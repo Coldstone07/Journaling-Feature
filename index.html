@@ -441,4 +441,292 @@
             const renderViewSection = (title, content, key) => {
                 if (!content || Object.values(content).every(v => !v || (Array.isArray(v) && v.length === 0))) return '';
                 let contentHtml;
-                if (key === 'physical' && content.sensations && content.sensations.length > 0) { const bodyFront = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const bodyBack = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const frontDots = content.sensations.filter(s => s.view === 'front').map(s => `<div class
+                if (key === 'physical' && content.sensations && content.sensations.length > 0) { const bodyFront = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const bodyBack = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const frontDots = content.sensations.filter(s => s.view === 'front').map(s => `<div class="sensation-dot" style="left:${s.x}%; top:${s.y}%; width:${8+s.intensity}px; height:${8+s.intensity}px; background-color: hsla(0, 100%, 50%, ${s.intensity/10});"></div>`).join(''); const backDots = content.sensations.filter(s => s.view === 'back').map(s => `<div class="sensation-dot" style="left:${s.x}%; top:${s.y}%; width:${8+s.intensity}px; height:${8+s.intensity}px; background-color: hsla(0, 100%, 50%, ${s.intensity/10});"></div>`).join(''); contentHtml = `<div class="grid grid-cols-2 gap-4"><div><h4 class="font-semibold text-center mb-2">Front</h4><div class="relative max-w-[200px] mx-auto"><svg viewBox="0 0 200 400">${bodyFront}</svg><div class="absolute top-0 left-0 w-full h-full">${frontDots}</div></div></div><div><h4 class="font-semibold text-center mb-2">Back</h4><div class="relative max-w-[200px] mx-auto"><svg viewBox="0 0 200 400">${bodyBack}</svg><div class="absolute top-0 left-0 w-full h-full">${backDots}</div></div></div></div><div class="mt-4">${content.sensations.map(s => `<p><strong>${s.part} (${s.view}):</strong> ${s.quality} (Intensity: ${s.intensity})</p>`).join('')}</div>`; } else { contentHtml = Object.entries(content).map(([k, value]) => { if (!value || (Array.isArray(value) && value.length === 0)) return ''; let formattedValue; if (k === 'emotions' && Array.isArray(value)) { formattedValue = value.map(e => `${e.name} (Intensity: ${e.intensity})`).join('<br>'); } else if (Array.isArray(value)) { formattedValue = value.join(', '); } else { formattedValue = value.toString().replace(/\n/g, '<br>'); } const formattedKey = k.charAt(0).toUpperCase() + k.slice(1).replace(/([A-Z])/g, ' $1'); return `<div class="mb-3"><strong class="font-semibold text-gray-600 block">${formattedKey}</strong><p class="text-gray-800 mt-1">${formattedValue}</p></div>`; }).join(''); }
+                if (!contentHtml.trim()) return '';
+                return `<div class="mb-8"><h3 class="text-2xl font-bold border-b-2 border-indigo-200 pb-2 mb-4 text-indigo-800">${title}</h3><div class="prose max-w-none">${contentHtml}</div></div>`;
+            };
+            return `<div class="container mx-auto p-4 md:p-8 max-w-4xl fade-in"><div class="bg-white p-6 md:p-10 rounded-xl shadow-lg"><div class="flex justify-between items-start mb-6 border-b pb-6"><div><h1 class="text-4xl font-bold text-gray-800">${entry.title || 'Untitled Entry'}</h1><p class="text-gray-500 mt-2">${new Date(entry.date).toLocaleString()} | ${entry.type || 'General'}</p></div><div class="flex gap-2"><button id="delete-entry-btn" data-id="${entry.id}" class="kairos-btn bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"><i class="fas fa-trash"></i></button></div></div>${renderViewSection('The Situation', entry.situation, 'situation')}${Object.keys(entrySections).map(key => renderViewSection(entrySections[key].title, entry[key], key)).join('')}<div class="mt-8 pt-6 border-t"><strong class="font-semibold text-gray-600 block mb-2">Tags:</strong><div class="flex flex-wrap gap-2">${entry.tags?.map(tag => `<span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">${tag}</span>`).join('') || '<span class="text-gray-500">No tags</span>'}</div></div><button id="back-to-dashboard" class="kairos-btn bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold mt-12"><i class="fas fa-arrow-left mr-2"></i>Back to Dashboard</button></div></div>`;
+        }
+        function ModalComponent({ title, content, onConfirm, confirmText = 'Confirm', cancelText = 'Cancel', bodyHtml = '' }) { 
+             return `<div class="modal-overlay fade-in"><div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"><h2 class="text-xl font-bold mb-4">${title}</h2><div class="text-gray-600 mb-6">${content || ''}${bodyHtml}</div><div class="flex justify-end gap-4"><button id="modal-cancel" class="kairos-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">${cancelText}</button>${onConfirm ? `<button id="modal-confirm" class="kairos-btn kairos-btn-primary px-4 py-2 rounded-lg">${confirmText}</button>` : ''}</div></div></div>`;
+        }
+
+        // --- EVENT LISTENERS & LOGIC ---
+        function attachEventListeners() {
+            // New navigation
+            document.getElementById('go-to-synthesis-btn')?.addEventListener('click', () => { state.currentPage = 'synthesis'; render(); });
+            document.getElementById('go-to-advisor-btn')?.addEventListener('click', () => { state.currentPage = 'advisor'; render(); });
+            document.getElementById('start-guided-entry-btn')?.addEventListener('click', () => { state.currentPage = 'somaticCheck1'; render(); });
+
+            document.querySelectorAll('.constellation-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const entryId = parseInt(e.currentTarget.dataset.id);
+                const entry = entries.find(en => en.id === entryId);
+                document.getElementById('constellation-display').innerHTML = renderConstellation(entry);
+            }));
+            document.querySelectorAll('.body-view-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                state.bodyMapView = e.target.id === 'body-view-front' ? 'front' : 'back';
+                document.getElementById('section-content').innerHTML = renderSectionContent('physical');
+                updateSensationDots();
+                attachEventListeners();
+            }));
+            document.getElementById('weave-insights-btn')?.addEventListener('click', handleWeaveInsights);
+
+            // All previous event listeners...
+            document.getElementById('go-to-register')?.addEventListener('click', (e) => { e.preventDefault(); state.currentPage = 'register'; render(); });
+            document.getElementById('go-to-login')?.addEventListener('click', (e) => { e.preventDefault(); state.currentPage = 'login'; render(); });
+            document.getElementById('start-new-entry-btn')?.addEventListener('click', () => { state.entryBuilder = { date: new Date().toISOString() }; state.currentPage = 'somaticCheck1'; render(); });
+            document.getElementById('back-to-dashboard')?.addEventListener('click', () => { state.currentPage = 'dashboard'; render(); });
+            document.getElementById('continue-to-setup')?.addEventListener('click', () => { state.currentPage = 'entrySetup'; render(); });
+            document.querySelectorAll('.somatic-option[data-state]').forEach(el => el.addEventListener('click', (e) => { state.somaticState = e.currentTarget.dataset.state; state.currentPage = 'somaticCheck2'; render(); }));
+            document.querySelectorAll('.somatic-option[data-capacity]').forEach(el => el.addEventListener('click', (e) => { state.sessionCapacity = e.currentTarget.dataset.capacity; state.currentPage = state.sessionCapacity === 'grounding' ? 'grounding' : 'entrySetup'; render(); }));
+            const breathText = document.getElementById('breath-text');
+            if(breathText) { setInterval(() => { breathText.innerText = breathText.innerText === 'Breathe In...' ? 'Breathe Out...' : 'Breathe In...'; }, 4000); }
+            document.getElementById('entry-setup-form')?.addEventListener('submit', (e) => { e.preventDefault(); const fd = new FormData(e.target); state.entryBuilder.title = fd.get('title'); state.entryBuilder.situation = { description: fd.get('situation.description') }; state.currentPage = 'thematicCheck'; render(); });
+            const thematicOptions = document.querySelectorAll('.thematic-option');
+            const startReflectionBtn = document.getElementById('start-reflection-btn');
+            thematicOptions.forEach(el => { el.addEventListener('click', () => { el.classList.toggle('selected'); const selectedCount = document.querySelectorAll('.thematic-option.selected').length; startReflectionBtn.disabled = selectedCount === 0; startReflectionBtn.classList.toggle('opacity-50', selectedCount === 0); }); });
+            startReflectionBtn?.addEventListener('click', () => { const selectedSections = Array.from(document.querySelectorAll('.thematic-option.selected')).map(el => el.dataset.section); state.entryBuilder.flow = { steps: selectedSections, currentStepIndex: 0 }; state.currentPage = 'entryFlow'; render(); });
+            document.getElementById('flow-back-btn')?.addEventListener('click', handleFlowBack);
+            document.getElementById('flow-next-btn')?.addEventListener('click', handleFlowNext);
+            document.getElementById('login-form')?.addEventListener('submit', handleLogin);
+            document.getElementById('register-form')?.addEventListener('submit', handleRegister);
+            document.querySelectorAll('.view-entry-btn').forEach(btn => btn.addEventListener('click', handleViewEntry));
+            document.getElementById('delete-entry-btn')?.addEventListener('click', handleDeleteEntry);
+            document.getElementById('modal-cancel')?.addEventListener('click', hideModal);
+            document.getElementById('modal-confirm')?.addEventListener('click', () => { if (state.modal.onConfirm) state.modal.onConfirm(); hideModal(); });
+            document.querySelectorAll('.emotion-chip').forEach(chip => chip.addEventListener('click', (e) => { e.currentTarget.classList.toggle('selected'); updateEmotionSliders(); }));
+            document.getElementById('body-map-svg')?.addEventListener('click', handleBodyMapClick);
+            document.querySelectorAll('.perspective-lens').forEach(lens => lens.addEventListener('click', handlePerspectiveLensClick));
+        }
+        
+        // --- HANDLER & UTILITY FUNCTIONS ---
+        const { showToast, renderToast } = (() => {
+            let toastTimeout;
+            const showToast = (message, type = 'success') => {
+                clearTimeout(toastTimeout);
+                state.toast = { message, type, visible: true };
+                renderToast();
+                toastTimeout = setTimeout(() => {
+                    state.toast.visible = false;
+                    renderToast();
+                }, 3000);
+            };
+            const renderToast = () => {
+                let toastElement = document.getElementById('toast-notification');
+                if (!toastElement && state.toast.visible) {
+                    toastElement = document.createElement('div');
+                    toastElement.id = 'toast-notification';
+                    document.body.appendChild(toastElement);
+                }
+                if (toastElement) {
+                    if (state.toast.visible) {
+                        const bgColor = state.toast.type === 'success' ? 'bg-green-500' : 'bg-red-500';
+                        toastElement.className = `fixed bottom-5 right-5 ${bgColor} text-white py-3 px-5 rounded-lg shadow-2xl transition-all duration-300 transform opacity-100 translate-y-0`;
+                        toastElement.innerText = state.toast.message;
+                    } else {
+                        toastElement.className = toastElement.className.replace('opacity-100 translate-y-0', 'opacity-0 translate-y-5');
+                    }
+                }
+            };
+            return { showToast, renderToast };
+        })();
+        
+        async function generateSynthesisInsights() {
+            state.synthesis = { isLoading: true, content: null, error: null };
+
+            if (entries.length < 2) {
+                state.synthesis = { isLoading: false, content: { guidance: "Patterns begin to reveal themselves with more data. Create another entry, focusing on emotions and body sensations, to awaken deeper insights." }, error: null };
+                return;
+            }
+
+            const recentEntriesSummary = entries.slice(0, 5).map(e => {
+                return `Entry: "${e.title || 'Untitled'}"\n- Situation: ${e.situation?.description}\n- Emotions: ${e.emotional?.emotions?.map(em => em.name).join(', ')}`;
+            }).join('\n\n');
+
+            const prompt = `
+                Analyze the following journal entries to identify core psychological themes.
+                Your task is to identify themes of "aversion" (what the user is pushing away, resisting, or fearful of) and "craving" (what the user is attached to, desiring, or seeking).
+
+                Entries:
+                ---
+                ${recentEntriesSummary}
+                ---
+
+                Based on this data, you MUST provide a response in a valid JSON format. The JSON object should contain two keys: "aversionThemes" and "cravingThemes".
+                Each key should have a value of an array of strings. Each string should be a concise theme (2-5 words).
+                Identify 2-4 themes for each category.
+
+                Example response:
+                {
+                  "aversionThemes": ["Fear of being judged", "Resistance to change", "Feeling of inadequacy"],
+                  "cravingThemes": ["Desire for peace and quiet", "Seeking validation from others", "Longing for connection"]
+                }
+                
+                Do not include any text outside of the JSON object.
+            `;
+            
+            try {
+                const apiUrl = '/.netlify/functions/call-gemini';
+                const payload = { prompt, structured: true };
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error(`Serverless function failed with status ${response.status}`);
+
+                const parsedContent = await response.json();
+                state.synthesis = { isLoading: false, content: parsedContent, error: null };
+
+            } catch (error) {
+                console.error("Gemini Synthesis call via Netlify failed:", error);
+                state.synthesis = { isLoading: false, content: null, error: "Could not synthesize patterns at this time. Please try again later." };
+            }
+        }
+
+
+        async function generateDynamicAdvisorContent() {
+            state.advisor = { isLoading: true, content: null, error: null };
+            
+            if (entries.length === 0) {
+                state.advisor = { isLoading: false, content: { guidance: "Your journey begins with a single step. The Advisor awakens once you've created your first journal entry. What's on your mind right now?" }, error: null };
+                return;
+            }
+
+            if (entries.length < 2) {
+                 state.advisor = { isLoading: false, content: { guidance: "A wonderful start. For the Advisor to see your patterns emerge, try to create another entry. The richest insights come from logging not just the situation, but also the emotions and body sensations you feel." }, error: null };
+                return;
+            }
+
+            const recentEntriesSummary = entries.slice(0, 5).map(e => {
+                return `Entry: "${e.title || 'Untitled'}"\n- Situation: ${e.situation?.description}\n- Narrative: ${e.inquiry?.story}\n- Emotions: ${e.emotional?.emotions?.map(em => `${em.name} (Intensity: ${em.intensity})`).join(', ')}\n- Sensations: ${e.physical?.sensations?.map(s => `${s.part}: ${s.quality}`).join(', ')}\n- Dream Insights: ${e.dream?.insights || 'N/A'}`;
+            }).join('\n\n');
+
+            const prompt = `
+                You are the Kairos Advisor, the integrated voice of the user's Higher Self. Your purpose is to translate their journal entries into compassionate, actionable wisdom.
+
+                Analyze the following summary of the user's recent journal entries:
+                ---
+                ${recentEntriesSummary}
+                ---
+
+                Based on this data, you MUST provide a response in a valid JSON format. The JSON object should contain three keys: "truth", "plan", and "challenge".
+
+                1.  **truth**: "The Compassionate Truth". Write a loving but direct reflection of a core pattern you observe in the data. Ground it in their own words and experiences.
+                2.  **plan**: "The Integration Plan". This must be an object with two keys:
+                    * "inner": A concrete "Inner Work" step (e.g., a specific somatic practice, breathwork, or meditation).
+                    * "outer": A concrete "Outer Action" step (e.g., a small, real-world behavior, a difficult conversation to have, or an action to take).
+                3.  **challenge**: "The Evolutionary Challenge". Write a single, powerful, forward-looking question or a specific assignment designed to push the user to their next level of consciousness. You can frame this as moving from a "Shadow" frequency (like Fear) to a "Gift" frequency (like Courage).
+
+                Do not include any text outside of the JSON object.
+            `;
+
+            try {
+                const apiUrl = '/.netlify/functions/call-gemini';
+                const payload = { prompt, structured: true };
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Serverless function failed with status ${response.status}`);
+                }
+
+                const parsedContent = await response.json();
+                state.advisor = { isLoading: false, content: parsedContent, error: null };
+
+            } catch (error) {
+                console.error("Gemini Advisor call via Netlify failed:", error);
+                state.advisor = { isLoading: false, content: null, error: "Could not retrieve wisdom from your Higher Self at this moment. Please try again later." };
+            }
+        }
+
+
+        async function handleWeaveInsights() {
+            const container = document.getElementById('dream-insights-container');
+            const description = document.querySelector('textarea[name="dream.description"]').value;
+            const symbols = document.querySelector('input[name="dream.symbols"]').value;
+
+            if (!description.trim()) {
+                showToast("Please describe the dream or synchronicity first.", "error");
+                return;
+            }
+
+            container.innerHTML = `<div class="flex justify-center items-center p-4"><div class="loader"></div></div>`;
+
+            const recentThemes = entries.slice(0, 2).map(e => e.situation.description).join('; ');
+
+            const prompt = `
+                As a Jungian-informed dream analyst, analyze the following dream/synchronicity.
+                Description: "${description}"
+                Key Symbols: "${symbols}"
+                
+                Also, consider these themes from the user's recent waking life journal entries for context: "${recentThemes}"
+
+                Your tasks are:
+                1. Identify potential archetypes or recurring symbols in the dream.
+                2. Gently highlight any potential cross-referenced insights or connections between the dream symbols and the waking life themes.
+                3. Frame your response as a compassionate, reflective prompt for deeper user inquiry, not as a definitive interpretation. Start with "Here are some threads that emerge...".
+            `;
+            
+            try {
+                const apiUrl = '/.netlify/functions/call-gemini';
+                const payload = { prompt };
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Serverless function failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+                const text = result.text.replace(/\n/g, '<br>');
+                
+                container.innerHTML = `
+                    <div class="border-t pt-4 mt-4">
+                        <h3 class="font-semibold text-lg mb-2 text-indigo-800">The Subconscious Bridge</h3>
+                        <div class="prose prose-sm max-w-none text-gray-700 bg-indigo-50 p-4 rounded-lg">${text}</div>
+                    </div>
+                `;
+                if(!state.entryBuilder.dream) state.entryBuilder.dream = {};
+                state.entryBuilder.dream.insights = text;
+
+            } catch (error) {
+                console.error("Gemini Weave Insights call via Netlify failed:", error);
+                container.innerHTML = `<p class="text-red-500 text-center">Sorry, we couldn't weave insights at this moment. Please try again later.</p>`;
+            }
+        }
+
+        // --- Other handler functions ---
+        function calculateEquanimity() { if (entries.length === 0) return { score: 100, ripples: 0 }; const totalIntensity = entries.reduce((sum, entry) => { const entryIntensity = entry.emotional?.emotions?.reduce((eSum, emo) => eSum + emo.intensity, 0) || 0; return sum + entryIntensity; }, 0); const avgIntensity = totalIntensity / entries.length / 5; const score = Math.max(0, Math.round(100 - avgIntensity * 10)); const ripples = Math.min(10, avgIntensity); return { score, ripples }; }
+        function analyzeThemes() { const aversionKeywords = ['criticized', 'defensive', 'fear', 'angry', 'bill', 'avoid']; const cravingKeywords = ['peaceful', 'happy', 'calm', 'want', 'need']; let aversionThemes = new Set(); let cravingThemes = new Set(); entries.forEach(entry => { const text = `${entry.title || ''} ${entry.situation?.description || ''}`.toLowerCase(); aversionKeywords.forEach(kw => { if (text.includes(kw)) aversionThemes.add(kw); }); cravingKeywords.forEach(kw => { if (text.includes(kw)) cravingThemes.add(kw); }); }); return { aversionThemes: Array.from(aversionThemes), cravingThemes: Array.from(cravingKeywords) }; }
+        function renderConstellation(entry) { if (!entry) return ''; const coreReaction = (entry.emotional?.emotions?.some(e => ['Angry', 'Fearful'].includes(e.name))) ? { type: 'Aversion', color: 'red-500' } : { type: 'Neutral/Craving', color: 'green-500' }; return `<div class="border-t pt-6 fade-in"><div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center items-center"><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Trigger</h4><i class="fas fa-bolt text-3xl text-yellow-500 mb-2"></i><p>${entry.situation?.description || 'N/A'}</p></div><i class="fas fa-arrow-right text-2xl text-gray-400 hidden md:block"></i><i class="fas fa-arrow-down text-2xl text-gray-400 md:hidden mx-auto"></i><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Core Reaction</h4><i class="fas ${coreReaction.type === 'Aversion' ? 'fa-hand-paper' : 'fa-hand-holding-heart'} text-3xl text-${coreReaction.color} mb-2"></i><p class="font-semibold text-${coreReaction.color}">${coreReaction.type}</p></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mt-4"><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Internal Narrative</h4><i class="fas fa-comment-dots text-3xl text-blue-500 mb-2"></i><p class="text-sm italic">"${entry.inquiry?.story || 'No narrative logged'}"</p></div><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Emotions</h4><i class="fas fa-heart-pulse text-3xl text-pink-500 mb-2"></i><p>${entry.emotional?.emotions?.map(e => `${e.name} (${e.intensity})`).join(', ') || 'N/A'}</p></div><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Somatic Signature</h4><i class="fas fa-child text-3xl text-orange-500 mb-2"></i><p>${entry.physical?.sensations?.map(s => `${s.part}: ${s.quality}`).join(', ') || 'N/A'}</p></div></div></div>`; }
+        function handleLogin(e) { e.preventDefault(); state.currentUser = { email: e.target.elements.email.value }; state.currentPage = 'dashboard'; render(); }
+        function handleRegister(e) { e.preventDefault(); const p1 = e.target.elements.password.value; const p2 = e.target.elements['confirm-password'].value; if (p1 !== p2) { showToast("Passwords do not match.", "error"); return; } showToast("Registration successful! Please log in.", "success"); state.currentPage = 'login'; render(); }
+        function handleViewEntry(e) { const entryId = parseInt(e.currentTarget.dataset.id); state.currentEntry = entries.find(entry => entry.id === entryId); state.currentPage = 'viewEntry'; render(); }
+        function handleDeleteEntry(e) { const entryId = parseInt(e.currentTarget.dataset.id); showModal({ title: 'Delete Entry', content: 'Are you sure you want to permanently delete this journal entry?', confirmText: 'Delete', onConfirm: () => { entries = entries.filter(entry => entry.id !== entryId); showToast('Entry deleted successfully.', 'success'); state.currentPage = 'dashboard'; render(); } }); }
+        function showModal(config) { state.modal = { ...config, visible: true }; render(); }
+        function hideModal() { state.modal = { visible: false }; render(); }
+        function saveCurrentStepData() { const { steps, currentStepIndex } = state.entryBuilder.flow; const sectionKey = steps[currentStepIndex]; const container = document.getElementById('section-content'); if (!container) return; state.entryBuilder[sectionKey] = state.entryBuilder[sectionKey] || {}; const inputs = container.querySelectorAll('textarea, input[type="radio"]:checked, input[type="text"]'); inputs.forEach(input => { const key = input.name.split('.')[1] || 'value'; state.entryBuilder[sectionKey][key] = input.value; }); if (sectionKey === 'emotional') { state.entryBuilder.emotional.emotions = Array.from(container.querySelectorAll('.emotion-chip.selected')).map(chip => { const name = chip.dataset.emotion; const slider = container.querySelector(`input[data-emotion-name="${name}"]`); return { name, intensity: slider ? parseInt(slider.value) : 5 }; }); } if (sectionKey === 'perspective') { const textarea = container.querySelector('textarea'); if (textarea) { state.entryBuilder.perspective[textarea.name] = textarea.value; } } }
+        function handleFlowBack() { saveCurrentStepData(); state.entryBuilder.flow.currentStepIndex--; render(); }
+        function handleFlowNext() { saveCurrentStepData(); const { steps, currentStepIndex } = state.entryBuilder.flow; if (currentStepIndex < steps.length - 1) { state.entryBuilder.flow.currentStepIndex++; render(); } else { const finalEntry = { ...state.entryBuilder, id: Date.now() }; delete finalEntry.flow; entries.unshift(finalEntry); showToast('Entry saved successfully!', 'success'); state.currentPage = 'dashboard'; render(); } }
+        function updateEmotionSliders() { const slidersContainer = document.getElementById('emotion-sliders'); if(!slidersContainer) return; slidersContainer.innerHTML = ''; const selectedChips = document.querySelectorAll('.emotion-chip.selected'); selectedChips.forEach(chip => { const emotionName = chip.dataset.emotion; const intensity = state.entryBuilder.emotional?.emotions?.find(e => e.name === emotionName)?.intensity || 5; const sliderHtml = `<div class="flex items-center gap-4 fade-in"><label class="w-24 text-gray-700">${emotionName}</label><input type="range" data-emotion-name="${emotionName}" min="1" max="10" value="${intensity}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"><span class="font-semibold w-8 text-center text-indigo-600">${intensity}</span></div>`; slidersContainer.insertAdjacentHTML('beforeend', sliderHtml); }); slidersContainer.querySelectorAll('input[type="range"]').forEach(slider => { slider.addEventListener('input', (e) => { e.target.nextElementSibling.textContent = e.target.value; }); }); }
+        function handleBodyMapClick(e) { const svg = document.getElementById('body-map-svg'); if (!svg) return; const rect = svg.getBoundingClientRect(); const x = ((e.clientX - rect.left) / rect.width) * 100; const y = ((e.clientY - rect.top) / rect.height) * 100; const partName = mapCoordsToPart(x, y); const sensationQualities = ["Tightness", "Vibration", "Heat", "Numbness", "Ache", "Tingling"]; const bodyHtml = `<div class="space-y-4"><div><label class="block font-semibold mb-2">Sensation Quality:</label><div id="sensation-quality-chips" class="flex flex-wrap gap-2">${sensationQualities.map(q => `<button class="sensation-chip bg-gray-200 px-3 py-1 rounded-full text-sm" data-quality="${q}">${q}</button>`).join('')}</div></div><div><label for="sensation-intensity" class="block font-semibold mb-2">Intensity:</label><input type="range" id="sensation-intensity" min="1" max="10" value="5" class="w-full"></div></div>`; showModal({ title: `Sensation in your ${partName}`, bodyHtml, confirmText: "Log Sensation", onConfirm: () => { const selectedQuality = document.querySelector('#sensation-quality-chips .selected')?.dataset.quality; const intensity = document.getElementById('sensation-intensity').value; if (!selectedQuality) { showToast("Please select a sensation quality.", "error"); return; } if (!state.entryBuilder.physical) state.entryBuilder.physical = {}; if (!state.entryBuilder.physical.sensations) state.entryBuilder.physical.sensations = []; state.entryBuilder.physical.sensations.push({ part: partName, quality: selectedQuality, intensity: parseInt(intensity), x, y, view: state.bodyMapView }); document.getElementById('section-content').innerHTML = renderSectionContent('physical'); updateSensationDots(); attachEventListeners(); } }); document.querySelectorAll('#sensation-quality-chips .sensation-chip').forEach(chip => { chip.addEventListener('click', (e) => { document.querySelectorAll('#sensation-quality-chips .sensation-chip').forEach(c => c.classList.remove('selected')); e.currentTarget.classList.add('selected'); }); }); }
+        function updateSensationDots() { const dotsContainer = document.getElementById('sensation-dots'); if (!dotsContainer) return; dotsContainer.innerHTML = ''; const sensations = state.entryBuilder.physical?.sensations || []; sensations.filter(s => s.view === state.bodyMapView).forEach(s => { const dot = document.createElement('div'); dot.className = 'sensation-dot'; dot.style.left = `${s.x}%`; dot.style.top = `${s.y}%`; dot.style.width = `${8 + parseInt(s.intensity)}px`; dot.style.height = `${8 + parseInt(s.intensity)}px`; dot.style.backgroundColor = `hsla(0, 100%, 50%, ${s.intensity / 10})`; dotsContainer.appendChild(dot); }); }
+        function mapCoordsToPart(x, y) { if (y < 25) return "Head"; if (y < 35) return "Neck/Throat"; if (y < 50 && x > 25 && x < 75) return "Chest"; if (y < 50) return "Shoulders/Arms"; if (y < 60) return "Stomach/Gut"; return "Legs"; }
+        function handlePerspectiveLensClick(e) { const lensType = e.currentTarget.dataset.lens; const promptArea = document.getElementById('perspective-prompt-area'); let promptText = ''; const firstEmotion = state.entryBuilder.emotional?.emotions?.[0]?.name.toLowerCase() || 'that feeling'; if (lensType === 'child') { promptText = `Taking a moment to connect with your younger self... What does the part of you that felt ${firstEmotion} really need to hear right now?`; } else if (lensType === 'future') { promptText = `Imagine your wise, future self looking back at this moment with compassion. What insight or guidance would they offer you?`; } promptArea.innerHTML = `<div class="mt-4 border-t pt-4 fade-in"><p class="text-gray-600 italic mb-2">${promptText}</p><textarea name="${lensType}Perspective" class="w-full border-gray-300 rounded-md" rows="4" placeholder="Write your reflection here..."></textarea></div>`; }
+
+        // --- INITIAL RENDER ---
+        render();
+    </script>
+</body>
+</html>
