@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kairos - A Journey Within</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F7F4;
+            color: #3D3D3D;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { 
+            animation: fadeIn 0.5s ease-out forwards; 
+            opacity: 0; /* Start hidden */
+        }
+        
+        .kairos-card {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .kairos-btn { transition: all 0.3s ease; }
+        .kairos-btn-primary { background-color: #4A55A2; color: white; }
+        .kairos-btn-primary:hover { background-color: #3A4482; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        .action-btn:hover {
+             transform: translateY(-3px) scale(1.02);
+             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .somatic-option, .thematic-option { transition: all 0.3s ease; cursor: pointer; }
+        .somatic-option:hover, .thematic-option:hover { transform: scale(1.03); box-shadow: 0 10px 20px rgba(0,0,0,0.08); }
+        .thematic-option.selected {
+            transform: scale(1.03);
+            box-shadow: 0 10px 20px rgba(74, 85, 162, 0.2);
+            border-color: #4A55A2;
+            background-color: #eef2ff;
+        }
+
+        .emotion-chip.selected, .sensation-chip.selected { background-color: #4A55A2; color: white; transform: scale(1.05); }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex; align-items: center; justify-content: center; z-index: 50;
+        }
+        
+        #body-map-svg path { fill: #d1d5db; stroke: #6b7280; stroke-width: 1.5; transition: fill 0.3s ease; cursor: pointer; }
+        #body-map-svg path:hover { fill: #93c5fd; }
+        .sensation-dot { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); border: 1px solid rgba(255,255,255,0.5); pointer-events: none; }
+        
+        #equanimity-pool { transition: all 1s ease-in-out; }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4A55A2;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app" class="min-h-screen"></div>
+    <div id="modal-container"></div>
+
+    <script type="module">
+        // --- MOCK DATA & CONFIG ---
+        let entries = [
+            { id: 1, title: "Team Meeting", date: "2025-07-22T14:30:00.000Z", situation: { description: "My project was criticized and I felt defensive." }, inquiry: { story: "They are trying to undermine me.", emotion: "Anger and Fear", belief: "I'm not good enough." }, emotional: { emotions: [{name: 'Angry', intensity: 8}, {name: 'Fearful', intensity: 7}]}, physical: { sensations: [{part: "Chest", quality: "Tightness", intensity: 8, x: 50, y: 45, view: 'front'}, {part: "Stomach/Gut", quality: "Ache", intensity: 6, x: 50, y: 55, view: 'front'}]} },
+            { id: 2, title: "Morning Walk", date: "2025-07-21T08:00:00.000Z", situation: { description: "A peaceful walk in the park." }, emotional: { emotions: [{name: 'Calm', intensity: 2}, {name: 'Happy', intensity: 3}]} },
+            { id: 3, title: "Unexpected Bill", date: "2025-07-20T18:00:00.000Z", situation: { description: "Received a large, unexpected bill in the mail." }, emotional: { emotions: [{name: 'Fearful', intensity: 9}]}, physical: { sensations: [{part: "Stomach/Gut", quality: "Tightness", intensity: 9, x: 50, y: 55, view: 'front'}]} }
+        ];
+        const quotes = ["The journey of a thousand miles begins with a single step.", "The only way out is through.", "What you resist, persists."];
+        const entrySections = {
+            dream: { title: "Dream & Synchronicity", icon: "fa-moon" },
+            inquiry: { title: "Internal Narrative", icon: "fa-layer-group" },
+            cognitive: { title: "My Thoughts & Beliefs", icon: "fa-brain" },
+            emotional: { title: "My Emotions", icon: "fa-heart" },
+            physical: { title: "My Body's Sensations", icon: "fa-person-running" },
+            behavioral: { title: "My Actions & Urges", icon: "fa-hand-fist" },
+            reflection: { title: "Patterns & Connections", icon: "fa-infinity" },
+            integration: { title: "Insights & Intentions", icon: "fa-seedling" },
+            perspective: { title: "Perspective Lenses", icon: "fa-glasses" }
+        };
+
+        // --- STATE MANAGEMENT ---
+        let state = {
+            currentPage: 'login',
+            currentUser: null,
+            currentEntry: null,
+            somaticState: null,
+            sessionCapacity: null,
+            bodyMapView: 'front',
+            entryBuilder: {},
+            advisor: { isLoading: true, content: null, error: null },
+            synthesis: { isLoading: true, content: null, error: null },
+            toast: { visible: false },
+            modal: { visible: false }
+        };
+
+        // --- RENDER FUNCTIONS ---
+        const appContainer = document.getElementById('app');
+        const modalContainer = document.getElementById('modal-container');
+
+        async function render() {
+            appContainer.innerHTML = ''; 
+            
+            // Handle async pages
+            if (state.currentPage === 'advisor') {
+                appContainer.innerHTML = AdvisorPage(); // Render skeleton
+                await generateDynamicAdvisorContent(); // Fetch data
+                appContainer.innerHTML = AdvisorPage(); // Re-render with data
+            } else if (state.currentPage === 'synthesis') {
+                appContainer.innerHTML = SynthesisPage(); // Render skeleton
+                await generateSynthesisInsights(); // Fetch data
+                appContainer.innerHTML = SynthesisPage(); // Re-render with data
+            } else {
+                // Handle synchronous pages
+                switch (state.currentPage) {
+                    case 'login': appContainer.innerHTML = LoginPage(); break;
+                    case 'register': appContainer.innerHTML = RegisterPage(); break;
+                    case 'dashboard': appContainer.innerHTML = DashboardPage(); break;
+                    case 'somaticCheck1': appContainer.innerHTML = SomaticCheckPage1(); break;
+                    case 'somaticCheck2': appContainer.innerHTML = SomaticCheckPage2(); break;
+                    case 'grounding': appContainer.innerHTML = GroundingPage(); break;
+                    case 'entrySetup': appContainer.innerHTML = EntrySetupPage(); break;
+                    case 'thematicCheck': appContainer.innerHTML = ThematicCheckPage(); break;
+                    case 'entryFlow': appContainer.innerHTML = EntryFlowPage(); break;
+                    case 'viewEntry': appContainer.innerHTML = ViewEntryPage(); break;
+                }
+            }
+            modalContainer.innerHTML = state.modal.visible ? ModalComponent(state.modal) : '';
+            attachEventListeners();
+            renderToast();
+        }
+        
+        // --- UI COMPONENTS ---
+        function LoginPage() { 
+             return `
+                <div class="min-h-screen flex items-center justify-center p-4 bg-cover bg-center" style="background-image: url('https://placehold.co/1200x800/A9B4C2/FFFFFF?text=Kairos');">
+                    <div class="kairos-card p-8 rounded-xl shadow-2xl max-w-md w-full fade-in">
+                        <h1 class="text-4xl font-bold text-center text-gray-800 mb-2">Kairos</h1>
+                        <p class="text-center text-gray-600 mb-8">Your Journey Within</p>
+                        <form id="login-form">
+                            <div class="mb-4">
+                                <label for="email" class="block text-gray-600 mb-2">Email</label>
+                                <input type="email" id="email" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" value="user@kairos.com" required>
+                            </div>
+                            <div class="mb-6">
+                                <label for="password" class="block text-gray-600 mb-2">Password</label>
+                                <input type="password" id="password" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" value="password" required>
+                            </div>
+                            <button type="submit" class="w-full kairos-btn kairos-btn-primary py-3 rounded-lg font-semibold">Enter Sanctuary</button>
+                        </form>
+                         <p class="text-center mt-6">New here? <a href="#" id="go-to-register" class="text-indigo-600 font-semibold hover:underline">Begin your journey</a></p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function RegisterPage() {
+            return `
+                <div class="min-h-screen flex items-center justify-center p-4 bg-cover bg-center" style="background-image: url('https://placehold.co/1200x800/A9B4C2/FFFFFF?text=Kairos');">
+                    <div class="kairos-card p-8 rounded-xl shadow-2xl max-w-md w-full fade-in">
+                        <h1 class="text-4xl font-bold text-center text-gray-800 mb-2">Begin Your Journey</h1>
+                        <p class="text-center text-gray-600 mb-8">Create your Kairos account.</p>
+                        <form id="register-form">
+                            <div class="mb-4">
+                                <label for="email" class="block text-gray-600 mb-2">Email</label>
+                                <input type="email" id="email" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="password" class="block text-gray-600 mb-2">Password</label>
+                                <input type="password" id="password" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
+                            </div>
+                            <div class="mb-6">
+                                <label for="confirm-password" class="block text-gray-600 mb-2">Confirm Password</label>
+                                <input type="password" id="confirm-password" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
+                            </div>
+                            <button type="submit" class="w-full kairos-btn kairos-btn-primary py-3 rounded-lg font-semibold">Create Account</button>
+                        </form>
+                        <p class="text-center mt-6">Already have a sanctuary? <a href="#" id="go-to-login" class="text-indigo-600 font-semibold hover:underline">Enter here</a></p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function DashboardPage() {
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            const recentEntriesHtml = entries.slice(0, 3).map((entry, index) => `
+                <div class="bg-white/80 p-5 rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105 view-entry-btn fade-in" style="animation-delay: ${0.5 + index * 0.1}s" data-id="${entry.id}">
+                    <h3 class="font-semibold text-lg text-gray-800 truncate">${entry.title || 'Untitled Entry'}</h3>
+                    <p class="text-sm text-gray-500">${new Date(entry.date).toLocaleDateString()}</p>
+                    <p class="text-sm text-indigo-600 mt-2 font-medium">${entry.type || 'General'}</p>
+                </div>
+            `).join('');
+
+            return `
+                <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+                    <header class="text-center mb-12">
+                        <h1 class="text-5xl font-bold text-gray-800 fade-in" style="animation-delay: 0.1s;">Your Sanctuary</h1>
+                        <p class="text-xl text-gray-600 mt-3 fade-in" style="animation-delay: 0.2s;">Welcome back, ${state.currentUser.email}.</p>
+                    </header>
+                    <div class="flex flex-col sm:flex-row justify-center gap-6 mb-12 fade-in" style="animation-delay: 0.3s;">
+                        <button id="start-new-entry-btn" class="kairos-btn action-btn kairos-btn-primary px-10 py-4 rounded-lg text-xl font-bold shadow-lg">
+                            <i class="fas fa-pen-fancy mr-2"></i> New Entry
+                        </button>
+                        <button id="go-to-synthesis-btn" class="kairos-btn action-btn bg-white/80 border px-10 py-4 rounded-lg text-xl font-bold shadow-lg hover:bg-white">
+                            <i class="fas fa-project-diagram mr-2"></i> Synthesis
+                        </button>
+                        <button id="go-to-advisor-btn" class="kairos-btn action-btn bg-white/80 border px-10 py-4 rounded-lg text-xl font-bold shadow-lg hover:bg-white">
+                            <i class="fas fa-user-graduate mr-2"></i> Advisor
+                        </button>
+                    </div>
+                    <div class="kairos-card p-6 rounded-xl shadow-lg text-center mb-12 fade-in" style="animation-delay: 0.4s;">
+                         <p class="text-lg italic text-gray-700">"${randomQuote}"</p>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-bold mb-6 text-gray-700 fade-in" style="animation-delay: 0.5s;">Recent Reflections</h2>
+                        <div class="grid md:grid-cols-3 gap-6">
+                            ${entries.length > 0 ? recentEntriesHtml : '<p class="text-gray-500 col-span-3 text-center py-10 fade-in" style="animation-delay: 0.6s;">Your journal is a blank canvas. Begin a new entry to start your reflection.</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function SynthesisPage() {
+            const { score, ripples } = calculateEquanimity();
+            const { isLoading, content, error } = state.synthesis;
+            
+            let themesHtml = '';
+            if (isLoading) {
+                themesHtml = `<div class="flex justify-center items-center p-6"><div class="loader"></div><p class="ml-4 text-gray-600">Synthesizing patterns...</p></div>`;
+            } else if (error) {
+                themesHtml = `<div class="text-center p-6 bg-red-50 border border-red-200 rounded-lg"><p class="text-red-600">${error}</p></div>`;
+            } else if (content) {
+                if (content.guidance) {
+                     themesHtml = `<div class="text-center p-6 bg-blue-50 border border-blue-200 rounded-lg"><p class="text-blue-700">${content.guidance}</p></div>`;
+                } else {
+                    themesHtml = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="font-semibold text-lg mb-2 text-red-700"><i class="fas fa-magnet mr-2"></i>Aversion Themes</h3>
+                                <ul class="list-disc list-inside text-gray-700 space-y-1">${content.aversionThemes.map(t => `<li>${t}</li>`).join('') || '<li>No strong aversion themes detected.</li>'}</ul>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg mb-2 text-green-700"><i class="fas fa-feather mr-2"></i>Craving Themes</h3>
+                                <ul class="list-disc list-inside text-gray-700 space-y-1">${content.cravingThemes.map(t => `<li>${t}</li>`).join('') || '<li>No strong craving themes detected.</li>'}</ul>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            return `
+                <div class="container mx-auto p-4 md:p-8 max-w-5xl fade-in">
+                    <header class="flex justify-between items-center mb-12">
+                        <div>
+                           <h1 class="text-5xl font-bold text-gray-800">Sankara Synthesis</h1>
+                           <p class="text-xl text-gray-600 mt-3">Making the unconscious conscious.</p>
+                        </div>
+                        <button id="back-to-dashboard" class="kairos-btn bg-white/80 border px-6 py-3 rounded-lg font-semibold hover:bg-white"><i class="fas fa-arrow-left mr-2"></i>Dashboard</button>
+                    </header>
+
+                    <div class="grid lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-1">
+                            <div class="kairos-card p-6 rounded-xl shadow-lg text-center">
+                                <h2 class="text-2xl font-bold mb-4">Equanimity Index</h2>
+                                <div id="equanimity-pool" class="w-48 h-48 mx-auto rounded-full flex items-center justify-center overflow-hidden" style="background: radial-gradient(circle, #a5f3fc, #0c4a6e);">
+                                    <div class="w-full h-full bg-black/20" style="backdrop-filter: blur(${ripples}px) brightness(1.2)"></div>
+                                </div>
+                                <p class="mt-4 text-lg font-semibold">${score}% Stillness</p>
+                                <p class="text-sm text-gray-600">Reflects your capacity for non-reactive awareness in recent entries.</p>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-2">
+                             <div class="kairos-card p-6 rounded-xl shadow-lg mb-8">
+                                <h2 class="text-2xl font-bold mb-4">Aversion & Craving Patterns</h2>
+                                ${themesHtml}
+                            </div>
+                            <div class="kairos-card p-6 rounded-xl shadow-lg">
+                                <h2 class="text-2xl font-bold mb-4">Trigger Constellations</h2>
+                                <p class="text-gray-600 mb-4">Select a recent entry to visualize its pattern.</p>
+                                <div id="entry-selector-for-constellation" class="flex flex-col gap-2">
+                                    ${entries.slice(0,5).map(entry => `<button class="constellation-btn text-left p-3 bg-gray-100 rounded-lg hover:bg-indigo-100" data-id="${entry.id}">${entry.title || 'Untitled Entry'}</button>`).join('')}
+                                </div>
+                                <div id="constellation-display" class="mt-6"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function AdvisorPage() {
+            const { isLoading, content, error } = state.advisor;
+
+            let advisorContentHtml = '';
+            if (isLoading) {
+                advisorContentHtml = `<div class="flex justify-center items-center p-10"><div class="loader"></div><p class="ml-4 text-gray-600">Your Advisor is reflecting...</p></div>`;
+            } else if (error) {
+                advisorContentHtml = `<div class="text-center p-10 bg-red-50 border border-red-200 rounded-lg"><p class="text-red-700 font-semibold">An error occurred.</p><p class="text-red-600 mt-2">${error}</p></div>`;
+            } else if (content) {
+                if (content.guidance) {
+                    advisorContentHtml = `
+                        <div class="kairos-card p-6 rounded-xl shadow-lg text-center">
+                            <h2 class="text-2xl font-bold mb-4 text-indigo-800">A Path to Deeper Insight</h2>
+                            <p class="text-lg text-gray-700">${content.guidance}</p>
+                            <button id="start-guided-entry-btn" class="kairos-btn kairos-btn-primary mt-6 px-6 py-2 rounded-lg font-semibold">Begin a New Entry</button>
+                        </div>
+                    `;
+                } else {
+                    advisorContentHtml = `
+                        <div class="space-y-8">
+                            <!-- Compassionate Truth -->
+                            <div class="kairos-card p-6 rounded-xl shadow-lg">
+                                <h2 class="text-2xl font-bold mb-4 text-indigo-800">The Compassionate Truth</h2>
+                                <p class="text-lg text-gray-700">${content.truth}</p>
+                            </div>
+                            <!-- Integration Plan -->
+                            <div class="kairos-card p-6 rounded-xl shadow-lg">
+                                <h2 class="text-2xl font-bold mb-4 text-indigo-800">The Integration Plan</h2>
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <h3 class="font-semibold text-xl mb-2"><i class="fas fa-leaf mr-2 text-green-600"></i>Inner Work</h3>
+                                        <p class="text-gray-700">${content.plan.inner}</p>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-xl mb-2"><i class="fas fa-shoe-prints mr-2 text-yellow-600"></i>Outer Action</h3>
+                                        <p class="text-gray-700">${content.plan.outer}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Evolutionary Challenge -->
+                            <div class="kairos-card p-6 rounded-xl shadow-lg bg-gray-800 text-white">
+                                <h2 class="text-2xl font-bold mb-4 text-yellow-400">The Evolutionary Challenge</h2>
+                                <p class="text-lg">${content.challenge}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            return `
+                <div class="container mx-auto p-4 md:p-8 max-w-4xl fade-in">
+                     <header class="flex justify-between items-center mb-12">
+                        <div>
+                           <h1 class="text-5xl font-bold text-gray-800">Kairos Advisor</h1>
+                           <p class="text-xl text-gray-600 mt-3">The integrated voice of your Higher Self.</p>
+                        </div>
+                        <button id="back-to-dashboard" class="kairos-btn bg-white/80 border px-6 py-3 rounded-lg font-semibold hover:bg-white"><i class="fas fa-arrow-left mr-2"></i>Dashboard</button>
+                    </header>
+                    ${advisorContentHtml}
+                </div>
+            `;
+        }
+
+
+        function SomaticCheckPage1() { 
+            return `<div class="min-h-screen flex flex-col items-center justify-center text-center p-4 fade-in"><h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Before we begin, let's connect with your body.</h1><p class="text-lg md:text-xl text-gray-600 mb-12 max-w-2xl">Right now, without needing to change anything, would you say your inner state feels more activated or more settled?</p><div class="grid md:grid-cols-2 gap-8 w-full max-w-4xl"><div class="somatic-option kairos-card p-8 rounded-xl shadow-lg" data-state="activated"><i class="fas fa-bolt text-5xl text-yellow-500 mb-4"></i><h2 class="text-2xl font-semibold mb-2">Activated</h2><p class="text-gray-600">Restless, tense, racing thoughts, energized.</p></div><div class="somatic-option kairos-card p-8 rounded-xl shadow-lg" data-state="settled"><i class="fas fa-feather-alt text-5xl text-blue-500 mb-4"></i><h2 class="text-2xl font-semibold mb-2">Settled</h2><p class="text-gray-600">Grounded, calm, relaxed, at ease.</p></div></div></div>`;
+        }
+        function SomaticCheckPage2() { 
+            const prompt = state.somaticState === 'activated' ? "It's courageous to acknowledge that energy." : "It's a gift to find moments of peace.";
+            return `<div class="min-h-screen flex flex-col items-center justify-center text-center p-4 fade-in"><p class="text-lg text-gray-600 mb-4">${prompt}</p><h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-12 max-w-3xl">What is your capacity to be with this state of ${state.somaticState}ness right now?</h1><div class="space-y-6 w-full max-w-2xl"><div class="somatic-option kairos-card p-6 rounded-xl shadow-lg text-left" data-capacity="deep"><h2 class="text-xl font-semibold">I have the space to explore this deeply.</h2></div><div class="somatic-option kairos-card p-6 rounded-xl shadow-lg text-left" data-capacity="gentle"><h2 class="text-xl font-semibold">I can be with it, but prefer gentle observation.</h2></div><div class="somatic-option kairos-card p-6 rounded-xl shadow-lg text-left" data-capacity="grounding"><h2 class="text-xl font-semibold">I feel overwhelmed and need to focus on grounding first.</h2></div></div></div>`;
+        }
+        function GroundingPage() { 
+            return `<div class="min-h-screen flex flex-col items-center justify-center text-center p-4 fade-in"><h1 class="text-3xl font-bold mb-4">A wise choice. Let's ground ourselves.</h1><p class="text-lg text-gray-600 mb-8">Follow the rhythm. Breathe in as the circle expands, and out as it contracts.</p><div class="w-48 h-48 bg-blue-200 rounded-full flex items-center justify-center" style="animation: breathe 8s ease-in-out infinite;"><span id="breath-text" class="text-blue-800 font-semibold">Breathe In...</span></div><button id="continue-to-setup" class="kairos-btn bg-white/80 border mt-12 px-8 py-3 rounded-lg font-semibold hover:bg-white">Continue when ready</button><style>@keyframes breathe { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(0.8); } }</style></div>`;
+        }
+        function EntrySetupPage() { 
+            return `<div class="container mx-auto p-4 md:p-8 max-w-3xl fade-in"><div class="kairos-card p-8 rounded-xl shadow-lg"><h1 class="text-3xl font-bold mb-2">Let's Begin</h1><p class="text-gray-600 mb-6">Start by capturing the essence of what's on your mind.</p><form id="entry-setup-form" class="space-y-4"><input type="text" name="title" placeholder="Give this entry a title (optional)" class="w-full text-2xl font-semibold border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-indigo-400 p-1 bg-transparent"><textarea name="situation.description" class="w-full border-gray-300 rounded-md mt-4" rows="6" placeholder="Describe the situation, interaction, or internal state you want to explore..."></textarea><div class="flex justify-end pt-4"><button type="submit" class="kairos-btn kairos-btn-primary px-8 py-3 rounded-lg font-semibold">Continue</button></div></form></div></div>`;
+        }
+        function ThematicCheckPage() { 
+            const optionsHtml = Object.entries(entrySections).map(([key, {title, icon}]) => `<div class="thematic-option kairos-card p-6 rounded-xl shadow-lg border-2 border-transparent" data-section="${key}"><i class="fas ${icon} text-3xl text-indigo-500 mb-3"></i><h2 class="text-xl font-semibold">${title}</h2></div>`).join('');
+            return `<div class="container mx-auto p-4 md:p-8 max-w-4xl text-center fade-in"><h1 class="text-3xl font-bold mb-4">How would you like to explore this?</h1><p class="text-lg text-gray-600 mb-10">Select the layers of your experience that feel most alive right now.</p><div id="thematic-options" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">${optionsHtml}</div><button id="start-reflection-btn" class="kairos-btn kairos-btn-primary px-12 py-4 rounded-lg text-xl font-bold shadow-lg opacity-50" disabled>Start Reflection</button></div>`;
+        }
+        function EntryFlowPage() { 
+            const { steps, currentStepIndex } = state.entryBuilder.flow;
+            const currentSectionKey = steps[currentStepIndex];
+            const sectionDetails = entrySections[currentSectionKey];
+            const progressPercentage = ((currentStepIndex + 1) / steps.length) * 100;
+            const isLastStep = currentStepIndex === steps.length - 1;
+            return `<div class="container mx-auto p-4 md:p-8 max-w-3xl fade-in"><div class="kairos-card p-8 rounded-xl shadow-lg"><div class="mb-6"><div class="flex justify-between items-center mb-2"><h2 class="text-2xl font-bold text-indigo-800">${sectionDetails.title}</h2><span class="text-sm font-semibold text-gray-500">Step ${currentStepIndex + 1} of ${steps.length}</span></div><div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-indigo-500 h-2.5 rounded-full" style="width: ${progressPercentage}%; transition: width 0.5s ease;"></div></div></div><div id="section-content">${renderSectionContent(currentSectionKey)}</div><div class="flex justify-between items-center mt-8 pt-4 border-t"><button id="flow-back-btn" class="kairos-btn bg-gray-200 px-6 py-2 rounded-lg font-semibold ${currentStepIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${currentStepIndex === 0 ? 'disabled' : ''}>Back</button><button id="flow-next-btn" class="kairos-btn kairos-btn-primary px-8 py-3 rounded-lg font-semibold">${isLastStep ? 'Review & Save' : 'Next'}</button></div></div></div>`;
+        }
+
+        // --- SECTION CONTENT RENDERER (with AI features) ---
+        function renderSectionContent(sectionKey) {
+            const entry = state.entryBuilder;
+            switch(sectionKey) {
+                case 'dream': return `
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-2">Describe the dream or synchronicity</label>
+                            <textarea name="dream.description" class="w-full border-gray-300 rounded-md" rows="5" placeholder="What happened? What did you see, hear, or feel?">${entry.dream?.description || ''}</textarea>
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-2">Key Symbols or Themes</label>
+                            <input type="text" name="dream.symbols" class="w-full border-gray-300 rounded-md" placeholder="e.g., water, flying, a recurring number" value="${entry.dream?.symbols || ''}">
+                        </div>
+                        <div class="text-center">
+                            <button type="button" id="weave-insights-btn" class="kairos-btn kairos-btn-primary px-6 py-2 rounded-lg font-semibold">
+                                ✨ Weave Insights
+                            </button>
+                        </div>
+                        <div id="dream-insights-container" class="mt-4">${entry.dream?.insights ? `<div class="border-t pt-4 mt-4"><h3 class="font-semibold text-lg mb-2 text-indigo-800">The Subconscious Bridge</h3><div class="prose prose-sm max-w-none text-gray-700 bg-indigo-50 p-4 rounded-lg">${entry.dream.insights}</div></div>` : ''}</div>
+                    </div>
+                `;
+                case 'inquiry': return `<div class="space-y-6"><div><label class="block font-semibold text-gray-700 mb-2">What is the primary story or judgment you are telling yourself about this?</label><textarea name="inquiry.story" class="w-full border-gray-300 rounded-md" rows="3" placeholder="e.g., 'They were intentionally trying to undermine me.'">${entry.inquiry?.story || ''}</textarea></div><div><label class="block font-semibold text-gray-700 mb-2">Beneath that story, what is the core emotion you feel?</label><textarea name="inquiry.emotion" class="w-full border-gray-300 rounded-md" rows="2" placeholder="e.g., 'I feel rejected.'">${entry.inquiry?.emotion || ''}</textarea></div><div><label class="block font-semibold text-gray-700 mb-2">And this entire pattern seems connected to a deeper belief. Does a thought like 'I am not safe' or 'I am not worthy' resonate here?</label><textarea name="inquiry.belief" class="w-full border-gray-300 rounded-md" rows="2" placeholder="e.g., 'I am not worthy of respect.'">${entry.inquiry?.belief || ''}</textarea></div></div>`;
+                case 'cognitive': return `<textarea name="cognitive.thoughts" class="w-full border-gray-300 rounded-md" rows="4" placeholder="What thoughts went through your mind?">${entry.cognitive?.thoughts || ''}</textarea><textarea name="cognitive.beliefs" class="w-full border-gray-300 rounded-md mt-4" rows="3" placeholder="Did any deep beliefs surface? (e.g., 'I'm not good enough')">${entry.cognitive?.beliefs || ''}</textarea>`;
+                case 'emotional': const emotions = ["Happy", "Sad", "Angry", "Fearful", "Surprised", "Disgusted", "Calm"]; return `<div id="emotion-chips" class="flex flex-wrap gap-2 mb-4">${emotions.map(e => `<button type="button" class="emotion-chip bg-gray-200 px-3 py-1 rounded-full text-sm" data-emotion="${e}">${e}</button>`).join('')}</div><div id="emotion-sliders" class="space-y-3"></div><textarea name="emotional.nuance" class="w-full border-gray-300 rounded-md mt-4" rows="2" placeholder="Describe any complex or mixed emotions...">${entry.emotional?.nuance || ''}</textarea>`;
+                case 'physical': const bodyFront = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const bodyBack = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; return `<div class="flex justify-center gap-4 mb-4"><button id="body-view-front" class="body-view-btn px-4 py-2 rounded-lg ${state.bodyMapView === 'front' ? 'bg-indigo-500 text-white' : 'bg-gray-200'}">Front View</button><button id="body-view-back" class="body-view-btn px-4 py-2 rounded-lg ${state.bodyMapView === 'back' ? 'bg-indigo-500 text-white' : 'bg-gray-200'}">Back View</button></div><p class="text-gray-600 mb-4 text-center">Click on the body map to log where you felt sensations.</p><div class="relative max-w-[200px] mx-auto"><svg id="body-map-svg" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">${state.bodyMapView === 'front' ? bodyFront : bodyBack}</svg><div id="sensation-dots"></div></div><div id="logged-sensations" class="mt-4 space-y-2"></div>`;
+                case 'behavioral': return `<textarea name="behavioral.actions" class="w-full border-gray-300 rounded-md" rows="3" placeholder="What did you do or say in response?">${entry.behavioral?.actions || ''}</textarea><textarea name="behavioral.urges" class="w-full border-gray-300 rounded-md mt-4" rows="2" placeholder="Did you feel strong urges that you didn't act on?">${entry.behavioral?.urges || ''}</textarea>`;
+                case 'reflection': return `<textarea name="reflection.patterns" class="w-full border-gray-300 rounded-md" rows="3" placeholder="Does this feel familiar? Any patterns you've noticed?">${entry.reflection?.patterns || ''}</textarea><textarea name="reflection.pastConnections" class="w-full border-gray-300 rounded-md mt-4" rows="3" placeholder="Does this remind you of past situations or feelings?">${entry.reflection?.pastConnections || ''}</textarea>`;
+                case 'integration': return `<textarea name="integration.insights" class="w-full border-gray-300 rounded-md" rows="3" placeholder="What insights came from reflecting on this experience?">${entry.integration?.insights || ''}</textarea><textarea name="integration.intentions" class="w-full border-gray-300 rounded-md mt-4" rows="3" placeholder="What is your intention moving forward?">${entry.integration?.intentions || ''}</textarea>`;
+                case 'perspective': return `<div class="space-y-4"><p class="text-gray-600 mb-4">Sometimes, looking at an experience from a different angle can reveal new wisdom. Choose a lens to explore.</p><div class="perspective-lens border p-4 rounded-lg cursor-pointer hover:bg-gray-50" data-lens="child"><h3 class="font-semibold text-lg">The Inner Child Lens</h3><p class="text-sm text-gray-500">Connect with your younger self.</p></div><div class="perspective-lens border p-4 rounded-lg cursor-pointer hover:bg-gray-50" data-lens="future"><h3 class="font-semibold text-lg">The Future Self Lens</h3><p class="text-sm text-gray-500">Access the wisdom of who you are becoming.</p></div><div id="perspective-prompt-area" class="mt-4"></div></div>`;
+                default: return `<p>Section not found.</p>`;
+            }
+        }
+        
+        function ViewEntryPage() { 
+            const entry = state.currentEntry;
+            if (!entry) return `<div class="text-center p-8"><p>Entry not found.</p><button id="back-to-dashboard" class="kairos-btn bg-gray-200 mt-4 px-6 py-2 rounded-lg">Back to Dashboard</button></div>`;
+            const renderViewSection = (title, content, key) => {
+                if (!content || Object.values(content).every(v => !v || (Array.isArray(v) && v.length === 0))) return '';
+                let contentHtml;
+                if (key === 'physical' && content.sensations && content.sensations.length > 0) { const bodyFront = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const bodyBack = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const frontDots = content.sensations.filter(s => s.view === 'front').map(s => `<div class
