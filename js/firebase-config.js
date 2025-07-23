@@ -9,12 +9,14 @@ import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.2/firebas
 // Firebase configuration - Replace with your actual Firebase project values
 // Note: These values can be public as they're designed for client-side use
 const firebaseConfig = {
-    apiKey: FIREBASE_API_KEY, // Replace with your actual API key
-    authDomain: FIREBASE_AUTH_DOMAIN, 
-    projectId: FIREBASE_PROJECT_ID,
-    storageBucket: FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
-    appId: FIREBASE_APP_ID
+    apiKey: "AIzaSyBCSBGXo-5Da8ombcU7ZveUa65KsvE1Y5E",
+    authDomain: "journaling-8af15.firebaseapp.com",
+    databaseURL: "https://journaling-8af15-default-rtdb.firebaseio.com",
+    projectId: "journaling-8af15",
+    storageBucket: "journaling-8af15.firebasestorage.app",
+    messagingSenderId: "762294602129",
+    appId: "1:762294602129:web:be5858cf1c31d1eb8f7230",
+    measurementId: "G-TZFC2X9PDX"
 };
 
 // Initialize Firebase
