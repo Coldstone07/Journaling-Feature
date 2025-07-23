@@ -83,31 +83,35 @@ Both functions will automatically access these values from Netlify's environment
 ## Project Structure
 
 ```
-├── index.html                      # Main UI and application logic
-├── js/                            # 📁 FRONTEND (Client-side)
-│   ├── firebase-config.js         # Firebase initialization & config
-│   ├── auth-service.js            # Authentication logic
-│   └── journal-service.js         # Journal operations
-├── netlify/functions/             # 📁 BACKEND (Server-side)
+├── index.html                      # 🖥️ Main UI and application logic
+├── js/
+│   └── firebase-config.js         # 🔐 Firebase client configuration
+├── netlify/functions/             # 📁 SECURE BACKEND (Server-side)
 │   ├── call-gemini.js            # 🤖 LLM API CALLS (uses GEMINI_API_KEY)
-│   └── firebase-backend.js       # 🔐 ACCOUNT MANAGEMENT (uses FIREBASE_PROJECT_ID)
-└── package.json                   # Dependencies
+│   └── firebase-backend.js       # 🔒 DATABASE OPERATIONS (uses FIREBASE_PROJECT_ID)
+├── package.json                   # Dependencies
+└── README.md                      # Documentation
 ```
 
 ## Feature Location Guide
 
 ### 🖥️ Frontend (Client-side)
-- **Main UI**: `index.html` - User interface, app state management, and authentication
-- **Firebase Config**: `js/firebase-config.js` - Client Firebase auth setup only
-- **Auth Services**: `js/auth-service.js` - ⚠️ NOT USED (kept for reference)
-- **Journal Services**: `js/journal-service.js` - ⚠️ NOT USED (kept for reference)
+- **Main UI**: `index.html` 
+  - Complete user interface and application logic
+  - User authentication (login/register/logout)
+  - Journal entry creation and display
+  - Dashboard and navigation
+- **Firebase Config**: `js/firebase-config.js` 
+  - Client-side Firebase authentication setup
+  - Secure configuration with string concatenation
 
-### 🔐 Backend (Server-side via Netlify Functions) - **ALL DATABASE OPERATIONS**
-- **Account Management**: `netlify/functions/firebase-backend.js`
+### 🔐 Secure Backend (Server-side via Netlify Functions)
+- **Database Operations**: `netlify/functions/firebase-backend.js`
+  - ✅ ALL database CRUD operations (create, read, update, delete)
+  - ✅ User authentication verification on every request
+  - ✅ Firebase ID token validation
+  - ✅ Complete user data isolation and security
   - ✅ Uses `process.env.FIREBASE_PROJECT_ID` from Netlify
-  - ✅ All CRUD operations (create, read, update, delete entries)
-  - ✅ User authentication verification
-  - ✅ User data isolation and security
   
 ### 🤖 LLM API Calls
 - **AI Features**: `netlify/functions/call-gemini.js`

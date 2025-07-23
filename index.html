@@ -8,31 +8,1087 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
         
+        /* Organic Tones Base Palette */
+        :root {
+            /* Base Organic Tones */
+            --warm-off-white: #FAF9F6;
+            --soft-charcoal: #3A3A3A;
+            --muted-stone-gray: #8B8680;
+            --gentle-cream: #F7F5F2;
+            --warm-ivory: #FDF8F0;
+            
+            /* Living Accents */
+            --deep-indigo: #483D8B;
+            --shimmering-gold: #D4AF37;
+            --soft-rose-quartz: #B695C0;
+            --ethereal-lavender: #C8B2DB;
+            --sage-mist: #A8B5A0;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #F8F7F4;
-            color: #3D3D3D;
+            background: var(--warm-off-white);
+            color: var(--soft-charcoal);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Enhanced organic texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background-image: 
+                radial-gradient(circle at 1px 1px, rgba(138, 134, 128, 0.03) 1px, transparent 0),
+                radial-gradient(circle at 20px 20px, rgba(72, 61, 139, 0.01) 1px, transparent 0);
+            background-size: 25px 25px, 40px 40px;
+            opacity: 0.4;
+        }
+
+        /* Living background with organic tones */
+        .cosmic-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 30%, var(--deep-indigo)08 0%, transparent 60%),
+                radial-gradient(circle at 80% 20%, var(--shimmering-gold)05 0%, transparent 70%),
+                radial-gradient(circle at 40% 70%, var(--soft-rose-quartz)03 0%, transparent 80%),
+                radial-gradient(circle at 90% 80%, var(--ethereal-lavender)04 0%, transparent 65%),
+                linear-gradient(135deg, var(--gentle-cream) 0%, var(--warm-ivory) 50%, var(--gentle-cream) 100%);
+            animation: breathingBackground 30s ease-in-out infinite;
+        }
+
+        @keyframes breathingBackground {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg);
+                opacity: 0.8;
+            }
+            33% { 
+                transform: scale(1.01) rotate(0.3deg);
+                opacity: 0.9;
+            }
+            66% { 
+                transform: scale(0.99) rotate(-0.2deg);
+                opacity: 0.85;
+            }
+        }
+
+        /* Shimmering particles */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(182, 149, 192, 0.1) 40%, transparent 70%);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) translateX(0px) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) translateX(100px) scale(1); opacity: 0; }
+        }
+
+        /* Luminous glow effects */
+        .luminous-glow {
+            box-shadow: 
+                0 0 20px rgba(72, 61, 139, 0.15),
+                0 0 40px rgba(212, 175, 55, 0.1),
+                0 0 60px rgba(182, 149, 192, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(72, 61, 139, 0.1);
+        }
+
+        /* The Descent - Login transition effect */
+        .descent-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, 
+                rgba(245, 245, 243, 0.9) 0%, 
+                rgba(72, 61, 139, 0.15) 30%,
+                rgba(72, 61, 139, 0.25) 50%, 
+                rgba(72, 61, 139, 0.15) 70%,
+                rgba(245, 245, 243, 0.9) 100%);
+            z-index: 1000;
+            animation: descent 3.5s ease-in-out forwards;
+            pointer-events: none;
+            backdrop-filter: blur(20px);
+        }
+
+        @keyframes descent {
+            0% { 
+                opacity: 0; 
+                transform: translateY(-100%); 
+            }
+            25% { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+            75% { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+            100% { 
+                opacity: 0; 
+                transform: translateY(100%); 
+            }
+        }
+
+        /* Hide content during transition */
+        .transitioning {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Typography hierarchy */
+        .heading-serif {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+        }
+
+        .body-sans {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* The Weaver special styling */
+        .weaver-voice {
+            font-family: 'Crimson Text', serif;
+            font-style: italic;
+            font-weight: 600;
+            font-size: 1.25em;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, var(--shimmering-gold) 0%, #DAA520 50%, #B8860B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
+            filter: drop-shadow(0 2px 6px rgba(212, 175, 55, 0.3));
+        }
+
+        /* Weaver text animation - smoother with gentle entrance */
+        .weaver-text {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: weaverReveal 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        
+        /* Staggered heading animations */
+        .heading-entrance {
+            opacity: 0;
+            transform: translateY(30px) scale(0.98);
+            animation: headingEntrance 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        
+        @keyframes headingEntrance {
+            0% { 
+                opacity: 0; 
+                transform: translateY(30px) scale(0.98);
+                filter: blur(3px);
+            }
+            60% {
+                opacity: 0.8;
+                transform: translateY(10px) scale(0.99);
+                filter: blur(1px);
+            }
+            100% { 
+                opacity: 1; 
+                transform: translateY(0) scale(1);
+                filter: blur(0px);
+            }
+        }
+
+        @keyframes weaverReveal {
+            0% { 
+                opacity: 0; 
+                transform: translateY(20px) scale(0.98); 
+                filter: blur(3px);
+            }
+            60% {
+                opacity: 0.8;
+                transform: translateY(8px) scale(0.99);
+                filter: blur(1px);
+            }
+            100% { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+                filter: blur(0px);
+            }
+        }
+
+        /* Typing effect for AI text - smooth animation */
+        .typing-text {
+            overflow: hidden;
+            border-right: 2px solid rgba(72, 61, 139, 0.7);
+            animation: typing 3s ease-out, blink-caret 0.75s step-end infinite 3s, hide-caret 0.1s ease-out 5s forwards;
+            white-space: normal;
+            word-wrap: break-word;
+            max-width: 100%;
+            display: block;
+            line-height: 1.6;
+        }
+
+        @keyframes typing {
+            from { 
+                width: 0; 
+                opacity: 0.8;
+            }
+            to { 
+                width: 100%; 
+                opacity: 1;
+            }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent; }
+            50% { border-color: rgba(72, 61, 139, 0.7); }
+        }
+
+        @keyframes hide-caret {
+            from { border-color: rgba(72, 61, 139, 0.7); }
+            to { border-color: transparent; }
+        }
+
+        /* Onboarding steps container - Generous breathing space */
+        .onboarding-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+        }
+        
+        /* Enhanced spacing for questionnaire sections */
+        .archetype-discovery-section {
+            padding: 6rem 2rem;
+        }
+        
+        .archetype-discovery-section .kairos-card {
+            padding: 4rem 3rem;
+            max-width: 5xl;
+        }
+        
+        /* Generous spacing between elements */
+        .space-y-generous > * + * {
+            margin-top: 3rem;
+        }
+        
+        .space-y-xl > * + * {
+            margin-top: 2rem;
+        }
+
+        /* Energy selection bubbles */
+        .energy-bubble {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .energy-bubble p {
+            color: #4A3C6B !important; /* Dark lavender for better contrast */
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .energy-bubble:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(72, 61, 139, 0.4);
+        }
+
+        .energy-bubble:hover p {
+            color: #6B46C1 !important; /* Slightly lighter lavender on hover */
+        }
+
+        .energy-bubble.selected {
+            background: linear-gradient(135deg, rgba(218, 165, 32, 0.3), rgba(255, 215, 0, 0.2)); /* Golden background */
+            box-shadow: 0 0 40px rgba(218, 165, 32, 0.6);
+            border-color: rgba(218, 165, 32, 0.7);
+        }
+
+        .energy-bubble.selected p {
+            color: #4A3C6B !important; /* Dark lavender text on golden selection */
+            font-weight: 700;
+            text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9);
+        }
+
+        /* Archetype selection styles - Floating panels with glassmorphism */
+        .archetype-option {
+            border: 2px solid rgba(72, 61, 139, 0.15);
+            position: relative;
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            padding: 1.5rem;
+            margin: 0.5rem;
+            box-shadow: 
+                0 8px 32px rgba(72, 61, 139, 0.08),
+                0 0 20px rgba(212, 175, 55, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .archetype-option:hover {
+            transform: translateY(-8px) scale(1.03);
+            border-color: rgba(72, 61, 139, 0.3);
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 
+                0 16px 40px rgba(72, 61, 139, 0.12),
+                0 0 30px rgba(212, 175, 55, 0.1),
+                0 0 50px rgba(182, 149, 192, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        .archetype-option.selected {
+            border-color: rgba(212, 175, 55, 0.6);
+            background: rgba(212, 175, 55, 0.1);
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 
+                0 20px 50px rgba(212, 175, 55, 0.2),
+                0 0 40px rgba(212, 175, 55, 0.3),
+                0 0 60px rgba(182, 149, 192, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+
+        .archetype-option i {
+            text-shadow: 0 2px 8px rgba(72, 61, 139, 0.15);
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            color: #483D8B;
+        }
+
+        .archetype-option p {
+            margin: 0;
+            line-height: 1.5;
+            font-weight: 600;
+            color: #333333;
+            font-size: 1rem;
+            letter-spacing: 0.3px;
+        }
+
+        /* Enneagram Card Experience Styles */
+        .enneagram-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.12),
+                0 0 40px rgba(72, 61, 139, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Base resonance art for all choices with organic tones */
+        .resonance-art {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, 
+                rgba(72, 61, 139, 0.06) 0%, 
+                rgba(212, 175, 55, 0.03) 40%, 
+                rgba(182, 149, 192, 0.02) 70%, 
+                transparent 100%);
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 1;
+            pointer-events: none;
+            border-radius: 20px;
+            opacity: 0.7;
+        }
+
+        /* Type 1 - The Perfectionist: Structured diamond with sage tones */
+        .resonance-art.type-1 {
+            background: radial-gradient(circle at 50% 50%, 
+                rgba(168, 181, 160, 0.15) 0%, 
+                rgba(138, 150, 128, 0.08) 40%, 
+                rgba(72, 61, 139, 0.03) 80%, 
+                transparent 100%);
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            animation: structuredPulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes structuredPulse {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+            50% { transform: scale(1.05) rotate(2deg); opacity: 0.9; }
+        }
+
+        /* Type 4 - The Individualist: Organic flowing with rose quartz tones */
+        .resonance-art.type-4 {
+            background: radial-gradient(ellipse at 30% 70%, 
+                rgba(182, 149, 192, 0.2) 0%, 
+                rgba(200, 178, 219, 0.12) 40%, 
+                rgba(72, 61, 139, 0.06) 70%, 
+                transparent 100%);
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            animation: flowingMood 6s ease-in-out infinite;
+        }
+        
+        @keyframes flowingMood {
+            0%, 100% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; opacity: 0.6; }
+            33% { border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%; opacity: 0.8; }
+            66% { border-radius: 50% 50% 80% 20% / 60% 40% 60% 40%; opacity: 0.7; }
+        }
+
+        /* Type 7 - The Enthusiast: Sparkling burst with golden tones */
+        .resonance-art.type-7 {
+            background: radial-gradient(circle at 50% 50%, 
+                rgba(212, 175, 55, 0.18) 0%, 
+                rgba(218, 165, 32, 0.12) 30%, 
+                rgba(184, 134, 11, 0.06) 60%, 
+                transparent 100%);
+            animation: sparklingBurst 3.5s ease-in-out infinite;
+        }
+        
+        @keyframes sparklingBurst {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            25% { transform: scale(1.1); opacity: 0.9; }
+            50% { transform: scale(0.95); opacity: 0.8; }
+            75% { transform: scale(1.05); opacity: 0.85; }
+        }
+        
+        /* Type 2 - The Helper: Warm embrace with rose quartz */
+        .resonance-art.type-2 {
+            background: radial-gradient(ellipse at 40% 40%, 
+                rgba(182, 149, 192, 0.16) 0%, 
+                rgba(212, 175, 55, 0.08) 35%, 
+                rgba(72, 61, 139, 0.04) 70%, 
+                transparent 100%);
+            border-radius: 50%;
+            animation: warmEmbrace 5s ease-in-out infinite;
+        }
+        
+        @keyframes warmEmbrace {
+            0%, 100% { transform: scale(1); opacity: 0.7; border-radius: 50%; }
+            50% { transform: scale(1.08); opacity: 0.9; border-radius: 60% 40% 50% 50%; }
+        }
+        
+        /* Type 3 - The Achiever: Dynamic arrow with golden accents */
+        .resonance-art.type-3 {
+            background: linear-gradient(45deg, 
+                rgba(212, 175, 55, 0.14) 0%, 
+                rgba(72, 61, 139, 0.08) 50%, 
+                rgba(182, 149, 192, 0.04) 100%);
+            clip-path: polygon(0% 50%, 25% 0%, 100% 50%, 25% 100%);
+            animation: dynamicForward 3s ease-in-out infinite;
+        }
+        
+        @keyframes dynamicForward {
+            0%, 100% { transform: translateX(0) scale(1); opacity: 0.7; }
+            50% { transform: translateX(5px) scale(1.05); opacity: 0.9; }
+        }
+        
+        /* Type 5 - The Investigator: Contemplative lens with deep indigo */
+        .resonance-art.type-5 {
+            background: radial-gradient(circle at 60% 40%, 
+                rgba(72, 61, 139, 0.12) 0%, 
+                rgba(138, 134, 128, 0.06) 40%, 
+                rgba(182, 149, 192, 0.03) 80%, 
+                transparent 100%);
+            border-radius: 50%;
+            animation: contemplativeLens 7s ease-in-out infinite;
+        }
+        
+        @keyframes contemplativeLens {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.6; }
+            25% { transform: scale(0.95) rotate(5deg); opacity: 0.8; }
+            50% { transform: scale(1.02) rotate(0deg); opacity: 0.9; }
+            75% { transform: scale(0.98) rotate(-3deg); opacity: 0.7; }
+        }
+        
+        /* Type 6 - The Loyalist: Protective hexagon with sage and indigo */
+        .resonance-art.type-6 {
+            background: linear-gradient(120deg, 
+                rgba(168, 181, 160, 0.12) 0%, 
+                rgba(72, 61, 139, 0.08) 50%, 
+                rgba(138, 134, 128, 0.04) 100%);
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+            animation: protectiveShield 4.5s ease-in-out infinite;
+        }
+        
+        @keyframes protectiveShield {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+            33% { transform: scale(1.03) rotate(2deg); opacity: 0.8; }
+            66% { transform: scale(0.98) rotate(-1deg); opacity: 0.9; }
+        }
+        
+        /* Type 8 - The Challenger: Bold octagon with powerful indigo */
+        .resonance-art.type-8 {
+            background: radial-gradient(circle at 50% 50%, 
+                rgba(72, 61, 139, 0.18) 0%, 
+                rgba(138, 134, 128, 0.10) 40%, 
+                rgba(212, 175, 55, 0.04) 80%, 
+                transparent 100%);
+            clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+            animation: powerfulPresence 3.8s ease-in-out infinite;
+        }
+        
+        @keyframes powerfulPresence {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.8; }
+            50% { transform: scale(1.06) rotate(1deg); opacity: 1; }
+        }
+        
+        /* Type 9 - The Peacemaker: Gentle wave with all living accents */
+        .resonance-art.type-9 {
+            background: radial-gradient(ellipse at 50% 70%, 
+                rgba(182, 149, 192, 0.10) 0%, 
+                rgba(168, 181, 160, 0.08) 30%, 
+                rgba(212, 175, 55, 0.04) 60%, 
+                rgba(72, 61, 139, 0.02) 90%, 
+                transparent 100%);
+            border-radius: 20% 80% 60% 40% / 70% 50% 50% 30%;
+            animation: gentleWave 8s ease-in-out infinite;
+        }
+        
+        @keyframes gentleWave {
+            0%, 100% { 
+                border-radius: 20% 80% 60% 40% / 70% 50% 50% 30%; 
+                opacity: 0.6; 
+                transform: scale(1);
+            }
+            25% { 
+                border-radius: 60% 40% 80% 20% / 50% 70% 30% 50%; 
+                opacity: 0.8; 
+                transform: scale(1.02);
+            }
+            50% { 
+                border-radius: 80% 20% 40% 60% / 30% 50% 70% 50%; 
+                opacity: 0.9; 
+                transform: scale(0.98);
+            }
+            75% { 
+                border-radius: 40% 60% 20% 80% / 50% 30% 50% 70%; 
+                opacity: 0.7; 
+                transform: scale(1.01);
+            }
+        }
+        
+        /* Enhanced Question Styling with Living Accents */
+        .question-container {
+            position: relative;
+            margin: 3rem 0;
+        }
+        
+        .question-backdrop {
+            position: absolute;
+            top: -1rem;
+            left: -2rem;
+            right: -2rem;
+            bottom: -1rem;
+            background: linear-gradient(135deg, 
+                rgba(72, 61, 139, 0.04) 0%, 
+                rgba(212, 175, 55, 0.02) 30%,
+                rgba(182, 149, 192, 0.03) 60%,
+                rgba(168, 181, 160, 0.02) 100%);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(72, 61, 139, 0.08);
+            animation: questionGlow 8s ease-in-out infinite;
+            z-index: 1;
+        }
+        
+        @keyframes questionGlow {
+            0%, 100% { 
+                box-shadow: 
+                    0 0 20px rgba(72, 61, 139, 0.1),
+                    0 0 40px rgba(212, 175, 55, 0.05);
+                opacity: 0.8;
+            }
+            50% { 
+                box-shadow: 
+                    0 0 30px rgba(72, 61, 139, 0.15),
+                    0 0 50px rgba(212, 175, 55, 0.08),
+                    0 0 70px rgba(182, 149, 192, 0.05);
+                opacity: 1;
+            }
+        }
+        
+        /* Living Sanctuary Animations */
+        @keyframes presenceBreathing {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 
+                    0 0 30px rgba(72, 61, 139, 0.4),
+                    0 0 60px rgba(72, 61, 139, 0.2),
+                    inset 0 0 20px rgba(255, 255, 255, 0.1);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 
+                    0 0 40px rgba(72, 61, 139, 0.6),
+                    0 0 80px rgba(72, 61, 139, 0.3),
+                    inset 0 0 25px rgba(255, 255, 255, 0.15);
+            }
+        }
+        
+        @keyframes innerPulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        
+        @keyframes gentlePulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+        
+        @keyframes gardenGrow {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.05) rotate(2deg); }
+            50% { transform: scale(1.1) rotate(0deg); }
+            75% { transform: scale(1.05) rotate(-2deg); }
+        }
+        
+        @keyframes somaticPulse {
+            0%, 100% { 
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% { 
+                transform: scale(1.1);
+                filter: brightness(1.2);
+            }
+        }
+        
+        /* Presence orb interaction states */
+        .presence-summary.show {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+        
+        .gem-shimmer {
+            animation: gemShimmer 2s ease-out;
+        }
+        
+        @keyframes gemShimmer {
+            0% { filter: brightness(1); }
+            50% { 
+                filter: brightness(1.3) drop-shadow(0 0 20px var(--shimmering-gold));
+                transform: scale(1.1);
+            }
+            100% { filter: brightness(1); }
+        }
+
+        @keyframes gentle-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes crystalline-form {
+            0% { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); }
+            100% { clip-path: polygon(30% 0%, 100% 30%, 70% 100%, 0% 70%); }
+        }
+
+        @keyframes fluid-morph {
+            0% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+            50% { border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%; }
+            100% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+        }
+
+        @keyframes particle-burst {
+            0% { 
+                transform: scale(1); 
+                opacity: 0.3; 
+            }
+            50% { 
+                transform: scale(1.2); 
+                opacity: 0.6; 
+            }
+            100% { 
+                transform: scale(1); 
+                opacity: 0.3; 
+            }
+        }
+
+        .resonance-option {
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.9) 0%, 
+                rgba(248, 250, 252, 0.8) 100%);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(72, 61, 139, 0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 0.5rem;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            z-index: 10;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            text-align: center;
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.08),
+                0 0 20px rgba(72, 61, 139, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            overflow: hidden;
+        }
+
+        .resonance-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(72, 61, 139, 0.1), 
+                transparent);
+            transition: left 0.5s ease;
+        }
+
+        .resonance-option:hover::before {
+            left: 100%;
+        }
+
+        .resonance-option:hover {
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.95) 0%, 
+                rgba(251, 250, 255, 0.9) 100%);
+            border-color: rgba(72, 61, 139, 0.6);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 
+                0 12px 35px rgba(72, 61, 139, 0.15),
+                0 0 25px rgba(212, 175, 55, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        .resonance-option.selected {
+            background: linear-gradient(135deg, 
+                rgba(255, 215, 0, 0.2) 0%, 
+                rgba(255, 185, 15, 0.15) 50%,
+                rgba(218, 165, 32, 0.1) 100%);
+            border: 2px solid rgba(218, 165, 32, 0.8);
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 
+                0 20px 50px rgba(218, 165, 32, 0.25),
+                0 0 40px rgba(255, 215, 0, 0.3),
+                inset 0 2px 0 rgba(255, 255, 255, 0.8),
+                0 0 60px rgba(255, 215, 0, 0.15);
+            animation: golden-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes golden-pulse {
+            0%, 100% { 
+                box-shadow: 
+                    0 20px 50px rgba(218, 165, 32, 0.25),
+                    0 0 40px rgba(255, 215, 0, 0.3),
+                    inset 0 2px 0 rgba(255, 255, 255, 0.8),
+                    0 0 60px rgba(255, 215, 0, 0.15); 
+            }
+            50% { 
+                box-shadow: 
+                    0 20px 50px rgba(218, 165, 32, 0.35),
+                    0 0 50px rgba(255, 215, 0, 0.4),
+                    inset 0 2px 0 rgba(255, 255, 255, 0.9),
+                    0 0 80px rgba(255, 215, 0, 0.25); 
+            }
+        }
+
+        .resonance-option.selected p {
+            color: #8B4513 !important;
+            font-weight: 700;
+            text-shadow: 
+                0 1px 2px rgba(255, 215, 0, 0.3),
+                0 0 6px rgba(218, 165, 32, 0.2);
+        }
+
+        /* Presence Orb Styles */
+        .presence-orb {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, 
+                rgba(72, 61, 139, 0.3) 0%, 
+                rgba(72, 61, 139, 0.6) 30%, 
+                rgba(72, 61, 139, 0.9) 70%, 
+                rgba(25, 25, 112, 1) 100%);
+            position: relative;
+            margin: 0 auto;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 0 40px rgba(72, 61, 139, 0.4),
+                inset 0 0 40px rgba(255, 255, 255, 0.1);
+            animation: presence-breathe 4s ease-in-out infinite;
+        }
+
+        .presence-orb:hover {
+            transform: scale(1.05);
+            box-shadow: 
+                0 0 60px rgba(72, 61, 139, 0.6),
+                inset 0 0 40px rgba(255, 255, 255, 0.2);
+        }
+
+        .presence-orb.gem-shimmer {
+            animation: presence-breathe 4s ease-in-out infinite, gem-shimmer 2s ease-in-out;
+        }
+
+        @keyframes presence-breathe {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 
+                    0 0 40px rgba(72, 61, 139, 0.4),
+                    inset 0 0 40px rgba(255, 255, 255, 0.1);
+            }
+            50% { 
+                transform: scale(1.03);
+                box-shadow: 
+                    0 0 60px rgba(72, 61, 139, 0.6),
+                    inset 0 0 60px rgba(255, 255, 255, 0.15);
+            }
+        }
+
+        @keyframes gem-shimmer {
+            0% { filter: brightness(1); }
+            30% { filter: brightness(1.4) hue-rotate(30deg); }
+            60% { filter: brightness(1.6) hue-rotate(45deg); }
+            100% { filter: brightness(1); }
+        }
+
+        .presence-orb-inner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            background: radial-gradient(circle, 
+                rgba(255, 255, 255, 0.1) 0%, 
+                transparent 70%);
+            animation: inner-pulse 6s ease-in-out infinite;
+        }
+
+        @keyframes inner-pulse {
+            0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .presence-summary {
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.9) 0%, 
+                rgba(248, 250, 252, 0.8) 100%);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(72, 61, 139, 0.2);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .presence-summary.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .journaling-prompt-card {
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.95) 0%, 
+                rgba(248, 250, 252, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(72, 61, 139, 0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .journaling-prompt-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(72, 61, 139, 0.4);
+            box-shadow: 0 20px 40px rgba(72, 61, 139, 0.15);
+        }
+
+        .journaling-prompt-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(72, 61, 139, 0.1), 
+                transparent);
+            transition: left 0.5s ease;
+        }
+
+        .journaling-prompt-card:hover::before {
+            left: 100%;
+        }
+
+        .scenario-question {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(72, 61, 139, 0.3);
+        }
+
+        .core-light-avatar {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 2rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                0 0 50px rgba(72, 61, 139, 0.4),
+                0 0 100px rgba(212, 175, 55, 0.2);
+            animation: avatar-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes avatar-glow {
+            0%, 100% { 
+                box-shadow: 
+                    0 0 50px rgba(72, 61, 139, 0.4),
+                    0 0 100px rgba(212, 175, 55, 0.2);
+            }
+            50% { 
+                box-shadow: 
+                    0 0 70px rgba(72, 61, 139, 0.6),
+                    0 0 140px rgba(212, 175, 55, 0.3);
+            }
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { 
+                opacity: 0; 
+                transform: translateY(8px) scale(0.99); 
+                filter: blur(1px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+                filter: blur(0px);
+            }
         }
         .fade-in { 
-            animation: fadeIn 0.5s ease-out forwards; 
+            animation: fadeIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
             opacity: 0; /* Start hidden */
         }
         
+        /* Floating Panel Cards with Glassmorphism */
         .kairos-card {
-            background-color: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(72, 61, 139, 0.1);
+            border-radius: 16px;
+            transition: all 0.4s ease;
+            box-shadow: 
+                0 12px 40px rgba(72, 61, 139, 0.08),
+                0 4px 20px rgba(212, 175, 55, 0.05),
+                0 0 30px rgba(182, 149, 192, 0.03),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+        
+        .kairos-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 20px 50px rgba(72, 61, 139, 0.12),
+                0 8px 25px rgba(212, 175, 55, 0.08),
+                0 0 40px rgba(182, 149, 192, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
 
-        .kairos-btn { transition: all 0.3s ease; }
-        .kairos-btn-primary { background-color: #4A55A2; color: white; }
-        .kairos-btn-primary:hover { background-color: #3A4482; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        /* Elegant Invitation Buttons */
+        .kairos-btn { 
+            font-family: 'Playfair Display', serif;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+            border: none;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kairos-btn-primary { 
+            background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
+            color: white;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            box-shadow: 
+                0 8px 25px rgba(72, 61, 139, 0.25),
+                0 4px 15px rgba(212, 175, 55, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        .kairos-btn-primary:hover { 
+            background: linear-gradient(135deg, #3A3374 0%, #4A3F7D 50%, #5A4FCF 100%);
+            transform: translateY(-4px) scale(1.02); 
+            box-shadow: 
+                0 15px 35px rgba(72, 61, 139, 0.3),
+                0 8px 20px rgba(212, 175, 55, 0.15),
+                0 0 30px rgba(182, 149, 192, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Shimmer effect for buttons */
+        .kairos-btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .kairos-btn-primary:hover::before {
+            left: 100%;
+        }
         
         .action-btn:hover {
              transform: translateY(-3px) scale(1.02);
@@ -43,12 +1099,12 @@
         .somatic-option:hover, .thematic-option:hover { transform: scale(1.03); box-shadow: 0 10px 20px rgba(0,0,0,0.08); }
         .thematic-option.selected {
             transform: scale(1.03);
-            box-shadow: 0 10px 20px rgba(74, 85, 162, 0.2);
-            border-color: #4A55A2;
+            box-shadow: 0 10px 20px rgba(72, 61, 139, 0.2);
+            border-color: #483D8B;
             background-color: #eef2ff;
         }
 
-        .emotion-chip.selected, .sensation-chip.selected { background-color: #4A55A2; color: white; transform: scale(1.05); }
+        .emotion-chip.selected, .sensation-chip.selected { background-color: #483D8B; color: white; transform: scale(1.05); }
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -64,7 +1120,7 @@
 
         .loader {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #4A55A2;
+            border-top: 4px solid #483D8B;
             border-radius: 50%;
             width: 30px;
             height: 30px;
@@ -114,12 +1170,35 @@
             perspective: { title: "Perspective Lenses", icon: "fa-glasses" }
         };
 
+        // --- DEBUG FUNCTIONS ---
+        // Helper function to determine if user should see onboarding
+        function shouldShowOnboarding(user) {
+            // Check if user has completed onboarding
+            const userOnboardingKey = `hasCompletedOnboarding_${user.uid}`;
+            const hasCompletedOnboarding = localStorage.getItem(userOnboardingKey) === 'true';
+            
+            // If they've completed onboarding, don't show it
+            if (hasCompletedOnboarding) {
+                return false;
+            }
+            
+            // For new users or users with no entries, show onboarding
+            return entries.length === 0;
+        }
+
         // --- STATE MANAGEMENT ---
         let state = {
             currentPage: 'login',
             currentUser: null,
             isLoading: false,
             authError: null,
+            isFirstVisit: true, // Will be determined per-user
+            onboardingStep: 0,
+            onboardingData: {},
+            enneagramStep: 0,
+            enneagramAnswers: [],
+            discoveredArchetype: null,
+            eventListenersAdded: false,
             currentEntry: null,
             somaticState: null,
             sessionCapacity: null,
@@ -131,17 +1210,59 @@
             modal: { visible: false }
         };
 
+        // Create "The Descent" transition effect
+        function createDescentTransition() {
+            // Hide current content immediately
+            const appContainer = document.getElementById('app');
+            if (appContainer) {
+                appContainer.classList.add('transitioning');
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'descent-overlay';
+            document.body.appendChild(overlay);
+            
+            // Remove overlay and show new content after animation
+            setTimeout(() => {
+                if (overlay.parentNode) {
+                    overlay.parentNode.removeChild(overlay);
+                }
+                // Restore content visibility
+                if (appContainer) {
+                    appContainer.classList.remove('transitioning');
+                }
+            }, 3500);
+        }
+
         // Firebase Authentication State Listener
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                state.currentUser = {
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName
-                };
+                // Store the actual Firebase user object to access getIdToken()
+                state.currentUser = user;
+                
                 if (state.currentPage === 'login' || state.currentPage === 'register') {
+                    // Create descent transition
+                    createDescentTransition();
+                    
+                    // Load user entries first to check if onboarding is needed
+                    await loadUserEntries();
+                    
+                    // Check if user should see onboarding
+                    setTimeout(() => {
+                        if (shouldShowOnboarding(user)) {
+                            state.currentPage = 'onboarding';
+                            state.onboardingStep = 0;
+                            state.isFirstVisit = true;
+                        } else {
+                            state.currentPage = 'dashboard';
+                            state.isFirstVisit = false;
+                        }
+                        render();
+                    }, 1500); // Delay to let descent animation play
+                } else if (state.currentPage === 'onboarding' && state.onboardingStep >= 4) {
                     state.currentPage = 'dashboard';
-                    loadUserEntries();
+                    await loadUserEntries();
+                    render();
                 }
             } else {
                 state.currentUser = null;
@@ -149,8 +1270,8 @@
                     state.currentPage = 'login';
                 }
                 entries = []; // Clear entries when logged out
+                render();
             }
-            render();
         });
 
         // Secure API call to Firebase backend
@@ -162,7 +1283,11 @@
             try {
                 const idToken = await state.currentUser.getIdToken();
                 
-                const response = await fetch('/.netlify/functions/firebase-backend', {
+                // Use different URL for local development
+                const baseUrl = window.location.hostname === 'localhost' ? 
+                    'http://localhost:8888' : '';
+                
+                const response = await fetch(`${baseUrl}/.netlify/functions/firebase-backend`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -172,12 +1297,22 @@
                 });
 
                 if (!response.ok) {
+                    // Handle 404 errors for local development
+                    if (response.status === 404) {
+                        console.warn('Netlify functions not available in local development. Using mock data.');
+                        return { mockData: true, entries: [] };
+                    }
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Backend operation failed');
                 }
 
                 return await response.json();
             } catch (error) {
+                // Handle network errors for local development
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    console.warn('Backend not available in local development. Using mock data.');
+                    return { mockData: true, entries: [] };
+                }
                 console.error('Firebase backend error:', error);
                 throw error;
             }
@@ -189,6 +1324,14 @@
             
             try {
                 const result = await callFirebaseBackend('getUserEntries', { limit: 50 });
+                
+                // Handle mock data for local development
+                if (result.mockData) {
+                    entries = [];
+                    console.log('Using mock data - no entries loaded');
+                    return;
+                }
+                
                 entries = result.map(entry => ({
                     ...entry,
                     // Convert Firestore timestamp to ISO string for compatibility
@@ -197,7 +1340,51 @@
                 }));
             } catch (error) {
                 console.error('Error loading entries:', error);
-                showToast('Failed to load your journal entries', 'error');
+                // Don't show error toast for local development
+                if (!error.message.includes('mock data')) {
+                    showToast('Failed to load your journal entries', 'error');
+                }
+            }
+        }
+
+        // Create luminous particles effect
+        function createLuminousParticles() {
+            const particlesContainer = document.getElementById('particles-container');
+            if (!particlesContainer) return;
+            
+            // Clear existing particles
+            particlesContainer.innerHTML = '';
+            
+            // Create 15 particles with random properties
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random size (2-6px)
+                const size = Math.random() * 4 + 2;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                
+                // Random starting position
+                particle.style.left = Math.random() * 100 + '%';
+                
+                // Random animation delay
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                
+                // Random animation duration (10-20s)
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                
+                // Slight random color variation
+                const colors = [
+                    'rgba(255, 255, 255, 0.8)',
+                    'rgba(72, 61, 139, 0.6)',
+                    'rgba(212, 175, 55, 0.5)',
+                    'rgba(182, 149, 192, 0.7)'
+                ];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.background = `radial-gradient(circle, ${color} 0%, transparent 70%)`;
+                
+                particlesContainer.appendChild(particle);
             }
         }
 
@@ -222,6 +1409,7 @@
                 switch (state.currentPage) {
                     case 'login': appContainer.innerHTML = LoginPage(); break;
                     case 'register': appContainer.innerHTML = RegisterPage(); break;
+                    case 'onboarding': appContainer.innerHTML = OnboardingPage(); break;
                     case 'dashboard': appContainer.innerHTML = DashboardPage(); break;
                     case 'somaticCheck1': appContainer.innerHTML = SomaticCheckPage1(); break;
                     case 'somaticCheck2': appContainer.innerHTML = SomaticCheckPage2(); break;
@@ -233,25 +1421,45 @@
                 }
             }
             modalContainer.innerHTML = state.modal.visible ? ModalComponent(state.modal) : '';
-            attachEventListeners();
+            
+            // Create particles for login/register/onboarding pages
+            if (state.currentPage === 'login' || state.currentPage === 'register' || state.currentPage === 'onboarding') {
+                setTimeout(() => createLuminousParticles(), 100);
+            }
+            
+            // Attach event listeners with small delay to ensure DOM is ready
+            setTimeout(() => attachEventListeners(), 10);
             renderToast();
         }
         
         // --- UI COMPONENTS ---
         function LoginPage() { 
              return `
-                <div class="min-h-screen flex items-center justify-center p-4 bg-cover bg-center" style="background-image: url('https://placehold.co/1200x800/A9B4C2/FFFFFF?text=Kairos');">
-                    <div class="kairos-card p-8 rounded-xl shadow-2xl max-w-md w-full fade-in">
-                        <h1 class="text-4xl font-bold text-center text-gray-800 mb-2">Kairos</h1>
-                        <p class="text-center text-gray-600 mb-8">Your Journey Within</p>
+                <div class="cosmic-background"></div>
+                <div class="particles" id="particles-container"></div>
+                <div class="min-h-screen flex items-center justify-center p-4 relative">
+                    <div class="kairos-card p-8 rounded-xl max-w-md w-full fade-in">
+                        <h1 class="heading-serif text-5xl font-bold text-center mb-2" style="
+                            background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
+                            -webkit-background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                            background-clip: text;
+                            text-shadow: 0 0 30px rgba(72, 61, 139, 0.5);
+                            filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
+                        ">Kairos</h1>
+                        <p class="text-center text-gray-600 mb-8" style="
+                            color: #6366F1;
+                            text-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+                            font-weight: 500;
+                        ">Your Journey Within</p>
                         <form id="login-form">
                             <div class="mb-4">
-                                <label for="email" class="block text-gray-600 mb-2">Email</label>
-                                <input type="email" id="email" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
+                                <label for="email" class="block text-gray-700 mb-2 font-medium">Email</label>
+                                <input type="email" id="email" class="w-full px-4 py-3 bg-white/70 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent backdrop-blur-sm transition-all duration-300" style="box-shadow: 0 0 10px rgba(138, 43, 226, 0.1);" required>
                             </div>
                             <div class="mb-6">
-                                <label for="password" class="block text-gray-600 mb-2">Password</label>
-                                <input type="password" id="password" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
+                                <label for="password" class="block text-gray-700 mb-2 font-medium">Password</label>
+                                <input type="password" id="password" class="w-full px-4 py-3 bg-white/70 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent backdrop-blur-sm transition-all duration-300" style="box-shadow: 0 0 10px rgba(138, 43, 226, 0.1);" required>
                             </div>
                             <button type="submit" class="w-full kairos-btn kairos-btn-primary py-3 rounded-lg font-semibold ${state.isLoading ? 'opacity-75 cursor-not-allowed' : ''}" ${state.isLoading ? 'disabled' : ''}>
                                 ${state.isLoading ? '<div class="loader inline-block mr-2" style="width:20px;height:20px;"></div>Signing In...' : 'Enter Sanctuary'}
@@ -264,24 +1472,228 @@
             `;
         }
 
+        function OnboardingPage() {
+            const steps = [
+                'weaver-welcome',
+                'energy-check',
+                'archetype-discovery',
+                'wearables-connect'
+            ];
+            
+            const currentStep = steps[state.onboardingStep];
+            
+            switch(currentStep) {
+                case 'weaver-welcome':
+                    return `
+                        <div class="cosmic-background"></div>
+                        <div class="particles" id="particles-container"></div>
+                        <div class="onboarding-container">
+                            <div class="kairos-card p-12 rounded-xl max-w-2xl w-full text-center">
+                                <div class="weaver-text" style="animation-delay: 0.5s;">
+                                    <div class="mb-8">
+                                        <div class="w-24 h-24 mx-auto mb-6" style="
+                                            background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
+                                            border-radius: 50%;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                            box-shadow: 0 0 30px rgba(72, 61, 139, 0.5);
+                                        ">
+                                            <i class="fas fa-sparkles  text-2xl"></i>
+                                        </div>
+                                        <h1 class="heading-serif text-4xl font-bold mb-4" style="
+                                            background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
+                                            -webkit-background-clip: text;
+                                            -webkit-text-fill-color: transparent;
+                                        ">Welcome, Soul Traveler</h1>
+                                    </div>
+                                    
+                                    <div class="body-sans space-y-6 text-lg text-gray-700 leading-relaxed">
+                                        <p class="typing-text" id="weaver-text-1" style="animation-delay: 1s;">I am <span class="weaver-voice">The Weaver</span>, your guide in this luminous tapestry of self-discovery.</p>
+                                        <p class="weaver-text" style="animation-delay: 3s;">Together, we will chart the territories of your inner cosmos,</p>
+                                        <p class="weaver-text" style="animation-delay: 4s;">weaving threads of awareness into a map of your authentic self.</p>
+                                        <p class="weaver-text" style="animation-delay: 5s;">This journey begins not with questions, but with presence.</p>
+                                    </div>
+                                    
+                                    <button id="begin-weaving" class="kairos-btn kairos-btn-primary px-8 py-4 rounded-lg text-xl font-semibold mt-12" style="animation-delay: 6s; opacity: 0; animation: weaverReveal 1s ease-out 6s forwards;">
+                                        Begin the Weaving
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                case 'energy-check':
+                    return `
+                        <div class="cosmic-background"></div>
+                        <div class="particles" id="particles-container"></div>
+                        <div class="onboarding-container">
+                            <div class="kairos-card p-10 rounded-xl max-w-4xl w-full text-center">
+                                <div class="weaver-text">
+                                    <h2 class="text-3xl font-bold mb-6" style="
+                                        background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
+                                        -webkit-background-clip: text;
+                                        -webkit-text-fill-color: transparent;
+                                    ">What energy do you bring with you today?</h2>
+                                    
+                                    <p class="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
+                                        Before we begin weaving your tapestry, let us attune to the luminous frequency you carry in this moment.
+                                    </p>
+                                    
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+                                        <div class="energy-bubble" data-energy="curious">
+                                            <div class="text-center">
+                                                <i class="fas fa-eye text-3xl mb-2" style="color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);"></i>
+                                                <p class="text-sm font-medium">Curious</p>
+                                            </div>
+                                        </div>
+                                        <div class="energy-bubble" data-energy="peaceful">
+                                            <div class="text-center">
+                                                <i class="fas fa-spa text-3xl mb-2" style="color: #90EE90; text-shadow: 0 0 10px rgba(144, 238, 144, 0.5);"></i>
+                                                <p class="text-sm font-medium">Peaceful</p>
+                                            </div>
+                                        </div>
+                                        <div class="energy-bubble" data-energy="excited">
+                                            <div class="text-center">
+                                                <i class="fas fa-star text-3xl mb-2" style="color: #FF6347; text-shadow: 0 0 10px rgba(255, 99, 71, 0.5);"></i>
+                                                <p class="text-sm font-medium ">Excited</p>
+                                            </div>
+                                        </div>
+                                        <div class="energy-bubble" data-energy="reflective">
+                                            <div class="text-center">
+                                                <i class="fas fa-moon text-3xl mb-2" style="color: #87CEEB; text-shadow: 0 0 10px rgba(135, 206, 235, 0.5);"></i>
+                                                <p class="text-sm font-medium ">Reflective</p>
+                                            </div>
+                                        </div>
+                                        <div class="energy-bubble" data-energy="uncertain">
+                                            <div class="text-center">
+                                                <i class="fas fa-question-circle text-3xl mb-2" style="color: #D3D3D3; text-shadow: 0 0 10px rgba(211, 211, 211, 0.5);"></i>
+                                                <p class="text-sm font-medium ">Uncertain</p>
+                                            </div>
+                                        </div>
+                                        <div class="energy-bubble" data-energy="hopeful">
+                                            <div class="text-center">
+                                                <i class="fas fa-seedling text-3xl mb-2" style="color: #FFB6C1; text-shadow: 0 0 10px rgba(255, 182, 193, 0.5);"></i>
+                                                <p class="text-sm font-medium ">Hopeful</p>
+                                            </div>
+                                        </div>
+                                        <div class="energy-bubble" data-energy="tired">
+                                            <div class="text-center">
+                                                <i class="fas fa-battery-quarter text-3xl mb-2" style="color: #DDA0DD; text-shadow: 0 0 10px rgba(221, 160, 221, 0.5);"></i>
+                                                <p class="text-sm font-medium ">Tired</p>
+                                            </div>
+                                        </div>
+                                        <div class="energy-bubble" data-energy="open">
+                                            <div class="text-center">
+                                                <i class="fas fa-heart-circle text-3xl mb-2" style="color: #FA8072; text-shadow: 0 0 10px rgba(250, 128, 114, 0.5);"></i>
+                                                <p class="text-sm font-medium ">Open</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button id="continue-energy" class="kairos-btn kairos-btn-primary px-8 py-3 rounded-lg font-semibold opacity-50" disabled>
+                                        Beautiful. Let us continue.
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                case 'wearables-connect':
+                    return `
+                        <div class="cosmic-background"></div>
+                        <div class="particles" id="particles-container"></div>
+                        <div class="onboarding-container">
+                            <div class="kairos-card p-10 rounded-xl max-w-3xl w-full text-center">
+                                <div class="weaver-text">
+                                    <h2 class="text-3xl font-bold mb-6" style="
+                                        background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
+                                        -webkit-background-clip: text;
+                                        -webkit-text-fill-color: transparent;
+                                    ">Connecting to Your Body's Wisdom</h2>
+                                    
+                                    <p class="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+                                        Your body holds profound intelligence. Let us weave in its voice through your wearable companions.
+                                    </p>
+                                    
+                                    <div class="grid md:grid-cols-3 gap-6 mb-8">
+                                        <div class="p-6 rounded-lg bg-gradient-to-br from-purple-100 to-indigo-100 hover:from-purple-200 hover:to-indigo-200 transition-all duration-300 cursor-pointer" id="connect-apple">
+                                            <i class="fab fa-apple text-4xl text-gray-800 mb-4"></i>
+                                            <h3 class="font-semibold text-gray-800 mb-2">Apple Health</h3>
+                                            <p class="text-sm text-gray-600">Heart rate, sleep, activity</p>
+                                        </div>
+                                        <div class="p-6 rounded-lg bg-gradient-to-br from-green-100 to-emerald-100 hover:from-green-200 hover:to-emerald-200 transition-all duration-300 cursor-pointer" id="connect-fitbit">
+                                            <i class="fas fa-heartbeat text-4xl text-green-600 mb-4"></i>
+                                            <h3 class="font-semibold text-gray-800 mb-2">Fitbit</h3>
+                                            <p class="text-sm text-gray-600">Comprehensive wellness data</p>
+                                        </div>
+                                        <div class="p-6 rounded-lg bg-gradient-to-br from-blue-100 to-cyan-100 hover:from-blue-200 hover:to-cyan-200 transition-all duration-300 cursor-pointer" id="connect-garmin">
+                                            <i class="fas fa-running text-4xl text-blue-600 mb-4"></i>
+                                            <h3 class="font-semibold text-gray-800 mb-2">Garmin</h3>
+                                            <p class="text-sm text-gray-600">Advanced biometrics</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <p class="text-sm text-gray-500 mb-8">
+                                        Don't worry - you can always connect these later in your sanctuary.
+                                    </p>
+                                    
+                                    <div class="flex justify-center gap-4">
+                                        <button id="skip-wearables" class="kairos-btn bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300">
+                                            Continue Without Devices
+                                        </button>
+                                        <button id="continue-wearables" class="kairos-btn kairos-btn-primary px-8 py-3 rounded-lg font-semibold">
+                                            Perfect. Continue Weaving.
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                case 'archetype-discovery':
+                    if (!state.enneagramStep) state.enneagramStep = 0;
+                    if (state.enneagramStep === 'complete') {
+                        return renderCoreLight();
+                    }
+                    return renderEnneagramCard();
+                    
+                default:
+                    return '<div>Onboarding step not found</div>';
+            }
+        }
+
         function RegisterPage() {
             return `
-                <div class="min-h-screen flex items-center justify-center p-4 bg-cover bg-center" style="background-image: url('https://placehold.co/1200x800/A9B4C2/FFFFFF?text=Kairos');">
-                    <div class="kairos-card p-8 rounded-xl shadow-2xl max-w-md w-full fade-in">
-                        <h1 class="text-4xl font-bold text-center text-gray-800 mb-2">Begin Your Journey</h1>
-                        <p class="text-center text-gray-600 mb-8">Create your Kairos account.</p>
+                <div class="cosmic-background"></div>
+                <div class="particles" id="particles-container"></div>
+                <div class="min-h-screen flex items-center justify-center p-4 relative">
+                    <div class="kairos-card p-8 rounded-xl max-w-md w-full fade-in">
+                        <h1 class="text-4xl font-bold text-center mb-2" style="
+                            background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
+                            -webkit-background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                            background-clip: text;
+                            text-shadow: 0 0 30px rgba(72, 61, 139, 0.5);
+                            filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
+                        ">Begin Your Journey</h1>
+                        <p class="text-center mb-8" style="
+                            color: #6366F1;
+                            text-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+                            font-weight: 500;
+                        ">Create your Kairos account.</p>
                         <form id="register-form">
                             <div class="mb-4">
-                                <label for="email" class="block text-gray-600 mb-2">Email</label>
-                                <input type="email" id="email" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
+                                <label for="email" class="block text-gray-700 mb-2 font-medium">Email</label>
+                                <input type="email" id="email" class="w-full px-4 py-3 bg-white/70 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent backdrop-blur-sm transition-all duration-300" style="box-shadow: 0 0 10px rgba(138, 43, 226, 0.1);" required>
                             </div>
                             <div class="mb-4">
-                                <label for="password" class="block text-gray-600 mb-2">Password</label>
-                                <input type="password" id="password" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
+                                <label for="password" class="block text-gray-700 mb-2 font-medium">Password</label>
+                                <input type="password" id="password" class="w-full px-4 py-3 bg-white/70 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent backdrop-blur-sm transition-all duration-300" style="box-shadow: 0 0 10px rgba(138, 43, 226, 0.1);" required>
                             </div>
                             <div class="mb-6">
-                                <label for="confirm-password" class="block text-gray-600 mb-2">Confirm Password</label>
-                                <input type="password" id="confirm-password" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
+                                <label for="confirm-password" class="block text-gray-700 mb-2 font-medium">Confirm Password</label>
+                                <input type="password" id="confirm-password" class="w-full px-4 py-3 bg-white/70 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent backdrop-blur-sm transition-all duration-300" style="box-shadow: 0 0 10px rgba(138, 43, 226, 0.1);" required>
                             </div>
                             <button type="submit" class="w-full kairos-btn kairos-btn-primary py-3 rounded-lg font-semibold ${state.isLoading ? 'opacity-75 cursor-not-allowed' : ''}" ${state.isLoading ? 'disabled' : ''}>
                                 ${state.isLoading ? '<div class="loader inline-block mr-2" style="width:20px;height:20px;"></div>Creating Account...' : 'Create Account'}
@@ -296,6 +1708,11 @@
 
         function DashboardPage() {
             const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            
+            // Calculate presence level (mock for now, will use last entry data later)
+            const presenceLevel = entries.length > 0 ? 8 : 7;
+            const lastEntryTone = entries.length > 0 ? 'calm contemplation' : 'peaceful readiness';
+            
             const recentEntriesHtml = entries.slice(0, 3).map((entry, index) => `
                 <div class="bg-white/80 p-5 rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105 view-entry-btn fade-in" style="animation-delay: ${0.5 + index * 0.1}s" data-id="${entry.id}">
                     <h3 class="font-semibold text-lg text-gray-800 truncate">${entry.title || 'Untitled Entry'}</h3>
@@ -305,39 +1722,73 @@
             `).join('');
 
             return `
-                <div class="container mx-auto p-4 md:p-8 max-w-5xl">
-                    <header class="text-center mb-12">
+                <div class="cosmic-background"></div>
+                <div class="particles" id="particles-container"></div>
+                <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+                    <header class="text-center mb-8">
                         <div class="flex justify-between items-start mb-6">
                             <div></div>
                             <div class="text-center">
-                                <h1 class="text-5xl font-bold text-gray-800 fade-in" style="animation-delay: 0.1s;">Your Sanctuary</h1>
-                                <p class="text-xl text-gray-600 mt-3 fade-in" style="animation-delay: 0.2s;">Welcome back, ${state.currentUser.email}.</p>
+                                <h1 class="heading-serif text-5xl font-bold fade-in" style="
+                                    animation-delay: 0.1s;
+                                    background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
+                                    -webkit-background-clip: text;
+                                    -webkit-text-fill-color: transparent;
+                                    background-clip: text;
+                                    text-shadow: 0 0 30px rgba(72, 61, 139, 0.5);
+                                    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
+                                ">The Sanctuary</h1>
+                                <p class="text-lg text-gray-600 mt-3 fade-in" style="animation-delay: 0.2s;">A space for presence and reflection</p>
                             </div>
-                            <button id="logout-btn" class="kairos-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300">
-                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            <button id="logout-btn" class="kairos-btn bg-white/80 border text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-white transition-all">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Leave
                             </button>
                         </div>
                     </header>
-                    <div class="flex flex-col sm:flex-row justify-center gap-6 mb-12 fade-in" style="animation-delay: 0.3s;">
-                        <button id="start-new-entry-btn" class="kairos-btn action-btn kairos-btn-primary px-10 py-4 rounded-lg text-xl font-bold shadow-lg">
-                            <i class="fas fa-pen-fancy mr-2"></i> New Entry
-                        </button>
-                        <button id="go-to-synthesis-btn" class="kairos-btn action-btn bg-white/80 border px-10 py-4 rounded-lg text-xl font-bold shadow-lg hover:bg-white">
-                            <i class="fas fa-project-diagram mr-2"></i> Synthesis
-                        </button>
-                        <button id="go-to-advisor-btn" class="kairos-btn action-btn bg-white/80 border px-10 py-4 rounded-lg text-xl font-bold shadow-lg hover:bg-white">
-                            <i class="fas fa-user-graduate mr-2"></i> Advisor
-                        </button>
-                    </div>
-                    <div class="kairos-card p-6 rounded-xl shadow-lg text-center mb-12 fade-in" style="animation-delay: 0.4s;">
-                         <p class="text-lg italic text-gray-700">"${randomQuote}"</p>
-                    </div>
-                    <div>
-                        <h2 class="text-3xl font-bold mb-6 text-gray-700 fade-in" style="animation-delay: 0.5s;">Recent Reflections</h2>
-                        <div class="grid md:grid-cols-3 gap-6">
-                            ${entries.length > 0 ? recentEntriesHtml : '<p class="text-gray-500 col-span-3 text-center py-10 fade-in" style="animation-delay: 0.6s;">Your journal is a blank canvas. Begin a new entry to start your reflection.</p>'}
+
+                    <!-- The Presence Orb -->
+                    <div class="text-center mb-12 fade-in" style="animation-delay: 0.3s;">
+                        <div class="presence-orb" id="presence-orb">
+                            <div class="presence-orb-inner"></div>
+                        </div>
+                        <div class="presence-summary" id="presence-summary">
+                            <p class="text-sm text-gray-600 mb-2">Your Current Presence</p>
+                            <p class="text-gray-800">Your last entry reflected a sense of <strong>${lastEntryTone}</strong>.</p>
+                            <p class="text-gray-800">You rated your presence as <strong>${presenceLevel}/10</strong>.</p>
                         </div>
                     </div>
+
+                    <!-- The Primary Invitation: Journaling Prompt -->
+                    <div class="mb-12 fade-in" style="animation-delay: 0.5s;">
+                        <div class="journaling-prompt-card" id="primary-prompt">
+                            <div class="text-center">
+                                <h2 class="heading-serif text-2xl font-semibold text-gray-800 mb-4">Today's Invitation</h2>
+                                <p class="text-lg text-gray-700 mb-6 italic">"${randomQuote}"</p>
+                                <button id="start-new-entry-btn" class="kairos-btn kairos-btn-primary px-8 py-3 rounded-lg text-lg font-semibold">
+                                    <i class="fas fa-pen-fancy mr-2"></i>Begin Reflection
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Secondary Actions - Minimized -->
+                    <div class="flex justify-center gap-4 mb-8 fade-in" style="animation-delay: 0.6s;">
+                        <button id="go-to-synthesis-btn" class="kairos-btn bg-white/60 border text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-white/80 transition-all text-sm">
+                            <i class="fas fa-project-diagram mr-2"></i>Synthesis
+                        </button>
+                        <button id="go-to-advisor-btn" class="kairos-btn bg-white/60 border text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-white/80 transition-all text-sm">
+                            <i class="fas fa-user-graduate mr-2"></i>Advisor
+                        </button>
+                        <button id="retake-onboarding-btn" class="kairos-btn bg-white/60 border text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-white/80 transition-all text-sm" title="Retake the archetype discovery">
+                            <i class="fas fa-redo-alt mr-2"></i>Onboarding
+                        </button>
+                        ${entries.length > 0 ? `<button id="view-entries-btn" class="kairos-btn bg-white/60 border text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-white/80 transition-all text-sm">
+                            <i class="fas fa-book-open mr-2"></i>Recent Entries
+                        </button>` : ''}
+                    </div>
+
+                    </div>
+                    
                 </div>
             `;
         }
@@ -450,7 +1901,7 @@
                                 </div>
                             </div>
                             <!-- Evolutionary Challenge -->
-                            <div class="kairos-card p-6 rounded-xl shadow-lg bg-gray-800 text-white">
+                            <div class="kairos-card p-6 rounded-xl shadow-lg bg-gray-800 ">
                                 <h2 class="text-2xl font-bold mb-4 text-yellow-400">The Evolutionary Challenge</h2>
                                 <p class="text-lg">${content.challenge}</p>
                             </div>
@@ -525,13 +1976,337 @@
                 case 'inquiry': return `<div class="space-y-6"><div><label class="block font-semibold text-gray-700 mb-2">What is the primary story or judgment you are telling yourself about this?</label><textarea name="inquiry.story" class="w-full border-gray-300 rounded-md" rows="3" placeholder="e.g., 'They were intentionally trying to undermine me.'">${entry.inquiry?.story || ''}</textarea></div><div><label class="block font-semibold text-gray-700 mb-2">Beneath that story, what is the core emotion you feel?</label><textarea name="inquiry.emotion" class="w-full border-gray-300 rounded-md" rows="2" placeholder="e.g., 'I feel rejected.'">${entry.inquiry?.emotion || ''}</textarea></div><div><label class="block font-semibold text-gray-700 mb-2">And this entire pattern seems connected to a deeper belief. Does a thought like 'I am not safe' or 'I am not worthy' resonate here?</label><textarea name="inquiry.belief" class="w-full border-gray-300 rounded-md" rows="2" placeholder="e.g., 'I am not worthy of respect.'">${entry.inquiry?.belief || ''}</textarea></div></div>`;
                 case 'cognitive': return `<textarea name="cognitive.thoughts" class="w-full border-gray-300 rounded-md" rows="4" placeholder="What thoughts went through your mind?">${entry.cognitive?.thoughts || ''}</textarea><textarea name="cognitive.beliefs" class="w-full border-gray-300 rounded-md mt-4" rows="3" placeholder="Did any deep beliefs surface? (e.g., 'I'm not good enough')">${entry.cognitive?.beliefs || ''}</textarea>`;
                 case 'emotional': const emotions = ["Happy", "Sad", "Angry", "Fearful", "Surprised", "Disgusted", "Calm"]; return `<div id="emotion-chips" class="flex flex-wrap gap-2 mb-4">${emotions.map(e => `<button type="button" class="emotion-chip bg-gray-200 px-3 py-1 rounded-full text-sm" data-emotion="${e}">${e}</button>`).join('')}</div><div id="emotion-sliders" class="space-y-3"></div><textarea name="emotional.nuance" class="w-full border-gray-300 rounded-md mt-4" rows="2" placeholder="Describe any complex or mixed emotions...">${entry.emotional?.nuance || ''}</textarea>`;
-                case 'physical': const bodyFront = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const bodyBack = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; return `<div class="flex justify-center gap-4 mb-4"><button id="body-view-front" class="body-view-btn px-4 py-2 rounded-lg ${state.bodyMapView === 'front' ? 'bg-indigo-500 text-white' : 'bg-gray-200'}">Front View</button><button id="body-view-back" class="body-view-btn px-4 py-2 rounded-lg ${state.bodyMapView === 'back' ? 'bg-indigo-500 text-white' : 'bg-gray-200'}">Back View</button></div><p class="text-gray-600 mb-4 text-center">Click on the body map to log where you felt sensations.</p><div class="relative max-w-[200px] mx-auto"><svg id="body-map-svg" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">${state.bodyMapView === 'front' ? bodyFront : bodyBack}</svg><div id="sensation-dots"></div></div><div id="logged-sensations" class="mt-4 space-y-2"></div>`;
+                case 'physical': const bodyFront = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const bodyBack = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; return `<div class="flex justify-center gap-4 mb-4"><button id="body-view-front" class="body-view-btn px-4 py-2 rounded-lg ${state.bodyMapView === 'front' ? 'bg-indigo-500 ' : 'bg-gray-200'}">Front View</button><button id="body-view-back" class="body-view-btn px-4 py-2 rounded-lg ${state.bodyMapView === 'back' ? 'bg-indigo-500 ' : 'bg-gray-200'}">Back View</button></div><p class="text-gray-600 mb-4 text-center">Click on the body map to log where you felt sensations.</p><div class="relative max-w-[200px] mx-auto"><svg id="body-map-svg" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">${state.bodyMapView === 'front' ? bodyFront : bodyBack}</svg><div id="sensation-dots"></div></div><div id="logged-sensations" class="mt-4 space-y-2"></div>`;
                 case 'behavioral': return `<textarea name="behavioral.actions" class="w-full border-gray-300 rounded-md" rows="3" placeholder="What did you do or say in response?">${entry.behavioral?.actions || ''}</textarea><textarea name="behavioral.urges" class="w-full border-gray-300 rounded-md mt-4" rows="2" placeholder="Did you feel strong urges that you didn't act on?">${entry.behavioral?.urges || ''}</textarea>`;
                 case 'reflection': return `<textarea name="reflection.patterns" class="w-full border-gray-300 rounded-md" rows="3" placeholder="Does this feel familiar? Any patterns you've noticed?">${entry.reflection?.patterns || ''}</textarea><textarea name="reflection.pastConnections" class="w-full border-gray-300 rounded-md mt-4" rows="3" placeholder="Does this remind you of past situations or feelings?">${entry.reflection?.pastConnections || ''}</textarea>`;
                 case 'integration': return `<textarea name="integration.insights" class="w-full border-gray-300 rounded-md" rows="3" placeholder="What insights came from reflecting on this experience?">${entry.integration?.insights || ''}</textarea><textarea name="integration.intentions" class="w-full border-gray-300 rounded-md mt-4" rows="3" placeholder="What is your intention moving forward?">${entry.integration?.intentions || ''}</textarea>`;
                 case 'perspective': return `<div class="space-y-4"><p class="text-gray-600 mb-4">Sometimes, looking at an experience from a different angle can reveal new wisdom. Choose a lens to explore.</p><div class="perspective-lens border p-4 rounded-lg cursor-pointer hover:bg-gray-50" data-lens="child"><h3 class="font-semibold text-lg">The Inner Child Lens</h3><p class="text-sm text-gray-500">Connect with your younger self.</p></div><div class="perspective-lens border p-4 rounded-lg cursor-pointer hover:bg-gray-50" data-lens="future"><h3 class="font-semibold text-lg">The Future Self Lens</h3><p class="text-sm text-gray-500">Access the wisdom of who you are becoming.</p></div><div id="perspective-prompt-area" class="mt-4"></div></div>`;
                 default: return `<p>Section not found.</p>`;
             }
+        }
+
+        // Enneagram Discovery Experience Data
+        const enneagramScenarios = [
+            {
+                title: "On Facing a Difficult Group Project",
+                subtitle: "You are part of a team working on a high-stakes project. Tensions are rising, and progress has stalled due to disagreement.",
+                question: "Your deepest, most instinctual focus is on:",
+                options: [
+                    { text: "Maintaining harmony within the group. You instinctively try to mediate, smooth over conflicts, and ensure everyone feels heard and included, believing the project's success depends on the team's cohesion.", types: [9], art: "type-9" },
+                    { text: "Taking decisive charge. You feel a pull to step up, direct the action, and push the team toward the goal, protecting the project's mission and ensuring it doesn't fail under pressure.", types: [8], art: "type-8" },
+                    { text: "Understanding the entire situation before acting. You feel a need to step back, analyze the problem from all angles, anticipate future obstacles, and formulate a secure, well-thought-out plan to ensure safety and certainty.", types: [6], art: "type-6" }
+                ]
+            },
+            {
+                title: "On Receiving Unexpected, Heartfelt Praise",
+                subtitle: "A respected colleague publicly gives you sole credit for a major success, praising your unique talent and contribution.",
+                question: "Your initial, private feeling is most likely:",
+                options: [
+                    { text: "A sense of deep connection and gratitude. You feel valued for your contribution to their success and see it as a reflection of a strong, supportive relationship, which you cherish above all.", types: [2], art: "type-2" },
+                    { text: "A feeling of validation and accomplishment. You feel seen for your competence and success, affirming your value and motivating you to strive for the next achievement.", types: [3], art: "type-3" },
+                    { text: "A quiet sense of melancholy or a feeling that they don't see the real you. You might feel that the praise is for a persona, and you long for them to understand the deeper, more complex emotional world behind your work.", types: [4], art: "type-4" }
+                ]
+            },
+            {
+                title: "On How You Prepare for the Future",
+                subtitle: "You are planning for the next five years of your life.",
+                question: "Your natural approach is to:",
+                options: [
+                    { text: "Create a detailed map of knowledge and skills you need to acquire. You prioritize becoming more competent and self-sufficient, ensuring you have the resources to be capable and unintrusive in the world.", types: [5], art: "type-5" },
+                    { text: "Envision exciting experiences and possibilities. You focus on keeping your options open, planning for joy, and ensuring you won't be trapped in boredom or miss out on what life has to offer.", types: [7], art: "type-7" },
+                    { text: "Define a clear set of principles and standards to live by. You feel a strong inner critic that pushes you to improve yourself and the world around you, striving for a life that is good, orderly, and purposeful.", types: [1], art: "type-1" }
+                ]
+            },
+            {
+                title: "On Responding to a Friend in Crisis",
+                subtitle: "A close friend calls you, distraught over a sudden personal crisis.",
+                question: "Your most immediate, gut-level impulse is to:",
+                options: [
+                    { text: "Immediately offer practical help and support. You feel a strong pull to be indispensable, to give them what they need, and to be seen as a caring and loving presence in their life.", types: [2], art: "type-2" },
+                    { text: "Protect them and fight on their behalf. You feel a surge of protective energy and want to take on their problem directly, confronting whoever or whatever is causing them harm.", types: [8], art: "type-8" },
+                    { text: "Create a process for improvement. You feel a responsibility to guide them toward the right and moral way to handle the situation, helping them see the principles at stake and how to act with integrity.", types: [1], art: "type-1" }
+                ]
+            },
+            {
+                title: "On What You Fundamentally Seek from Life",
+                subtitle: "If you could be granted one of the following states of being, which would you choose?",
+                question: "The state that calls to you most deeply is:",
+                options: [
+                    { text: "A state of profound understanding. To have the clarity and insight that comes from deep knowledge and objective observation, feeling fully capable and self-reliant within your own mind.", types: [5], art: "type-5" },
+                    { text: "A state of unwavering inner peace. To move through life without internal conflict, feeling connected to the world and accepting of others, free from pressure and turmoil.", types: [9], art: "type-9" },
+                    { text: "A state of authentic self-expression. To have your unique identity and emotional depth be seen and understood by others, creating a life that is rich with meaning and significance.", types: [4], art: "type-4" }
+                ]
+            },
+            {
+                title: "On Your Relationship with Rules and Structure",
+                subtitle: "You are in a situation governed by rules you find inefficient or illogical.",
+                question: "Your internal response is to:",
+                options: [
+                    { text: "Seek security and guidance. You analyze the risks of the rules, question the authority behind them, and look for a trustworthy system or person to believe in, feeling anxious until you find that certainty.", types: [6], art: "type-6" },
+                    { text: "Find joyful loopholes and new possibilities. You see the rules as limiting and instinctively look for ways around them to create a more enjoyable and stimulating experience for yourself and others.", types: [7], art: "type-7" },
+                    { text: "Feel a drive to be efficient and effective. You see the flaws in the system as an obstacle to success and look for the best way to adapt or present an image of compliance while achieving your goals.", types: [3], art: "type-3" }
+                ]
+            }
+        ];
+
+        const archetypeProfiles = {
+            1: { 
+                name: "The Perfectionist",
+                coreLight: "Integrity & Excellence",
+                description: "Your Core Light shines through your commitment to doing what is right and bringing order to chaos. You are driven by a deep sense of purpose and an intuitive understanding of how things could be improved.",
+                avatar: "🔷",
+                gifts: ["Natural wisdom about quality and correctness", "Strong moral compass", "Ability to see potential for improvement", "Dedication to making things better"]
+            },
+            2: { 
+                name: "The Helper", 
+                coreLight: "Love & Service",
+                description: "Your Core Light radiates through your genuine care for others and your natural ability to sense what people need. You bring warmth and support that helps others flourish.",
+                avatar: "❤️",
+                gifts: ["Deep empathy and emotional intelligence", "Natural ability to support others", "Generous heart and giving spirit", "Creates connections and harmony"]
+            },
+            3: { 
+                name: "The Achiever",
+                coreLight: "Brilliance & Success", 
+                description: "Your Core Light shines through your drive to excel and your ability to inspire others to reach their potential. You naturally understand what it takes to succeed and can adapt to meet any challenge.",
+                avatar: "⭐",
+                gifts: ["Natural leadership and motivation", "Ability to achieve goals efficiently", "Inspiring others to excellence", "Adaptability and resourcefulness"]
+            },
+            4: { 
+                name: "The Individualist",
+                coreLight: "Authenticity & Depth",
+                description: "Your Core Light illuminates the profound and the beautiful. You see what others miss and bring unique perspectives that enrich the world with meaning and creativity.",
+                avatar: "🌙",
+                gifts: ["Deep emotional insight and sensitivity", "Unique creative vision", "Ability to find beauty in darkness", "Authentic self-expression"]
+            },
+            5: { 
+                name: "The Investigator",
+                coreLight: "Wisdom & Understanding",
+                description: "Your Core Light emanates through your quest for knowledge and your ability to understand complex systems. You bring clarity and insight that illuminates truth.",
+                avatar: "🔍",
+                gifts: ["Deep analytical thinking", "Independent and self-reliant", "Objective perspective", "Mastery of chosen domains"]
+            },
+            6: { 
+                name: "The Loyalist",
+                coreLight: "Courage & Devotion",
+                description: "Your Core Light shines through your commitment to what you believe in and your ability to anticipate challenges. You bring security and reliability to uncertain situations.",
+                avatar: "🛡️",
+                gifts: ["Strong loyalty and commitment", "Excellent troubleshooting abilities", "Responsible and dependable", "Courage to face difficulties"]
+            },
+            7: { 
+                name: "The Enthusiast",
+                coreLight: "Joy & Possibility",
+                description: "Your Core Light sparkles with enthusiasm and vision for what's possible. You bring optimism and creative energy that opens new horizons for yourself and others.",
+                avatar: "✨",
+                gifts: ["Natural optimism and enthusiasm", "Ability to synthesize ideas", "Brings joy and energy to situations", "Visionary thinking"]
+            },
+            8: { 
+                name: "The Challenger",
+                coreLight: "Power & Protection",
+                description: "Your Core Light blazes with strength and the courage to stand up for what matters. You naturally protect others and have the power to create significant change.",
+                avatar: "🔥",
+                gifts: ["Natural leadership and authority", "Courage to take on challenges", "Protects the vulnerable", "Ability to make tough decisions"]
+            },
+            9: { 
+                name: "The Peacemaker",
+                coreLight: "Harmony & Wholeness",
+                description: "Your Core Light glows with the ability to see all perspectives and bring people together. You create peace and stability in a world that often feels fragmented.",
+                avatar: "🕊️",
+                gifts: ["Natural ability to see multiple perspectives", "Creates harmony and peace", "Calming presence for others", "Accepts others unconditionally"]
+            }
+        };
+
+        function renderEnneagramCard() {
+            if (state.enneagramStep === 0) {
+                return `
+                    <div class="cosmic-background"></div>
+                    <div class="particles" id="particles-container"></div>
+                    <div class="onboarding-container">
+                        <div class="kairos-card p-12 rounded-xl max-w-4xl w-full text-center">
+                            <div class="weaver-text" style="animation-delay: 0.5s;">
+                                <h2 class="heading-serif text-3xl font-bold mb-6" style="
+                                    background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
+                                    -webkit-background-clip: text;
+                                    -webkit-text-fill-color: transparent;
+                                ">Discovering Your Archetype's Core Light</h2>
+                                
+                                <div class="body-sans space-y-6 text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto">
+                                    <p class="weaver-text" style="animation-delay: 1s;">Within you is a core light, a fundamental way your energy engages with the world.</p>
+                                    <p class="weaver-text" style="animation-delay: 2s;">Let us uncover its unique pattern together. <span class="weaver-voice">The Weaver</span> will guide you through resonant choices that reveal your authentic essence.</p>
+                                    <p class="weaver-text" style="animation-delay: 3s;">There are no right or wrong answers, only your truth. Choose the reflection that feels most like home.</p>
+                                </div>
+                                
+                                <button id="begin-archetype-discovery" class="kairos-btn kairos-btn-primary px-8 py-4 rounded-lg text-xl font-semibold mt-12" style="animation-delay: 4s; opacity: 0; animation: weaverReveal 1s ease-out 4s forwards;">
+                                    Begin the Discovery
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const scenario = enneagramScenarios[state.enneagramStep - 1];
+            if (!scenario) {
+                state.enneagramStep = 'complete';
+                return renderCoreLight();
+            }
+
+            return `
+                <div class="cosmic-background"></div>
+                <div class="particles" id="particles-container"></div>
+                <div class="onboarding-container">
+                    <div class="max-w-5xl w-full">
+                        <div class="text-center mb-8">
+                            <div class="flex justify-center items-center gap-2 mb-4">
+                                ${Array.from({length: enneagramScenarios.length}, (_, i) => 
+                                    `<div class="w-3 h-3 rounded-full ${i < state.enneagramStep ? 'bg-purple-500' : 'bg-purple-200'}"></div>`
+                                ).join('')}
+                            </div>
+                            <p class="text-sm text-gray-500">Question ${state.enneagramStep} of ${enneagramScenarios.length}</p>
+                        </div>
+
+                        <div class="scenario-question mb-8">
+                            <div class="resonance-art" id="resonance-art"></div>
+                            <div class="text-center">
+                                <h3 class="heading-serif text-2xl font-semibold text-indigo-900 mb-4">
+                                    ${scenario.title}
+                                </h3>
+                                <p class="body-sans text-xl leading-relaxed heading-entrance" style="
+                                    color: var(--muted-stone-gray);
+                                    font-style: italic;
+                                    font-weight: 500;
+                                    max-width: 600px;
+                                    margin: 0 auto 2rem auto;
+                                    animation-delay: 0.4s;
+                                ">
+                                    ${scenario.subtitle}
+                                </p>
+                                <div class="question-container mt-8 mb-12">
+                                    <div class="question-backdrop"></div>
+                                    <h4 class="heading-serif text-2xl font-bold text-center heading-entrance" style="
+                                        background: linear-gradient(135deg, var(--deep-indigo) 0%, var(--ethereal-lavender) 100%);
+                                        -webkit-background-clip: text;
+                                        -webkit-text-fill-color: transparent;
+                                        background-clip: text;
+                                        text-shadow: 0 2px 6px rgba(72, 61, 139, 0.15);
+                                        filter: drop-shadow(0 1px 3px rgba(182, 149, 192, 0.1));
+                                        line-height: 1.4;
+                                        max-width: 700px;
+                                        margin: 0 auto;
+                                        padding: 2rem;
+                                        position: relative;
+                                        z-index: 2;
+                                        animation-delay: 0.6s;
+                                    ">
+                                        ${scenario.question}
+                                    </h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid gap-4 max-w-4xl mx-auto">
+                            ${scenario.options.map((option, index) => `
+                                <div class="resonance-option" data-types="${option.types.join(',')}" data-art="${option.art}" data-option="${index}">
+                                    <p class="body-sans text-indigo-900 font-medium">${option.text}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCoreLight() {
+            const typeScores = {};
+            state.enneagramAnswers.forEach(answer => {
+                answer.forEach(type => {
+                    typeScores[type] = (typeScores[type] || 0) + 1;
+                });
+            });
+
+            const dominantType = Object.keys(typeScores).reduce((a, b) => 
+                typeScores[a] > typeScores[b] ? a : b
+            );
+
+            state.discoveredArchetype = parseInt(dominantType);
+            const profile = archetypeProfiles[state.discoveredArchetype];
+            
+            // Define unique color schemes for each archetype
+            const archetypeColors = {
+                1: "background: linear-gradient(135deg, #E53E3E 0%, #C53030 50%, #9B2C2C 100%);", // Red - Perfectionist
+                2: "background: linear-gradient(135deg, #D69E2E 0%, #B7791F 50%, #975A16 100%);", // Orange - Helper  
+                3: "background: linear-gradient(135deg, #38A169 0%, #2F855A 50%, #276749 100%);", // Green - Achiever
+                4: "background: linear-gradient(135deg, #805AD5 0%, #6B46C1 50%, #553C9A 100%);", // Purple - Individualist
+                5: "background: linear-gradient(135deg, #3182CE 0%, #2C5282 50%, #2A4365 100%);", // Blue - Investigator
+                6: "background: linear-gradient(135deg, #DD6B20 0%, #C05621 50%, #9C4221 100%);", // Burnt Orange - Loyalist
+                7: "background: linear-gradient(135deg, #ECC94B 0%, #D69E2E 50%, #B7791F 100%);", // Yellow - Enthusiast
+                8: "background: linear-gradient(135deg, #E53E3E 0%, #C53030 50%, #9B2C2C 100%);", // Dark Red - Challenger
+                9: "background: linear-gradient(135deg, #48BB78 0%, #38A169 50%, #2F855A 100%);"  // Sage Green - Peacemaker
+            };
+
+            return `
+                <div class="cosmic-background"></div>
+                <div class="particles" id="particles-container"></div>
+                <div class="onboarding-container">
+                    <div class="kairos-card p-12 rounded-xl max-w-4xl w-full text-center">
+                        <div class="fade-in">
+                            <div class="core-light-avatar">
+                                <span style="font-size: 4rem;">${profile.avatar}</span>
+                            </div>
+                            
+                            <div class="mb-6 text-center">
+                                <p class="weaver-voice text-xl text-gray-700 leading-relaxed mb-4">
+                                    "Thank you for sharing your resonance. The pattern is clear. It is not a box, but a starting point—a lens through which to view your journey. Your Core Light is ready to be seen."
+                                </p>
+                            </div>
+                            
+                            <h2 class="heading-serif text-4xl font-bold mb-4" style="
+                                background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+                                -webkit-background-clip: text;
+                                -webkit-text-fill-color: transparent;
+                                text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+                                filter: drop-shadow(0 2px 4px rgba(255, 140, 0, 0.3));
+                            ">Your Core Light resonates with</h2>
+                            
+                            <h3 class="heading-serif text-5xl font-bold mb-6" style="
+                                ${archetypeColors[state.discoveredArchetype]}
+                                -webkit-background-clip: text;
+                                -webkit-text-fill-color: transparent;
+                                text-shadow: 
+                                    0 2px 4px rgba(0, 0, 0, 0.3),
+                                    0 0 8px rgba(0, 0, 0, 0.2);
+                                filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+                            ">${profile.name}</h3>
+                            
+                            <div class="body-sans max-w-3xl mx-auto space-y-6">
+                                <div class="text-xl text-gray-700 leading-relaxed">
+                                    <strong class="weaver-voice text-2xl">Core Light:</strong> ${profile.coreLight}
+                                </div>
+                                
+                                <p class="text-lg text-gray-600 leading-relaxed">
+                                    ${profile.description}
+                                </p>
+                                
+                                <div class="bg-gradient-to-r from-purple-100 to-pink-100 p-6 rounded-xl">
+                                    <h4 class="font-bold text-gray-800 mb-4 text-xl">Your Sacred Gifts</h4>
+                                    <ul class="text-left space-y-2 max-w-2xl mx-auto">
+                                        ${profile.gifts.map(gift => `
+                                            <li class="flex items-start gap-3">
+                                                <span class="text-purple-500 mt-1">✨</span>
+                                                <span class="text-gray-700">${gift}</span>
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <button id="continue-to-wearables" class="kairos-btn kairos-btn-primary px-8 py-4 rounded-lg text-xl font-semibold mt-12">
+                                Continue the Weaving
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
         
         function ViewEntryPage() { 
@@ -544,7 +2319,7 @@
                 if (!contentHtml.trim()) return '';
                 return `<div class="mb-8"><h3 class="text-2xl font-bold border-b-2 border-indigo-200 pb-2 mb-4 text-indigo-800">${title}</h3><div class="prose max-w-none">${contentHtml}</div></div>`;
             };
-            return `<div class="container mx-auto p-4 md:p-8 max-w-4xl fade-in"><div class="bg-white p-6 md:p-10 rounded-xl shadow-lg"><div class="flex justify-between items-start mb-6 border-b pb-6"><div><h1 class="text-4xl font-bold text-gray-800">${entry.title || 'Untitled Entry'}</h1><p class="text-gray-500 mt-2">${new Date(entry.date).toLocaleString()} | ${entry.type || 'General'}</p></div><div class="flex gap-2"><button id="delete-entry-btn" data-id="${entry.id}" class="kairos-btn bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"><i class="fas fa-trash"></i></button></div></div>${renderViewSection('The Situation', entry.situation, 'situation')}${Object.keys(entrySections).map(key => renderViewSection(entrySections[key].title, entry[key], key)).join('')}<div class="mt-8 pt-6 border-t"><strong class="font-semibold text-gray-600 block mb-2">Tags:</strong><div class="flex flex-wrap gap-2">${entry.tags?.map(tag => `<span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">${tag}</span>`).join('') || '<span class="text-gray-500">No tags</span>'}</div></div><button id="back-to-dashboard" class="kairos-btn bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold mt-12"><i class="fas fa-arrow-left mr-2"></i>Back to Dashboard</button></div></div>`;
+            return `<div class="container mx-auto p-4 md:p-8 max-w-4xl fade-in"><div class="bg-white p-6 md:p-10 rounded-xl shadow-lg"><div class="flex justify-between items-start mb-6 border-b pb-6"><div><h1 class="text-4xl font-bold text-gray-800">${entry.title || 'Untitled Entry'}</h1><p class="text-gray-500 mt-2">${new Date(entry.date).toLocaleString()} | ${entry.type || 'General'}</p></div><div class="flex gap-2"><button id="delete-entry-btn" data-id="${entry.id}" class="kairos-btn bg-red-500  px-4 py-2 rounded-lg hover:bg-red-600"><i class="fas fa-trash"></i></button></div></div>${renderViewSection('The Situation', entry.situation, 'situation')}${Object.keys(entrySections).map(key => renderViewSection(entrySections[key].title, entry[key], key)).join('')}<div class="mt-8 pt-6 border-t"><strong class="font-semibold text-gray-600 block mb-2">Tags:</strong><div class="flex flex-wrap gap-2">${entry.tags?.map(tag => `<span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">${tag}</span>`).join('') || '<span class="text-gray-500">No tags</span>'}</div></div><button id="back-to-dashboard" class="kairos-btn bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold mt-12"><i class="fas fa-arrow-left mr-2"></i>Back to Dashboard</button></div></div>`;
         }
         function ModalComponent({ title, content, onConfirm, confirmText = 'Confirm', cancelText = 'Cancel', bodyHtml = '' }) { 
              return `<div class="modal-overlay fade-in"><div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"><h2 class="text-xl font-bold mb-4">${title}</h2><div class="text-gray-600 mb-6">${content || ''}${bodyHtml}</div><div class="flex justify-end gap-4"><button id="modal-cancel" class="kairos-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">${cancelText}</button>${onConfirm ? `<button id="modal-confirm" class="kairos-btn kairos-btn-primary px-4 py-2 rounded-lg">${confirmText}</button>` : ''}</div></div></div>`;
@@ -576,7 +2351,204 @@
             document.getElementById('start-new-entry-btn')?.addEventListener('click', () => { state.entryBuilder = { date: new Date().toISOString() }; state.currentPage = 'somaticCheck1'; render(); });
             document.getElementById('back-to-dashboard')?.addEventListener('click', () => { state.currentPage = 'dashboard'; render(); });
             document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
+            
+            // Onboarding access for existing users
+            document.getElementById('retake-onboarding-btn')?.addEventListener('click', () => {
+                // Reset onboarding state to allow retaking
+                state.onboardingStep = 0;
+                state.enneagramStep = 0;
+                state.enneagramAnswers = [];
+                state.discoveredArchetype = null;
+                state.currentPage = 'onboarding';
+                render();
+            });
+            
+            // Primary journal input - start entry when user types
+            document.getElementById('primary-journal-input')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && e.target.value.trim()) {
+                    // Store the initial input and start guided entry
+                    state.entryBuilder = { 
+                        date: new Date().toISOString(),
+                        initialPrompt: e.target.value.trim()
+                    };
+                    state.currentPage = 'somaticCheck1';
+                    render();
+                }
+            });
+            
+            // Somatic heatmap glimpse
+            document.getElementById('somatic-heatmap-btn')?.addEventListener('click', () => {
+                // Future: Show artistic somatic heatmap modal
+                console.log('Somatic heatmap view - future implementation');
+                showToast('Somatic visualization coming soon...', 'info');
+            });
+            
+            // Presence Orb interaction
+            document.getElementById('presence-orb')?.addEventListener('click', () => {
+                const summary = document.getElementById('presence-summary');
+                const orb = document.getElementById('presence-orb');
+                if (summary) {
+                    summary.classList.toggle('show');
+                    if (summary.classList.contains('show')) {
+                        orb.classList.add('gem-shimmer');
+                        setTimeout(() => orb.classList.remove('gem-shimmer'), 2000);
+                    }
+                }
+            });
+            
+            // View entries toggle
+            document.getElementById('view-entries-btn')?.addEventListener('click', () => {
+                const entriesSection = document.getElementById('recent-entries-section');
+                if (entriesSection) {
+                    entriesSection.style.display = entriesSection.style.display === 'none' ? 'block' : 'none';
+                }
+            });
             document.getElementById('continue-to-setup')?.addEventListener('click', () => { state.currentPage = 'entrySetup'; render(); });
+            
+            // Onboarding event listeners
+            document.getElementById('begin-weaving')?.addEventListener('click', () => { 
+                state.onboardingStep = 1; 
+                render(); 
+            });
+            
+            // Energy selection bubbles
+            document.querySelectorAll('.energy-bubble').forEach(bubble => {
+                bubble.addEventListener('click', (e) => {
+                    // Remove selected class from all bubbles
+                    document.querySelectorAll('.energy-bubble').forEach(b => b.classList.remove('selected'));
+                    // Add selected class to clicked bubble
+                    e.currentTarget.classList.add('selected');
+                    // Store energy data
+                    state.onboardingData.energy = e.currentTarget.dataset.energy;
+                    // Enable continue button
+                    const continueBtn = document.getElementById('continue-energy');
+                    continueBtn.disabled = false;
+                    continueBtn.classList.remove('opacity-50');
+                });
+            });
+            
+            document.getElementById('continue-energy')?.addEventListener('click', () => { 
+                state.onboardingStep = 2; 
+                render(); 
+            });
+            
+            // Wearables connection - complete onboarding
+            document.getElementById('skip-wearables')?.addEventListener('click', () => { 
+                state.onboardingStep = 4; // This triggers completion
+                state.isFirstVisit = false;
+                // Save completion status for this specific user
+                const userOnboardingKey = `hasCompletedOnboarding_${state.currentUser.uid}`;
+                localStorage.setItem(userOnboardingKey, 'true');
+                // Navigate directly to dashboard
+                state.currentPage = 'dashboard';
+                loadUserEntries();
+                render(); 
+            });
+            document.getElementById('continue-wearables')?.addEventListener('click', () => { 
+                state.onboardingStep = 4; // This triggers completion
+                state.isFirstVisit = false;
+                // Save completion status for this specific user
+                const userOnboardingKey = `hasCompletedOnboarding_${state.currentUser.uid}`;
+                localStorage.setItem(userOnboardingKey, 'true');
+                // Navigate directly to dashboard
+                state.currentPage = 'dashboard';
+                loadUserEntries();
+                render(); 
+            });
+            
+            // Wearable device clicks (for future implementation)
+            document.getElementById('connect-apple')?.addEventListener('click', () => {
+                // Future: Implement Apple Health connection
+                console.log('Apple Health connection requested');
+            });
+            document.getElementById('connect-fitbit')?.addEventListener('click', () => {
+                // Future: Implement Fitbit connection
+                console.log('Fitbit connection requested');
+            });
+            document.getElementById('connect-garmin')?.addEventListener('click', () => {
+                // Future: Implement Garmin connection
+                console.log('Garmin connection requested');
+            });
+            
+            // Enneagram Discovery Experience
+            document.getElementById('begin-archetype-discovery')?.addEventListener('click', () => {
+                state.enneagramStep = 1;
+                render();
+            });
+
+            // Enneagram interaction handlers - using event delegation (only add once)
+            if (!state.eventListenersAdded) {
+                state.eventListenersAdded = true;
+                
+                document.addEventListener('click', (e) => {
+                // Handle resonance option clicks
+                if (e.target.closest('.resonance-option')) {
+                    const option = e.target.closest('.resonance-option');
+                    
+                    // Remove selected class from all options
+                    document.querySelectorAll('.resonance-option').forEach(o => o.classList.remove('selected'));
+                    // Add selected class to clicked option
+                    option.classList.add('selected');
+                    
+                    // Store answer
+                    const types = option.dataset.types.split(',').map(t => parseInt(t));
+                    if (!state.enneagramAnswers[state.enneagramStep - 1]) {
+                        state.enneagramAnswers[state.enneagramStep - 1] = [];
+                    }
+                    state.enneagramAnswers[state.enneagramStep - 1] = types;
+                    
+                    // Auto-advance to next question after brief delay
+                    setTimeout(() => {
+                        state.enneagramStep++;
+                        render();
+                    }, 800); // 0.8 second delay to show selection
+                }
+            });
+
+            // Resonance option hover effects - using event delegation
+            document.addEventListener('mouseenter', (e) => {
+                if (e.target && typeof e.target.closest === 'function') {
+                    const option = e.target.closest('.resonance-option');
+                    if (option) {
+                        const artType = option.dataset.art;
+                        const resonanceArt = document.getElementById('resonance-art');
+                        if (resonanceArt) {
+                            resonanceArt.className = `resonance-art ${artType}`;
+                        }
+                    }
+                }
+            }, true);
+
+            document.addEventListener('mouseleave', (e) => {
+                if (e.target && typeof e.target.closest === 'function') {
+                    const option = e.target.closest('.resonance-option');
+                    if (option) {
+                        const resonanceArt = document.getElementById('resonance-art');
+                        if (resonanceArt) {
+                            resonanceArt.className = 'resonance-art';
+                        }
+                    }
+                }
+            }, true);
+            
+            } // End of eventListenersAdded check
+
+            // Continue from archetype discovery to wearables
+            document.getElementById('continue-to-wearables')?.addEventListener('click', () => {
+                state.onboardingStep = 3; // Move to wearables step
+                state.enneagramStep = 0; // Reset for next user
+                render();
+            });
+            
+            document.getElementById('complete-onboarding')?.addEventListener('click', () => { 
+                state.isFirstVisit = false;
+                // Save completion status for this specific user
+                const userOnboardingKey = `hasCompletedOnboarding_${state.currentUser.uid}`;
+                localStorage.setItem(userOnboardingKey, 'true');
+                state.currentPage = 'dashboard'; 
+                loadUserEntries();
+                render(); 
+            });
             document.querySelectorAll('.somatic-option[data-state]').forEach(el => el.addEventListener('click', (e) => { state.somaticState = e.currentTarget.dataset.state; state.currentPage = 'somaticCheck2'; render(); }));
             document.querySelectorAll('.somatic-option[data-capacity]').forEach(el => el.addEventListener('click', (e) => { state.sessionCapacity = e.currentTarget.dataset.capacity; state.currentPage = state.sessionCapacity === 'grounding' ? 'grounding' : 'entrySetup'; render(); }));
             const breathText = document.getElementById('breath-text');
@@ -621,7 +2593,7 @@
                 if (toastElement) {
                     if (state.toast.visible) {
                         const bgColor = state.toast.type === 'success' ? 'bg-green-500' : 'bg-red-500';
-                        toastElement.className = `fixed bottom-5 right-5 ${bgColor} text-white py-3 px-5 rounded-lg shadow-2xl transition-all duration-300 transform opacity-100 translate-y-0`;
+                        toastElement.className = `fixed bottom-5 right-5 ${bgColor}  py-3 px-5 rounded-lg shadow-2xl transition-all duration-300 transform opacity-100 translate-y-0`;
                         toastElement.innerText = state.toast.message;
                     } else {
                         toastElement.className = toastElement.className.replace('opacity-100 translate-y-0', 'opacity-0 translate-y-5');
