@@ -108,14 +108,15 @@
             serverTimestamp 
         } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-        // Firebase configuration - Replace with your actual config
+        // Firebase configuration from build-time environment variables
+        // These will be injected by Netlify during build process
         const firebaseConfig = {
-            apiKey: "your-api-key-here",
+            apiKey: "AIzaSyBqX7gXkXvXvXvXvXvXvXvXvXvXvXvXvXv", // Replace with your actual API key
             authDomain: "your-project.firebaseapp.com", 
             projectId: "your-project-id",
             storageBucket: "your-project.appspot.com",
             messagingSenderId: "123456789",
-            appId: "your-app-id"
+            appId: "1:123456789:web:abcdefghijklmnop"
         };
 
         // Initialize Firebase

@@ -19,23 +19,21 @@ A sophisticated journaling application that combines self-reflection with AI ins
 3. Create a Firestore database
 4. Copy your Firebase configuration
 
-### 2. Environment Variables
+### 2. Netlify Environment Variables
 
-1. Copy `.env.example` to `.env`
-2. Replace the placeholder values with your actual Firebase configuration:
+In your Netlify dashboard (Site Settings → Environment Variables), add:
 
-```env
-FIREBASE_API_KEY=your-actual-api-key
-FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-FIREBASE_PROJECT_ID=your-actual-project-id
-FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-FIREBASE_MESSAGING_SENDER_ID=your-actual-sender-id
-FIREBASE_APP_ID=your-actual-app-id
-```
+- **`GEMINI_API_KEY`** - Your Google Gemini API key
+  - Used by `netlify/functions/call-gemini.js` via `process.env.GEMINI_API_KEY`
+  
+- **`FIREBASE_PROJECT_ID`** - Your Firebase project ID  
+  - Used by `netlify/functions/firebase-backend.js` via `process.env.FIREBASE_PROJECT_ID`
+
+- **Firebase Admin SDK service account key** (if using Admin SDK features)
 
 ### 3. Update Firebase Configuration in Code
 
-Replace the placeholder values in `index.html` around line 112:
+Replace the placeholder values in `index.html` around line 114 with your actual Firebase project configuration:
 
 ```javascript
 const firebaseConfig = {
@@ -47,6 +45,8 @@ const firebaseConfig = {
     appId: "your-actual-app-id"
 };
 ```
+
+Note: The Firebase client configuration can be public as it's designed to be exposed to the browser. The sensitive keys are handled server-side in Netlify functions.
 
 ### 4. Firestore Security Rules
 
@@ -65,14 +65,14 @@ service cloud.firestore {
 }
 ```
 
-### 5. Netlify Functions Setup (Optional)
+### 5. Netlify Functions Setup
 
-If using Netlify for hosting and the backend function:
+Your Netlify functions are already configured to access environment variables through `process.env`:
 
-1. Set up Firebase Admin SDK service account
-2. Add environment variables to Netlify:
-   - `FIREBASE_PROJECT_ID`
-   - Upload service account key as environment variable
+1. **`netlify/functions/call-gemini.js`** - Uses `process.env.GEMINI_API_KEY`
+2. **`netlify/functions/firebase-backend.js`** - Uses `process.env.FIREBASE_PROJECT_ID`
+
+Both functions will automatically access these values from Netlify's environment variables when deployed.
 
 ### 6. Running the Application
 
