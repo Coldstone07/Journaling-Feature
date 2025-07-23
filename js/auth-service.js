@@ -1,11 +1,15 @@
-// Firebase Authentication Service
+// Frontend Authentication Service
+// NOTE: This service is NOT USED in the current implementation
+// Authentication is handled directly in index.html for simplicity
+// This file is kept for reference/alternative implementation
+
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
   updateProfile 
-} from 'firebase/auth';
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { auth } from './firebase-config.js';
 
 class FirebaseAuthService {

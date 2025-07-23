@@ -81,48 +81,19 @@
     <div id="app" class="min-h-screen"></div>
     <div id="modal-container"></div>
 
-    <!-- Firebase SDK -->
+    <!-- Main Application Script -->
     <script type="module">
-        // Import Firebase services
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        // Import organized services (only auth needed - db operations via backend)
+        import { auth } from './js/firebase-config.js';
+        // Note: firebaseAuth and firebaseJournal services not needed with backend approach
+        
+        // Import only Firebase Auth functions (Firestore operations will be server-side)
         import { 
-            getAuth, 
             createUserWithEmailAndPassword, 
             signInWithEmailAndPassword, 
             signOut, 
             onAuthStateChanged 
         } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            getDocs, 
-            doc, 
-            getDoc, 
-            updateDoc, 
-            deleteDoc, 
-            query, 
-            where, 
-            orderBy, 
-            limit,
-            serverTimestamp 
-        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
-        // Firebase configuration from build-time environment variables
-        // These will be injected by Netlify during build process
-        const firebaseConfig = {
-            apiKey: "AIzaSyBqX7gXkXvXvXvXvXvXvXvXvXvXvXvXvXv", // Replace with your actual API key
-            authDomain: "your-project.firebaseapp.com", 
-            projectId: "your-project-id",
-            storageBucket: "your-project.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdefghijklmnop"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
 
         // --- MOCK DATA & CONFIG ---
         let entries = [
@@ -182,30 +153,48 @@
             render();
         });
 
-        // Load user's journal entries from Firebase
+        // Secure API call to Firebase backend
+        async function callFirebaseBackend(action, data = {}) {
+            if (!state.currentUser) {
+                throw new Error('User must be authenticated');
+            }
+
+            try {
+                const idToken = await state.currentUser.getIdToken();
+                
+                const response = await fetch('/.netlify/functions/firebase-backend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify({ action, data })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Backend operation failed');
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('Firebase backend error:', error);
+                throw error;
+            }
+        }
+
+        // Load user's journal entries from Firebase (via backend)
         async function loadUserEntries() {
             if (!state.currentUser) return;
             
             try {
-                const q = query(
-                    collection(db, 'journalEntries'),
-                    where('userId', '==', state.currentUser.uid),
-                    orderBy('createdAt', 'desc'),
-                    limit(50)
-                );
-                
-                const querySnapshot = await getDocs(q);
-                entries = [];
-                
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    entries.push({
-                        id: doc.id,
-                        ...data,
-                        // Convert Firestore timestamp to ISO string for compatibility
-                        date: data.createdAt?.toDate()?.toISOString() || new Date().toISOString()
-                    });
-                });
+                const result = await callFirebaseBackend('getUserEntries', { limit: 50 });
+                entries = result.map(entry => ({
+                    ...entry,
+                    // Convert Firestore timestamp to ISO string for compatibility
+                    date: entry.createdAt?.toDate?.()?.toISOString() || 
+                          (entry.createdAt?._seconds ? new Date(entry.createdAt._seconds * 1000).toISOString() : new Date().toISOString())
+                }));
             } catch (error) {
                 console.error('Error loading entries:', error);
                 showToast('Failed to load your journal entries', 'error');
@@ -908,8 +897,8 @@
                 confirmText: 'Delete', 
                 onConfirm: async () => { 
                     try {
-                        // Delete from Firebase
-                        await deleteDoc(doc(db, 'journalEntries', entryId));
+                        // Delete via secure backend
+                        await callFirebaseBackend('deleteEntry', { entryId });
                         
                         // Remove from local entries array
                         entries = entries.filter(entry => entry.id !== entryId); 
@@ -934,7 +923,7 @@
                 state.entryBuilder.flow.currentStepIndex++; 
                 render(); 
             } else { 
-                // Save to Firebase
+                // Save to Firebase via secure backend
                 if (!state.currentUser) {
                     showToast('You must be logged in to save entries', 'error');
                     return;
@@ -944,21 +933,14 @@
                     const finalEntry = { ...state.entryBuilder };
                     delete finalEntry.flow;
                     
-                    // Add Firebase-specific fields
-                    finalEntry.userId = state.currentUser.uid;
-                    finalEntry.userEmail = state.currentUser.email;
-                    finalEntry.createdAt = serverTimestamp();
-                    finalEntry.updatedAt = serverTimestamp();
+                    // Call secure backend to create entry
+                    const savedEntry = await callFirebaseBackend('createEntry', finalEntry);
                     
-                    const docRef = await addDoc(collection(db, 'journalEntries'), finalEntry);
-                    
-                    // Add to local entries array with Firebase ID
-                    const savedEntry = {
-                        ...finalEntry,
-                        id: docRef.id,
-                        date: new Date().toISOString() // Use current date for immediate display
-                    };
-                    entries.unshift(savedEntry);
+                    // Add to local entries array for immediate display
+                    entries.unshift({
+                        ...savedEntry,
+                        date: new Date().toISOString()
+                    });
                     
                     showToast('Entry saved successfully!', 'success'); 
                     state.currentPage = 'dashboard'; 

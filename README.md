@@ -80,10 +80,45 @@ Both functions will automatically access these values from Netlify's environment
 2. Open `index.html` in a web browser or serve via a local server
 3. For development with live reload, you can use any static file server
 
+## Project Structure
+
+```
+├── index.html                      # Main UI and application logic
+├── js/                            # 📁 FRONTEND (Client-side)
+│   ├── firebase-config.js         # Firebase initialization & config
+│   ├── auth-service.js            # Authentication logic
+│   └── journal-service.js         # Journal operations
+├── netlify/functions/             # 📁 BACKEND (Server-side)
+│   ├── call-gemini.js            # 🤖 LLM API CALLS (uses GEMINI_API_KEY)
+│   └── firebase-backend.js       # 🔐 ACCOUNT MANAGEMENT (uses FIREBASE_PROJECT_ID)
+└── package.json                   # Dependencies
+```
+
+## Feature Location Guide
+
+### 🖥️ Frontend (Client-side)
+- **Main UI**: `index.html` - User interface, app state management, and authentication
+- **Firebase Config**: `js/firebase-config.js` - Client Firebase auth setup only
+- **Auth Services**: `js/auth-service.js` - ⚠️ NOT USED (kept for reference)
+- **Journal Services**: `js/journal-service.js` - ⚠️ NOT USED (kept for reference)
+
+### 🔐 Backend (Server-side via Netlify Functions) - **ALL DATABASE OPERATIONS**
+- **Account Management**: `netlify/functions/firebase-backend.js`
+  - ✅ Uses `process.env.FIREBASE_PROJECT_ID` from Netlify
+  - ✅ All CRUD operations (create, read, update, delete entries)
+  - ✅ User authentication verification
+  - ✅ User data isolation and security
+  
+### 🤖 LLM API Calls
+- **AI Features**: `netlify/functions/call-gemini.js`
+  - Uses `process.env.GEMINI_API_KEY` from Netlify
+  - Dream analysis, synthesis, advisor features
+
 ## Architecture
 
 ### Frontend
 - Vanilla JavaScript with ES6 modules
+- Organized service architecture
 - Firebase Web SDK for authentication and Firestore
 - Responsive design with Tailwind CSS
 - State management through global application state
@@ -119,12 +154,22 @@ Stored in Firestore `journalEntries` collection:
 }
 ```
 
-## Security
+## Security 🔒
 
-- All Firebase operations require user authentication
-- Firestore security rules ensure users can only access their own data
-- Sensitive configuration stored in environment variables
-- Service account keys never committed to version control
+**✅ Enhanced Server-Side Security Model:**
+- **All database operations** happen server-side via `netlify/functions/firebase-backend.js`
+- **User authentication verification** on every database request
+- **Firebase ID tokens** validated server-side before any operation
+- **Zero direct client access** to Firestore database
+- **Environment variables** store all sensitive keys in Netlify
+- **Firestore security rules** provide additional protection layer
+- **Service account keys** never exposed to client or version control
+
+**🛡️ Security Benefits:**
+- Prevents client-side database manipulation
+- Eliminates exposure of database queries to browser
+- Centralized access control and logging
+- Protection against malicious client modifications
 
 ## Development
 

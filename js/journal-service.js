@@ -1,4 +1,8 @@
-// Firebase Journal Service
+// Frontend Journal Service
+// NOTE: This service is NOT USED in the current secure backend approach
+// All journal operations go through netlify/functions/firebase-backend.js
+// This file is kept for reference/alternative implementation
+
 import { 
   collection, 
   doc, 
@@ -12,9 +16,9 @@ import {
   orderBy, 
   limit,
   serverTimestamp 
-} from 'firebase/firestore';
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { db } from './firebase-config.js';
-import { firebaseAuth } from './firebase-auth.js';
+import { firebaseAuth } from './auth-service.js';
 
 class FirebaseJournalService {
   constructor() {
