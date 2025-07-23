@@ -1,0 +1,25 @@
+node_modules
+.env
+.env.local
+.env.production
+*.log
+.DS_Store
+dist/
+build/
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*~
+
+# Firebase service account keys (never commit these!)
+*-firebase-adminsdk-*.json
+service-account-key.json

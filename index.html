@@ -81,7 +81,48 @@
     <div id="app" class="min-h-screen"></div>
     <div id="modal-container"></div>
 
+    <!-- Firebase SDK -->
     <script type="module">
+        // Import Firebase services
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged 
+        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            getDocs, 
+            doc, 
+            getDoc, 
+            updateDoc, 
+            deleteDoc, 
+            query, 
+            where, 
+            orderBy, 
+            limit,
+            serverTimestamp 
+        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+        // Firebase configuration - Replace with your actual config
+        const firebaseConfig = {
+            apiKey: "your-api-key-here",
+            authDomain: "your-project.firebaseapp.com", 
+            projectId: "your-project-id",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "your-app-id"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
         // --- MOCK DATA & CONFIG ---
         let entries = [
             { id: 1, title: "Team Meeting", date: "2025-07-22T14:30:00.000Z", situation: { description: "My project was criticized and I felt defensive." }, inquiry: { story: "They are trying to undermine me.", emotion: "Anger and Fear", belief: "I'm not good enough." }, emotional: { emotions: [{name: 'Angry', intensity: 8}, {name: 'Fearful', intensity: 7}]}, physical: { sensations: [{part: "Chest", quality: "Tightness", intensity: 8, x: 50, y: 45, view: 'front'}, {part: "Stomach/Gut", quality: "Ache", intensity: 6, x: 50, y: 55, view: 'front'}]} },
@@ -105,6 +146,8 @@
         let state = {
             currentPage: 'login',
             currentUser: null,
+            isLoading: false,
+            authError: null,
             currentEntry: null,
             somaticState: null,
             sessionCapacity: null,
@@ -115,6 +158,58 @@
             toast: { visible: false },
             modal: { visible: false }
         };
+
+        // Firebase Authentication State Listener
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                state.currentUser = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName
+                };
+                if (state.currentPage === 'login' || state.currentPage === 'register') {
+                    state.currentPage = 'dashboard';
+                    loadUserEntries();
+                }
+            } else {
+                state.currentUser = null;
+                if (state.currentPage !== 'login' && state.currentPage !== 'register') {
+                    state.currentPage = 'login';
+                }
+                entries = []; // Clear entries when logged out
+            }
+            render();
+        });
+
+        // Load user's journal entries from Firebase
+        async function loadUserEntries() {
+            if (!state.currentUser) return;
+            
+            try {
+                const q = query(
+                    collection(db, 'journalEntries'),
+                    where('userId', '==', state.currentUser.uid),
+                    orderBy('createdAt', 'desc'),
+                    limit(50)
+                );
+                
+                const querySnapshot = await getDocs(q);
+                entries = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    entries.push({
+                        id: doc.id,
+                        ...data,
+                        // Convert Firestore timestamp to ISO string for compatibility
+                        date: data.createdAt?.toDate()?.toISOString() || new Date().toISOString()
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading entries:', error);
+                showToast('Failed to load your journal entries', 'error');
+            }
+        }
 
         // --- RENDER FUNCTIONS ---
         const appContainer = document.getElementById('app');
@@ -162,13 +257,16 @@
                         <form id="login-form">
                             <div class="mb-4">
                                 <label for="email" class="block text-gray-600 mb-2">Email</label>
-                                <input type="email" id="email" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" value="user@kairos.com" required>
+                                <input type="email" id="email" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
                             </div>
                             <div class="mb-6">
                                 <label for="password" class="block text-gray-600 mb-2">Password</label>
-                                <input type="password" id="password" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" value="password" required>
+                                <input type="password" id="password" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
                             </div>
-                            <button type="submit" class="w-full kairos-btn kairos-btn-primary py-3 rounded-lg font-semibold">Enter Sanctuary</button>
+                            <button type="submit" class="w-full kairos-btn kairos-btn-primary py-3 rounded-lg font-semibold ${state.isLoading ? 'opacity-75 cursor-not-allowed' : ''}" ${state.isLoading ? 'disabled' : ''}>
+                                ${state.isLoading ? '<div class="loader inline-block mr-2" style="width:20px;height:20px;"></div>Signing In...' : 'Enter Sanctuary'}
+                            </button>
+                            ${state.authError ? `<p class="text-red-500 text-sm mt-4 text-center">${state.authError}</p>` : ''}
                         </form>
                          <p class="text-center mt-6">New here? <a href="#" id="go-to-register" class="text-indigo-600 font-semibold hover:underline">Begin your journey</a></p>
                     </div>
@@ -195,7 +293,10 @@
                                 <label for="confirm-password" class="block text-gray-600 mb-2">Confirm Password</label>
                                 <input type="password" id="confirm-password" class="w-full px-4 py-2 bg-white/50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" required>
                             </div>
-                            <button type="submit" class="w-full kairos-btn kairos-btn-primary py-3 rounded-lg font-semibold">Create Account</button>
+                            <button type="submit" class="w-full kairos-btn kairos-btn-primary py-3 rounded-lg font-semibold ${state.isLoading ? 'opacity-75 cursor-not-allowed' : ''}" ${state.isLoading ? 'disabled' : ''}>
+                                ${state.isLoading ? '<div class="loader inline-block mr-2" style="width:20px;height:20px;"></div>Creating Account...' : 'Create Account'}
+                            </button>
+                            ${state.authError ? `<p class="text-red-500 text-sm mt-4 text-center">${state.authError}</p>` : ''}
                         </form>
                         <p class="text-center mt-6">Already have a sanctuary? <a href="#" id="go-to-login" class="text-indigo-600 font-semibold hover:underline">Enter here</a></p>
                     </div>
@@ -216,8 +317,16 @@
             return `
                 <div class="container mx-auto p-4 md:p-8 max-w-5xl">
                     <header class="text-center mb-12">
-                        <h1 class="text-5xl font-bold text-gray-800 fade-in" style="animation-delay: 0.1s;">Your Sanctuary</h1>
-                        <p class="text-xl text-gray-600 mt-3 fade-in" style="animation-delay: 0.2s;">Welcome back, ${state.currentUser.email}.</p>
+                        <div class="flex justify-between items-start mb-6">
+                            <div></div>
+                            <div class="text-center">
+                                <h1 class="text-5xl font-bold text-gray-800 fade-in" style="animation-delay: 0.1s;">Your Sanctuary</h1>
+                                <p class="text-xl text-gray-600 mt-3 fade-in" style="animation-delay: 0.2s;">Welcome back, ${state.currentUser.email}.</p>
+                            </div>
+                            <button id="logout-btn" class="kairos-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </button>
+                        </div>
                     </header>
                     <div class="flex flex-col sm:flex-row justify-center gap-6 mb-12 fade-in" style="animation-delay: 0.3s;">
                         <button id="start-new-entry-btn" class="kairos-btn action-btn kairos-btn-primary px-10 py-4 rounded-lg text-xl font-bold shadow-lg">
@@ -476,6 +585,7 @@
             document.getElementById('go-to-login')?.addEventListener('click', (e) => { e.preventDefault(); state.currentPage = 'login'; render(); });
             document.getElementById('start-new-entry-btn')?.addEventListener('click', () => { state.entryBuilder = { date: new Date().toISOString() }; state.currentPage = 'somaticCheck1'; render(); });
             document.getElementById('back-to-dashboard')?.addEventListener('click', () => { state.currentPage = 'dashboard'; render(); });
+            document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
             document.getElementById('continue-to-setup')?.addEventListener('click', () => { state.currentPage = 'entrySetup'; render(); });
             document.querySelectorAll('.somatic-option[data-state]').forEach(el => el.addEventListener('click', (e) => { state.somaticState = e.currentTarget.dataset.state; state.currentPage = 'somaticCheck2'; render(); }));
             document.querySelectorAll('.somatic-option[data-capacity]').forEach(el => el.addEventListener('click', (e) => { state.sessionCapacity = e.currentTarget.dataset.capacity; state.currentPage = state.sessionCapacity === 'grounding' ? 'grounding' : 'entrySetup'; render(); }));
@@ -710,15 +820,154 @@
         function calculateEquanimity() { if (entries.length === 0) return { score: 100, ripples: 0 }; const totalIntensity = entries.reduce((sum, entry) => { const entryIntensity = entry.emotional?.emotions?.reduce((eSum, emo) => eSum + emo.intensity, 0) || 0; return sum + entryIntensity; }, 0); const avgIntensity = totalIntensity / entries.length / 5; const score = Math.max(0, Math.round(100 - avgIntensity * 10)); const ripples = Math.min(10, avgIntensity); return { score, ripples }; }
         function analyzeThemes() { const aversionKeywords = ['criticized', 'defensive', 'fear', 'angry', 'bill', 'avoid']; const cravingKeywords = ['peaceful', 'happy', 'calm', 'want', 'need']; let aversionThemes = new Set(); let cravingThemes = new Set(); entries.forEach(entry => { const text = `${entry.title || ''} ${entry.situation?.description || ''}`.toLowerCase(); aversionKeywords.forEach(kw => { if (text.includes(kw)) aversionThemes.add(kw); }); cravingKeywords.forEach(kw => { if (text.includes(kw)) cravingThemes.add(kw); }); }); return { aversionThemes: Array.from(aversionThemes), cravingThemes: Array.from(cravingKeywords) }; }
         function renderConstellation(entry) { if (!entry) return ''; const coreReaction = (entry.emotional?.emotions?.some(e => ['Angry', 'Fearful'].includes(e.name))) ? { type: 'Aversion', color: 'red-500' } : { type: 'Neutral/Craving', color: 'green-500' }; return `<div class="border-t pt-6 fade-in"><div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center items-center"><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Trigger</h4><i class="fas fa-bolt text-3xl text-yellow-500 mb-2"></i><p>${entry.situation?.description || 'N/A'}</p></div><i class="fas fa-arrow-right text-2xl text-gray-400 hidden md:block"></i><i class="fas fa-arrow-down text-2xl text-gray-400 md:hidden mx-auto"></i><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Core Reaction</h4><i class="fas ${coreReaction.type === 'Aversion' ? 'fa-hand-paper' : 'fa-hand-holding-heart'} text-3xl text-${coreReaction.color} mb-2"></i><p class="font-semibold text-${coreReaction.color}">${coreReaction.type}</p></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mt-4"><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Internal Narrative</h4><i class="fas fa-comment-dots text-3xl text-blue-500 mb-2"></i><p class="text-sm italic">"${entry.inquiry?.story || 'No narrative logged'}"</p></div><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Emotions</h4><i class="fas fa-heart-pulse text-3xl text-pink-500 mb-2"></i><p>${entry.emotional?.emotions?.map(e => `${e.name} (${e.intensity})`).join(', ') || 'N/A'}</p></div><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Somatic Signature</h4><i class="fas fa-child text-3xl text-orange-500 mb-2"></i><p>${entry.physical?.sensations?.map(s => `${s.part}: ${s.quality}`).join(', ') || 'N/A'}</p></div></div></div>`; }
-        function handleLogin(e) { e.preventDefault(); state.currentUser = { email: e.target.elements.email.value }; state.currentPage = 'dashboard'; render(); }
-        function handleRegister(e) { e.preventDefault(); const p1 = e.target.elements.password.value; const p2 = e.target.elements['confirm-password'].value; if (p1 !== p2) { showToast("Passwords do not match.", "error"); return; } showToast("Registration successful! Please log in.", "success"); state.currentPage = 'login'; render(); }
+        async function handleLogin(e) { 
+            e.preventDefault(); 
+            state.isLoading = true;
+            state.authError = null;
+            render();
+            
+            const email = e.target.elements.email.value;
+            const password = e.target.elements.password.value;
+            
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showToast("Welcome back to your sanctuary!", "success");
+            } catch (error) {
+                console.error('Login error:', error);
+                state.authError = getAuthErrorMessage(error.code);
+                showToast(state.authError, "error");
+                state.isLoading = false;
+                render();
+            }
+        }
+        
+        async function handleRegister(e) { 
+            e.preventDefault(); 
+            state.isLoading = true;
+            state.authError = null;
+            render();
+            
+            const email = e.target.elements.email.value;
+            const password = e.target.elements.password.value;
+            const confirmPassword = e.target.elements['confirm-password'].value;
+            
+            if (password !== confirmPassword) { 
+                showToast("Passwords do not match.", "error"); 
+                state.isLoading = false;
+                render();
+                return; 
+            }
+            
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                showToast("Welcome to Kairos! Your journey begins now.", "success");
+            } catch (error) {
+                console.error('Registration error:', error);
+                state.authError = getAuthErrorMessage(error.code);
+                showToast(state.authError, "error");
+                state.isLoading = false;
+                render();
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await signOut(auth);
+                showToast('Signed out successfully', 'success');
+            } catch (error) {
+                console.error('Logout error:', error);
+                showToast('Error signing out', 'error');
+            }
+        }
+
+        function getAuthErrorMessage(errorCode) {
+            switch (errorCode) {
+                case 'auth/user-not-found':
+                    return 'No account found with this email address.';
+                case 'auth/wrong-password':
+                    return 'Incorrect password. Please try again.';
+                case 'auth/email-already-in-use':
+                    return 'An account with this email already exists.';
+                case 'auth/weak-password':
+                    return 'Password should be at least 6 characters long.';
+                case 'auth/invalid-email':
+                    return 'Please enter a valid email address.';
+                case 'auth/too-many-requests':
+                    return 'Too many failed attempts. Please try again later.';
+                default:
+                    return 'An error occurred. Please try again.';
+            }
+        }
         function handleViewEntry(e) { const entryId = parseInt(e.currentTarget.dataset.id); state.currentEntry = entries.find(entry => entry.id === entryId); state.currentPage = 'viewEntry'; render(); }
-        function handleDeleteEntry(e) { const entryId = parseInt(e.currentTarget.dataset.id); showModal({ title: 'Delete Entry', content: 'Are you sure you want to permanently delete this journal entry?', confirmText: 'Delete', onConfirm: () => { entries = entries.filter(entry => entry.id !== entryId); showToast('Entry deleted successfully.', 'success'); state.currentPage = 'dashboard'; render(); } }); }
+        function handleDeleteEntry(e) { 
+            const entryId = e.currentTarget.dataset.id; 
+            showModal({ 
+                title: 'Delete Entry', 
+                content: 'Are you sure you want to permanently delete this journal entry?', 
+                confirmText: 'Delete', 
+                onConfirm: async () => { 
+                    try {
+                        // Delete from Firebase
+                        await deleteDoc(doc(db, 'journalEntries', entryId));
+                        
+                        // Remove from local entries array
+                        entries = entries.filter(entry => entry.id !== entryId); 
+                        showToast('Entry deleted successfully.', 'success'); 
+                        state.currentPage = 'dashboard'; 
+                        render();
+                    } catch (error) {
+                        console.error('Error deleting entry:', error);
+                        showToast('Failed to delete entry. Please try again.', 'error');
+                    }
+                } 
+            }); 
+        }
         function showModal(config) { state.modal = { ...config, visible: true }; render(); }
         function hideModal() { state.modal = { visible: false }; render(); }
         function saveCurrentStepData() { const { steps, currentStepIndex } = state.entryBuilder.flow; const sectionKey = steps[currentStepIndex]; const container = document.getElementById('section-content'); if (!container) return; state.entryBuilder[sectionKey] = state.entryBuilder[sectionKey] || {}; const inputs = container.querySelectorAll('textarea, input[type="radio"]:checked, input[type="text"]'); inputs.forEach(input => { const key = input.name.split('.')[1] || 'value'; state.entryBuilder[sectionKey][key] = input.value; }); if (sectionKey === 'emotional') { state.entryBuilder.emotional.emotions = Array.from(container.querySelectorAll('.emotion-chip.selected')).map(chip => { const name = chip.dataset.emotion; const slider = container.querySelector(`input[data-emotion-name="${name}"]`); return { name, intensity: slider ? parseInt(slider.value) : 5 }; }); } if (sectionKey === 'perspective') { const textarea = container.querySelector('textarea'); if (textarea) { state.entryBuilder.perspective[textarea.name] = textarea.value; } } }
         function handleFlowBack() { saveCurrentStepData(); state.entryBuilder.flow.currentStepIndex--; render(); }
-        function handleFlowNext() { saveCurrentStepData(); const { steps, currentStepIndex } = state.entryBuilder.flow; if (currentStepIndex < steps.length - 1) { state.entryBuilder.flow.currentStepIndex++; render(); } else { const finalEntry = { ...state.entryBuilder, id: Date.now() }; delete finalEntry.flow; entries.unshift(finalEntry); showToast('Entry saved successfully!', 'success'); state.currentPage = 'dashboard'; render(); } }
+        async function handleFlowNext() { 
+            saveCurrentStepData(); 
+            const { steps, currentStepIndex } = state.entryBuilder.flow; 
+            if (currentStepIndex < steps.length - 1) { 
+                state.entryBuilder.flow.currentStepIndex++; 
+                render(); 
+            } else { 
+                // Save to Firebase
+                if (!state.currentUser) {
+                    showToast('You must be logged in to save entries', 'error');
+                    return;
+                }
+                
+                try {
+                    const finalEntry = { ...state.entryBuilder };
+                    delete finalEntry.flow;
+                    
+                    // Add Firebase-specific fields
+                    finalEntry.userId = state.currentUser.uid;
+                    finalEntry.userEmail = state.currentUser.email;
+                    finalEntry.createdAt = serverTimestamp();
+                    finalEntry.updatedAt = serverTimestamp();
+                    
+                    const docRef = await addDoc(collection(db, 'journalEntries'), finalEntry);
+                    
+                    // Add to local entries array with Firebase ID
+                    const savedEntry = {
+                        ...finalEntry,
+                        id: docRef.id,
+                        date: new Date().toISOString() // Use current date for immediate display
+                    };
+                    entries.unshift(savedEntry);
+                    
+                    showToast('Entry saved successfully!', 'success'); 
+                    state.currentPage = 'dashboard'; 
+                    render();
+                } catch (error) {
+                    console.error('Error saving entry:', error);
+                    showToast('Failed to save entry. Please try again.', 'error');
+                }
+            } 
+        }
         function updateEmotionSliders() { const slidersContainer = document.getElementById('emotion-sliders'); if(!slidersContainer) return; slidersContainer.innerHTML = ''; const selectedChips = document.querySelectorAll('.emotion-chip.selected'); selectedChips.forEach(chip => { const emotionName = chip.dataset.emotion; const intensity = state.entryBuilder.emotional?.emotions?.find(e => e.name === emotionName)?.intensity || 5; const sliderHtml = `<div class="flex items-center gap-4 fade-in"><label class="w-24 text-gray-700">${emotionName}</label><input type="range" data-emotion-name="${emotionName}" min="1" max="10" value="${intensity}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"><span class="font-semibold w-8 text-center text-indigo-600">${intensity}</span></div>`; slidersContainer.insertAdjacentHTML('beforeend', sliderHtml); }); slidersContainer.querySelectorAll('input[type="range"]').forEach(slider => { slider.addEventListener('input', (e) => { e.target.nextElementSibling.textContent = e.target.value; }); }); }
         function handleBodyMapClick(e) { const svg = document.getElementById('body-map-svg'); if (!svg) return; const rect = svg.getBoundingClientRect(); const x = ((e.clientX - rect.left) / rect.width) * 100; const y = ((e.clientY - rect.top) / rect.height) * 100; const partName = mapCoordsToPart(x, y); const sensationQualities = ["Tightness", "Vibration", "Heat", "Numbness", "Ache", "Tingling"]; const bodyHtml = `<div class="space-y-4"><div><label class="block font-semibold mb-2">Sensation Quality:</label><div id="sensation-quality-chips" class="flex flex-wrap gap-2">${sensationQualities.map(q => `<button class="sensation-chip bg-gray-200 px-3 py-1 rounded-full text-sm" data-quality="${q}">${q}</button>`).join('')}</div></div><div><label for="sensation-intensity" class="block font-semibold mb-2">Intensity:</label><input type="range" id="sensation-intensity" min="1" max="10" value="5" class="w-full"></div></div>`; showModal({ title: `Sensation in your ${partName}`, bodyHtml, confirmText: "Log Sensation", onConfirm: () => { const selectedQuality = document.querySelector('#sensation-quality-chips .selected')?.dataset.quality; const intensity = document.getElementById('sensation-intensity').value; if (!selectedQuality) { showToast("Please select a sensation quality.", "error"); return; } if (!state.entryBuilder.physical) state.entryBuilder.physical = {}; if (!state.entryBuilder.physical.sensations) state.entryBuilder.physical.sensations = []; state.entryBuilder.physical.sensations.push({ part: partName, quality: selectedQuality, intensity: parseInt(intensity), x, y, view: state.bodyMapView }); document.getElementById('section-content').innerHTML = renderSectionContent('physical'); updateSensationDots(); attachEventListeners(); } }); document.querySelectorAll('#sensation-quality-chips .sensation-chip').forEach(chip => { chip.addEventListener('click', (e) => { document.querySelectorAll('#sensation-quality-chips .sensation-chip').forEach(c => c.classList.remove('selected')); e.currentTarget.classList.add('selected'); }); }); }
         function updateSensationDots() { const dotsContainer = document.getElementById('sensation-dots'); if (!dotsContainer) return; dotsContainer.innerHTML = ''; const sensations = state.entryBuilder.physical?.sensations || []; sensations.filter(s => s.view === state.bodyMapView).forEach(s => { const dot = document.createElement('div'); dot.className = 'sensation-dot'; dot.style.left = `${s.x}%`; dot.style.top = `${s.y}%`; dot.style.width = `${8 + parseInt(s.intensity)}px`; dot.style.height = `${8 + parseInt(s.intensity)}px`; dot.style.backgroundColor = `hsla(0, 100%, 50%, ${s.intensity / 10})`; dotsContainer.appendChild(dot); }); }
