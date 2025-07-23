@@ -1,0 +1,8 @@
+# Files to ignore during Netlify build (but still deploy)
+# This prevents false positive secret detection
+
+# Test files
+test-auth.html
+
+# Documentation
+README.md
