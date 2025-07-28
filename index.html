@@ -297,46 +297,129 @@
             margin-top: 2rem;
         }
 
-        /* Energy selection bubbles */
+        /* Sacred Energy Bubbles */
         .energy-bubble {
-            width: 120px;
-            height: 120px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(72, 61, 139, 0.2);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 8px 25px rgba(72, 61, 139, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .energy-bubble::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, 
+                rgba(212, 175, 55, 0.1) 0%, 
+                transparent 60%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .energy-bubble i {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
             transition: all 0.4s ease;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.1);
         }
 
         .energy-bubble p {
-            color: #4A3C6B !important; /* Dark lavender for better contrast */
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-family: 'Inter', sans-serif;
             font-weight: 600;
-            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            text-shadow: 0 1px 3px rgba(72, 61, 139, 0.3);
+            margin: 0;
+            transition: all 0.4s ease;
         }
 
         .energy-bubble:hover {
+            transform: scale(1.08) translateY(-5px);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(72, 61, 139, 0.4);
+            box-shadow: 
+                0 15px 35px rgba(72, 61, 139, 0.2),
+                0 0 30px rgba(212, 175, 55, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        .energy-bubble:hover::before {
+            opacity: 1;
+        }
+
+        .energy-bubble:hover i {
             transform: scale(1.1);
-            box-shadow: 0 0 30px rgba(72, 61, 139, 0.4);
+            filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.3));
         }
 
         .energy-bubble:hover p {
-            color: #6B46C1 !important; /* Slightly lighter lavender on hover */
+            color: rgba(255, 255, 255, 1) !important;
+            text-shadow: 0 2px 6px rgba(72, 61, 139, 0.4);
         }
 
         .energy-bubble.selected {
-            background: linear-gradient(135deg, rgba(218, 165, 32, 0.3), rgba(255, 215, 0, 0.2)); /* Golden background */
-            box-shadow: 0 0 40px rgba(218, 165, 32, 0.6);
-            border-color: rgba(218, 165, 32, 0.7);
+            background: linear-gradient(135deg, 
+                rgba(212, 175, 55, 0.2) 0%, 
+                rgba(182, 149, 192, 0.15) 100%);
+            border-color: var(--shimmering-gold);
+            transform: scale(1.1) translateY(-8px);
+            box-shadow: 
+                0 20px 40px rgba(212, 175, 55, 0.3),
+                0 0 40px rgba(212, 175, 55, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .energy-bubble.selected::before {
+            opacity: 1;
+            background: radial-gradient(circle at 30% 30%, 
+                rgba(212, 175, 55, 0.3) 0%, 
+                rgba(182, 149, 192, 0.1) 60%,
+                transparent 80%);
+        }
+
+        .energy-bubble.selected i {
+            transform: scale(1.15);
+            filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.4));
         }
 
         .energy-bubble.selected p {
-            color: #4A3C6B !important; /* Dark lavender text on golden selection */
+            color: var(--warm-off-white) !important;
             font-weight: 700;
-            text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9);
+            text-shadow: 0 2px 8px rgba(212, 175, 55, 0.5);
+        }
+        
+        /* Sacred Continue Button States */
+        #continue-energy:not([disabled]) {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            box-shadow: 
+                0 12px 30px rgba(72, 61, 139, 0.3),
+                0 0 25px rgba(212, 175, 55, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        #continue-energy:not([disabled]):hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 
+                0 18px 40px rgba(72, 61, 139, 0.4),
+                0 0 35px rgba(212, 175, 55, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
         /* Archetype selection styles - Floating panels with glassmorphism */
@@ -707,6 +790,230 @@
             }
             100% { filter: brightness(1); }
         }
+        
+        /* The Descent - Sacred Threshold Background */
+        .descent-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(72, 61, 139, 0.4) 0%, transparent 60%),
+                radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.2) 0%, transparent 70%),
+                radial-gradient(circle at 40% 70%, rgba(182, 149, 192, 0.3) 0%, transparent 80%),
+                radial-gradient(circle at 90% 80%, rgba(72, 61, 139, 0.5) 0%, transparent 65%),
+                linear-gradient(135deg, 
+                    rgba(10, 11, 30, 0.95) 0%, 
+                    rgba(26, 27, 58, 0.98) 30%,
+                    rgba(45, 27, 105, 1) 50%, 
+                    rgba(26, 27, 58, 0.98) 70%,
+                    rgba(10, 11, 30, 0.95) 100%);
+            animation: descentFlow 30s ease-in-out infinite;
+        }
+        
+        @keyframes descentFlow {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg);
+                filter: brightness(0.9);
+            }
+            33% { 
+                transform: scale(1.02) rotate(0.5deg);
+                filter: brightness(1.1);
+            }
+            66% { 
+                transform: scale(0.98) rotate(-0.5deg);
+                filter: brightness(0.95);
+            }
+        }
+        
+        /* Enhanced descent particles */
+        .descent-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        
+        .descent-particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: descentFall 20s infinite linear;
+            opacity: 0.6;
+        }
+        
+        @keyframes descentFall {
+            0% { 
+                transform: translateY(-100px) translateX(0px) scale(0.3);
+                opacity: 0;
+            }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.4; }
+            100% { 
+                transform: translateY(calc(100vh + 100px)) translateX(50px) scale(1);
+                opacity: 0;
+            }
+        }
+        
+        /* Sacred Login Animations */
+        @keyframes logoBreathing {
+            0%, 100% { 
+                text-shadow: 0 0 40px rgba(72, 61, 139, 0.6);
+                filter: drop-shadow(0 2px 8px rgba(212, 175, 55, 0.3));
+            }
+            50% { 
+                text-shadow: 0 0 60px rgba(72, 61, 139, 0.8);
+                filter: drop-shadow(0 3px 12px rgba(212, 175, 55, 0.5));
+            }
+        }
+        
+        @keyframes logoEntrance {
+            0% { 
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+                filter: blur(5px);
+            }
+            100% { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0px);
+            }
+        }
+        
+        @keyframes formEntrance {
+            0% { 
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+                filter: blur(3px);
+            }
+            100% { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0px);
+            }
+        }
+        
+        @keyframes linkEntrance {
+            0% { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Sacred Loading Animation - Enhanced Purple Theme */
+        .sacred-loader {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(72, 61, 139, 0.2);
+            border-top: 2px solid var(--shimmering-gold);
+            border-right: 2px solid var(--soft-rose-quartz);
+            border-radius: 50%;
+            animation: sacredSpin 1.5s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Full Screen Loading Overlay */
+        .kairos-loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, 
+                var(--deep-indigo) 0%, 
+                var(--ethereal-lavender) 50%, 
+                var(--soft-rose-quartz) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .kairos-loading-content {
+            text-align: center;
+            max-width: 400px;
+            padding: 2rem;
+        }
+
+        .kairos-loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--shimmering-gold);
+            border-right: 4px solid var(--soft-rose-quartz);
+            border-radius: 50%;
+            animation: sacredSpin 2s ease-in-out infinite;
+            margin: 0 auto 2rem;
+            box-shadow: 
+                0 0 30px rgba(212, 175, 55, 0.3),
+                0 0 60px rgba(182, 149, 192, 0.2);
+        }
+
+        .kairos-loading-text {
+            font-family: 'Playfair Display', serif;
+            color: var(--warm-off-white);
+            font-size: 1.5rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 8px rgba(72, 61, 139, 0.3);
+            animation: breathingText 3s ease-in-out infinite;
+        }
+
+        @keyframes breathingText {
+            0%, 100% { 
+                opacity: 0.8; 
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 1; 
+                transform: scale(1.02);
+            }
+        }
+        
+        @keyframes sacredSpin {
+            0% { 
+                transform: rotate(0deg) scale(1);
+                border-top-color: var(--shimmering-gold);
+                border-right-color: var(--soft-rose-quartz);
+                box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            }
+            33% { 
+                transform: rotate(120deg) scale(1.1);
+                border-top-color: var(--soft-rose-quartz);
+                border-right-color: var(--deep-indigo);
+                box-shadow: 0 0 15px rgba(182, 149, 192, 0.4);
+            }
+            66% { 
+                transform: rotate(240deg) scale(1.05);
+                border-top-color: var(--deep-indigo);
+                border-right-color: var(--shimmering-gold);
+                box-shadow: 0 0 12px rgba(72, 61, 139, 0.4);
+            }
+            100% { 
+                transform: rotate(360deg) scale(1);
+                border-top-color: var(--shimmering-gold);
+                border-right-color: var(--soft-rose-quartz);
+                box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            }
+        }
+        
+        /* Input placeholder styling for the threshold */
+        .threshold-form input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
 
         @keyframes gentle-pulse {
             0%, 100% { transform: scale(1); }
@@ -833,49 +1140,204 @@
                 0 0 6px rgba(218, 165, 32, 0.2);
         }
 
-        /* Presence Orb Styles */
+        /* Living Mirror Presence Orb */
         .presence-orb {
-            width: 200px;
-            height: 200px;
+            width: 280px;
+            height: 280px;
             border-radius: 50%;
-            background: radial-gradient(circle, 
-                rgba(72, 61, 139, 0.3) 0%, 
-                rgba(72, 61, 139, 0.6) 30%, 
-                rgba(72, 61, 139, 0.9) 70%, 
-                rgba(25, 25, 112, 1) 100%);
             position: relative;
             margin: 0 auto;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 
-                0 0 40px rgba(72, 61, 139, 0.4),
-                inset 0 0 40px rgba(255, 255, 255, 0.1);
-            animation: presence-breathe 4s ease-in-out infinite;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            animation: nervousSystemBreathing 10s ease-in-out infinite;
         }
 
-        .presence-orb:hover {
-            transform: scale(1.05);
+        .presence-orb-core {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            background: 
+                radial-gradient(circle at 30% 20%, rgba(72, 61, 139, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(72, 61, 139, 0.4) 0%, transparent 60%),
+                radial-gradient(circle at 50% 50%, rgba(45, 27, 105, 0.8) 0%, rgba(26, 27, 58, 1) 100%);
             box-shadow: 
-                0 0 60px rgba(72, 61, 139, 0.6),
-                inset 0 0 40px rgba(255, 255, 255, 0.2);
+                0 0 80px rgba(72, 61, 139, 0.4),
+                0 0 140px rgba(72, 61, 139, 0.2),
+                inset 0 0 60px rgba(72, 61, 139, 0.3);
+        }
+
+        .orb-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .orb-swirl-layer {
+            background: conic-gradient(from 0deg, 
+                transparent 0deg, 
+                rgba(72, 61, 139, 0.2) 90deg, 
+                transparent 180deg, 
+                rgba(72, 61, 139, 0.15) 270deg, 
+                transparent 360deg);
+            animation: orbSwirl 20s linear infinite;
+        }
+
+        .orb-depth-layer {
+            background: radial-gradient(circle at 40% 40%, 
+                rgba(255, 255, 255, 0.1) 0%, 
+                rgba(72, 61, 139, 0.1) 30%, 
+                transparent 70%);
+            animation: orbDepthPulse 8s ease-in-out infinite;
+        }
+
+        .presence-orb-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .presence-orb:hover .presence-orb-core {
+            box-shadow: 
+                0 0 80px rgba(72, 61, 139, 0.7),
+                0 0 150px rgba(72, 61, 139, 0.3),
+                inset 0 0 50px rgba(182, 149, 192, 0.2),
+                inset 0 0 100px rgba(212, 175, 55, 0.08);
+        }
+
+        .presence-orb-particle {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--shimmering-gold);
+            opacity: 0.4;
+            animation: orbParticleFloat 12s linear infinite;
+            filter: blur(0.5px);
+        }
+
+        .presence-orb-particle.rose {
+            background: var(--soft-rose-quartz);
+            animation-duration: 15s;
+        }
+
+        /* Emotional Thread Weaving System */
+        .emotional-thread {
+            position: absolute;
+            width: 2px;
+            height: 60px;
+            border-radius: 1px;
+            opacity: 0;
+            pointer-events: none;
+            background: linear-gradient(to bottom, transparent, var(--shimmering-gold), transparent);
+            animation: threadWeave 8s ease-out forwards;
+        }
+
+        .emotional-thread.gold {
+            background: linear-gradient(to bottom, transparent, var(--shimmering-gold), transparent);
+            box-shadow: 0 0 6px var(--shimmering-gold);
+        }
+
+        .emotional-thread.rose {
+            background: linear-gradient(to bottom, transparent, var(--soft-rose-quartz), transparent);
+            box-shadow: 0 0 6px var(--soft-rose-quartz);
+        }
+
+        .emotional-thread.silver {
+            background: linear-gradient(to bottom, transparent, rgba(200, 200, 220, 0.8), transparent);
+            box-shadow: 0 0 6px rgba(200, 200, 220, 0.4);
+        }
+
+        .emotional-thread.indigo {
+            background: linear-gradient(to bottom, transparent, var(--deep-indigo), transparent);
+            box-shadow: 0 0 8px var(--deep-indigo);
+            animation-duration: 6s;
+        }
+
+        @keyframes threadWeave {
+            0% {
+                left: -100px;
+                opacity: 0;
+                transform: rotate(-10deg);
+            }
+            15% {
+                opacity: 1;
+            }
+            50% {
+                left: 50%;
+                transform: translateX(-50%) rotate(5deg);
+                opacity: 0.8;
+            }
+            80% {
+                left: 50%;
+                transform: translateX(-50%) rotate(0deg) scale(0.3);
+                opacity: 0.6;
+            }
+            100% {
+                left: 50%;
+                transform: translateX(-50%) rotate(0deg) scale(0.1);
+                opacity: 0;
+            }
         }
 
         .presence-orb.gem-shimmer {
             animation: presence-breathe 4s ease-in-out infinite, gem-shimmer 2s ease-in-out;
         }
 
-        @keyframes presence-breathe {
-            0%, 100% { 
+        /* Nervous System Regulation Breathing: 4s inhale, 6s exhale */
+        @keyframes nervousSystemBreathing {
+            0% { 
                 transform: scale(1);
-                box-shadow: 
-                    0 0 40px rgba(72, 61, 139, 0.4),
-                    inset 0 0 40px rgba(255, 255, 255, 0.1);
+                filter: brightness(1);
+            }
+            40% { /* 4 seconds inhale */
+                transform: scale(1.08);
+                filter: brightness(1.1);
+            }
+            100% { /* 6 seconds exhale */
+                transform: scale(1);
+                filter: brightness(1);
+            }
+        }
+
+        @keyframes orbSwirl {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes orbDepthPulse {
+            0%, 100% { 
+                opacity: 0.6;
+                transform: scale(1);
             }
             50% { 
-                transform: scale(1.03);
-                box-shadow: 
-                    0 0 60px rgba(72, 61, 139, 0.6),
-                    inset 0 0 60px rgba(255, 255, 255, 0.15);
+                opacity: 0.9;
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes orbParticleFloat {
+            0% { 
+                transform: translateY(100%) rotate(0deg);
+                opacity: 0;
+            }
+            10% { 
+                opacity: 0.6;
+            }
+            90% { 
+                opacity: 0.6;
+            }
+            100% { 
+                transform: translateY(-100%) rotate(360deg);
+                opacity: 0;
             }
         }
 
@@ -926,22 +1388,31 @@
 
         .journaling-prompt-card {
             background: linear-gradient(135deg, 
-                rgba(255, 255, 255, 0.95) 0%, 
-                rgba(248, 250, 252, 0.9) 100%);
+                rgba(72, 61, 139, 0.15) 0%, 
+                rgba(182, 149, 192, 0.1) 50%,
+                rgba(212, 175, 55, 0.08) 100%);
             backdrop-filter: blur(20px);
-            border: 2px solid rgba(72, 61, 139, 0.2);
+            border: 2px solid rgba(212, 175, 55, 0.3);
             border-radius: 20px;
             padding: 2rem;
             position: relative;
             overflow: hidden;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 
+                0 8px 32px rgba(72, 61, 139, 0.12),
+                0 0 40px rgba(212, 175, 55, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
 
         .journaling-prompt-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(72, 61, 139, 0.4);
-            box-shadow: 0 20px 40px rgba(72, 61, 139, 0.15);
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(212, 175, 55, 0.6);
+            box-shadow: 
+                0 20px 60px rgba(72, 61, 139, 0.2),
+                0 0 60px rgba(212, 175, 55, 0.15),
+                0 0 80px rgba(182, 149, 192, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
         .journaling-prompt-card::before {
@@ -953,9 +1424,10 @@
             height: 100%;
             background: linear-gradient(90deg, 
                 transparent, 
-                rgba(72, 61, 139, 0.1), 
+                rgba(212, 175, 55, 0.2), 
+                rgba(182, 149, 192, 0.1),
                 transparent);
-            transition: left 0.5s ease;
+            transition: left 0.6s ease;
         }
 
         .journaling-prompt-card:hover::before {
@@ -1018,27 +1490,78 @@
             opacity: 0; /* Start hidden */
         }
         
-        /* Floating Panel Cards with Glassmorphism */
+        /* Floating Panel Cards with Enhanced Glassmorphism */
         .kairos-card {
-            background: rgba(255, 255, 255, 0.8);
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.15) 0%, 
+                rgba(72, 61, 139, 0.08) 50%,
+                rgba(182, 149, 192, 0.06) 100%);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(72, 61, 139, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.2);
             border-radius: 16px;
-            transition: all 0.4s ease;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            animation: cardFloat 6s ease-in-out infinite;
             box-shadow: 
-                0 12px 40px rgba(72, 61, 139, 0.08),
-                0 4px 20px rgba(212, 175, 55, 0.05),
-                0 0 30px rgba(182, 149, 192, 0.03),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+                0 12px 40px rgba(72, 61, 139, 0.12),
+                0 4px 20px rgba(212, 175, 55, 0.08),
+                0 0 30px rgba(182, 149, 192, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
         
         .kairos-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(212, 175, 55, 0.4);
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.2) 0%, 
+                rgba(72, 61, 139, 0.12) 50%,
+                rgba(182, 149, 192, 0.1) 100%);
             box-shadow: 
-                0 20px 50px rgba(72, 61, 139, 0.12),
-                0 8px 25px rgba(212, 175, 55, 0.08),
-                0 0 40px rgba(182, 149, 192, 0.05),
-                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+                0 20px 60px rgba(72, 61, 139, 0.15),
+                0 8px 30px rgba(212, 175, 55, 0.12),
+                0 0 50px rgba(182, 149, 192, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        @keyframes cardFloat {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg);
+            }
+            33% { 
+                transform: translateY(-3px) rotate(0.5deg);
+            }
+            66% { 
+                transform: translateY(2px) rotate(-0.3deg);
+            }
+        }
+
+        @keyframes progressPulse {
+            0%, 100% { 
+                r: 3px;
+                filter: drop-shadow(0 0 3px var(--shimmering-gold));
+            }
+            50% { 
+                r: 5px;
+                filter: drop-shadow(0 0 8px var(--shimmering-gold));
+            }
+        }
+
+        .sanctuary-container {
+            min-height: 100vh;
+            padding: 0;
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @keyframes containerBreathe {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% { 
+                transform: scale(1.005);
+                opacity: 0.98;
+            }
         }
 
         /* Elegant Invitation Buttons */
@@ -1387,6 +1910,50 @@
                 particlesContainer.appendChild(particle);
             }
         }
+        
+        // Create enhanced descent particles for login threshold
+        function createDescentParticles() {
+            const particlesContainer = document.getElementById('descent-particles-container');
+            if (!particlesContainer) return;
+            
+            // Clear existing particles
+            particlesContainer.innerHTML = '';
+            
+            // Create 25 sacred particles with enhanced properties
+            for (let i = 0; i < 25; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'descent-particle';
+                
+                // Varied sizes (3-8px)
+                const size = Math.random() * 5 + 3;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                
+                // Random starting position across width
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = '-100px';
+                
+                // Staggered animation delays for continuous flow
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                
+                // Enhanced sacred colors with more variety
+                const colors = [
+                    'rgba(72, 61, 139, 0.8)',    // Deep Indigo
+                    'rgba(212, 175, 55, 0.7)',   // Shimmering Gold
+                    'rgba(182, 149, 192, 0.6)',  // Rose Quartz
+                    'rgba(255, 255, 255, 0.5)',  // Pure Light
+                    'rgba(200, 178, 219, 0.4)',  // Ethereal Lavender
+                    'rgba(168, 181, 160, 0.3)'   // Sage Mist
+                ];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.background = `radial-gradient(circle, ${color} 0%, rgba(255,255,255,0.1) 50%, transparent 70%)`;
+                
+                // Add subtle box shadow for enhanced glow
+                particle.style.boxShadow = `0 0 ${size * 2}px ${color}`;
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
 
         // --- RENDER FUNCTIONS ---
         const appContainer = document.getElementById('app');
@@ -1418,13 +1985,19 @@
                     case 'thematicCheck': appContainer.innerHTML = ThematicCheckPage(); break;
                     case 'entryFlow': appContainer.innerHTML = EntryFlowPage(); break;
                     case 'viewEntry': appContainer.innerHTML = ViewEntryPage(); break;
+                    case 'quickJournal': appContainer.innerHTML = QuickJournalPage(); break;
                 }
             }
             modalContainer.innerHTML = state.modal.visible ? ModalComponent(state.modal) : '';
             
-            // Create particles for login/register/onboarding pages
-            if (state.currentPage === 'login' || state.currentPage === 'register' || state.currentPage === 'onboarding') {
-                setTimeout(() => createLuminousParticles(), 100);
+            // Create particles for different page types
+            if (state.currentPage === 'login' || state.currentPage === 'register' || state.currentPage === 'onboarding' || state.currentPage === 'quickJournal') {
+                setTimeout(() => createDescentParticles(), 100);
+            } else if (state.currentPage === 'dashboard') {
+                setTimeout(() => {
+                    createDescentParticles();
+                    initializeOrbParticles();
+                }, 100);
             }
             
             // Attach event listeners with small delay to ensure DOM is ready
@@ -1435,39 +2008,224 @@
         // --- UI COMPONENTS ---
         function LoginPage() { 
              return `
-                <div class="cosmic-background"></div>
-                <div class="particles" id="particles-container"></div>
-                <div class="min-h-screen flex items-center justify-center p-4 relative">
-                    <div class="kairos-card p-8 rounded-xl max-w-md w-full fade-in">
-                        <h1 class="heading-serif text-5xl font-bold text-center mb-2" style="
-                            background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
+                <!-- The Descent Background - Living Inner Cosmos -->
+                <div class="descent-background"></div>
+                <div class="descent-particles" id="descent-particles-container"></div>
+                
+                <div class="threshold-container" style="
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2rem;
+                    position: relative;
+                ">
+                    
+                    <!-- Breathing Kairos Logo -->
+                    <div class="logo-container" style="
+                        text-align: center;
+                        margin-bottom: 3rem;
+                        animation: logoEntrance 2s ease-out 0.5s both;
+                    ">
+                        <h1 style="
+                            font-family: 'Playfair Display', serif;
+                            font-size: 4rem;
+                            font-weight: 600;
+                            margin-bottom: 1rem;
+                            background: linear-gradient(135deg, 
+                                var(--deep-indigo) 0%, 
+                                var(--soft-rose-quartz) 50%, 
+                                var(--shimmering-gold) 100%);
                             -webkit-background-clip: text;
                             -webkit-text-fill-color: transparent;
-                            background-clip: text;
-                            text-shadow: 0 0 30px rgba(72, 61, 139, 0.5);
-                            filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
+                            text-shadow: 0 0 40px rgba(72, 61, 139, 0.6);
+                            filter: drop-shadow(0 2px 8px rgba(212, 175, 55, 0.3));
+                            animation: logoBreathing 4s ease-in-out infinite;
                         ">Kairos</h1>
-                        <p class="text-center text-gray-600 mb-8" style="
-                            color: #6366F1;
-                            text-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
-                            font-weight: 500;
-                        ">Your Journey Within</p>
-                        <form id="login-form">
-                            <div class="mb-4">
-                                <label for="email" class="block text-gray-700 mb-2 font-medium">Email</label>
-                                <input type="email" id="email" class="w-full px-4 py-3 bg-white/70 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent backdrop-blur-sm transition-all duration-300" style="box-shadow: 0 0 10px rgba(138, 43, 226, 0.1);" required>
-                            </div>
-                            <div class="mb-6">
-                                <label for="password" class="block text-gray-700 mb-2 font-medium">Password</label>
-                                <input type="password" id="password" class="w-full px-4 py-3 bg-white/70 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent backdrop-blur-sm transition-all duration-300" style="box-shadow: 0 0 10px rgba(138, 43, 226, 0.1);" required>
-                            </div>
-                            <button type="submit" class="w-full kairos-btn kairos-btn-primary py-3 rounded-lg font-semibold ${state.isLoading ? 'opacity-75 cursor-not-allowed' : ''}" ${state.isLoading ? 'disabled' : ''}>
-                                ${state.isLoading ? '<div class="loader inline-block mr-2" style="width:20px;height:20px;"></div>Signing In...' : 'Enter Sanctuary'}
-                            </button>
-                            ${state.authError ? `<p class="text-red-500 text-sm mt-4 text-center">${state.authError}</p>` : ''}
-                        </form>
-                         <p class="text-center mt-6">New here? <a href="#" id="go-to-register" class="text-indigo-600 font-semibold hover:underline">Begin your journey</a></p>
+                        
+                        <p style="
+                            font-family: 'Playfair Display', serif;
+                            font-size: 1.25rem;
+                            font-weight: 400;
+                            color: var(--warm-off-white);
+                            opacity: 0.9;
+                            letter-spacing: 1px;
+                            text-shadow: 0 1px 3px rgba(72, 61, 139, 0.3);
+                        ">Welcome back</p>
                     </div>
+                    
+                    <!-- Sacred Login Form -->
+                    <div class="threshold-form" style="
+                        width: 100%;
+                        max-width: 400px;
+                        opacity: 0;
+                        animation: formEntrance 1.5s ease-out 2.5s both;
+                    ">
+                        <form id="login-form" style="
+                            display: flex;
+                            flex-direction: column;
+                            gap: 2rem;
+                        ">
+                            <div class="input-sanctuary">
+                                <input 
+                                    type="email" 
+                                    id="email" 
+                                    placeholder="Your email"
+                                    style="
+                                        width: 100%;
+                                        padding: 1.25rem 1.5rem;
+                                        background: rgba(255, 255, 255, 0.1);
+                                        backdrop-filter: blur(20px);
+                                        border: 2px solid rgba(72, 61, 139, 0.2);
+                                        border-radius: 16px;
+                                        font-family: 'Inter', sans-serif;
+                                        font-size: 1rem;
+                                        color: var(--warm-off-white);
+                                        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                                        outline: none;
+                                        box-shadow: 
+                                            0 8px 25px rgba(72, 61, 139, 0.1),
+                                            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                                    "
+                                    onfocus="
+                                        this.style.background='rgba(255,255,255,0.15)';
+                                        this.style.borderColor='var(--deep-indigo)';
+                                        this.style.boxShadow='0 12px 35px rgba(72,61,139,0.2), 0 0 30px rgba(212,175,55,0.1), inset 0 1px 0 rgba(255,255,255,0.2)';
+                                        this.style.transform='translateY(-2px)';
+                                    "
+                                    onblur="
+                                        this.style.background='rgba(255,255,255,0.1)';
+                                        this.style.borderColor='rgba(72,61,139,0.2)';
+                                        this.style.boxShadow='0 8px 25px rgba(72,61,139,0.1), inset 0 1px 0 rgba(255,255,255,0.1)';
+                                        this.style.transform='translateY(0)';
+                                    "
+                                    required
+                                />
+                            </div>
+                            
+                            <div class="input-sanctuary">
+                                <input 
+                                    type="password" 
+                                    id="password" 
+                                    placeholder="Your sacred key"
+                                    style="
+                                        width: 100%;
+                                        padding: 1.25rem 1.5rem;
+                                        background: rgba(255, 255, 255, 0.1);
+                                        backdrop-filter: blur(20px);
+                                        border: 2px solid rgba(72, 61, 139, 0.2);
+                                        border-radius: 16px;
+                                        font-family: 'Inter', sans-serif;
+                                        font-size: 1rem;
+                                        color: var(--warm-off-white);
+                                        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                                        outline: none;
+                                        box-shadow: 
+                                            0 8px 25px rgba(72, 61, 139, 0.1),
+                                            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                                    "
+                                    onfocus="
+                                        this.style.background='rgba(255,255,255,0.15)';
+                                        this.style.borderColor='var(--deep-indigo)';
+                                        this.style.boxShadow='0 12px 35px rgba(72,61,139,0.2), 0 0 30px rgba(212,175,55,0.1), inset 0 1px 0 rgba(255,255,255,0.2)';
+                                        this.style.transform='translateY(-2px)';
+                                    "
+                                    onblur="
+                                        this.style.background='rgba(255,255,255,0.1)';
+                                        this.style.borderColor='rgba(72,61,139,0.2)';
+                                        this.style.boxShadow='0 8px 25px rgba(72,61,139,0.1), inset 0 1px 0 rgba(255,255,255,0.1)';
+                                        this.style.transform='translateY(0)';
+                                    "
+                                    required
+                                />
+                            </div>
+                            
+                            <button 
+                                type="submit" 
+                                class="threshold-enter-btn"
+                                style="
+                                    width: 100%;
+                                    padding: 1.25rem 2rem;
+                                    background: linear-gradient(135deg, 
+                                        var(--deep-indigo) 0%, 
+                                        var(--soft-rose-quartz) 50%, 
+                                        var(--shimmering-gold) 100%);
+                                    border: none;
+                                    border-radius: 16px;
+                                    font-family: 'Inter', sans-serif;
+                                    font-size: 1.1rem;
+                                    font-weight: 600;
+                                    letter-spacing: 0.5px;
+                                    color: var(--warm-off-white);
+                                    cursor: pointer;
+                                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                                    position: relative;
+                                    overflow: hidden;
+                                    text-transform: uppercase;
+                                    box-shadow: 
+                                        0 8px 25px rgba(72, 61, 139, 0.3),
+                                        0 0 20px rgba(212, 175, 55, 0.1),
+                                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                                    ${state.isLoading ? 'opacity: 0.75; cursor: not-allowed;' : ''}
+                                "
+                                onmouseover="
+                                    if (!this.disabled) {
+                                        this.style.transform='translateY(-3px) scale(1.02)';
+                                        this.style.boxShadow='0 15px 35px rgba(72,61,139,0.4), 0 0 30px rgba(212,175,55,0.2), inset 0 1px 0 rgba(255,255,255,0.3)';
+                                    }
+                                "
+                                onmouseout="
+                                    if (!this.disabled) {
+                                        this.style.transform='translateY(0) scale(1)';
+                                        this.style.boxShadow='0 8px 25px rgba(72,61,139,0.3), 0 0 20px rgba(212,175,55,0.1), inset 0 1px 0 rgba(255,255,255,0.2)';
+                                    }
+                                "
+                                ${state.isLoading ? 'disabled' : ''}
+                            >
+                                ${state.isLoading ? 
+                                    '<div style="display: inline-flex; align-items: center; gap: 0.75rem;"><div class="sacred-loader"></div>Entering Sanctuary...</div>' : 
+                                    'Enter Sanctuary'
+                                }
+                            </button>
+                            
+                            ${state.authError ? `
+                                <p style="
+                                    color: var(--soft-rose-quartz);
+                                    font-size: 0.9rem;
+                                    text-align: center;
+                                    margin-top: 1rem;
+                                    padding: 0.75rem;
+                                    background: rgba(182, 149, 192, 0.1);
+                                    border: 1px solid rgba(182, 149, 192, 0.2);
+                                    border-radius: 8px;
+                                    backdrop-filter: blur(10px);
+                                ">${state.authError}</p>
+                            ` : ''}
+                        </form>
+                        
+                        <div style="
+                            text-align: center;
+                            margin-top: 2rem;
+                            opacity: 0;
+                            animation: linkEntrance 1s ease-out 3.5s both;
+                        ">
+                            <p style="
+                                font-family: 'Inter', sans-serif;
+                                color: rgba(255, 255, 255, 0.7);
+                                font-size: 0.95rem;
+                            ">New here? 
+                                <a href="#" id="go-to-register" style="
+                                    color: var(--shimmering-gold);
+                                    font-weight: 600;
+                                    text-decoration: none;
+                                    transition: all 0.3s ease;
+                                    text-shadow: 0 1px 3px rgba(212, 175, 55, 0.3);
+                                " onmouseover="this.style.textShadow='0 2px 8px rgba(212,175,55,0.6)'" onmouseout="this.style.textShadow='0 1px 3px rgba(212,175,55,0.3)'">Begin your journey</a>
+                            </p>
+                        </div>
+                    </div>
+                    
                 </div>
             `;
         }
@@ -1485,139 +2243,320 @@
             switch(currentStep) {
                 case 'weaver-welcome':
                     return `
-                        <div class="cosmic-background"></div>
-                        <div class="particles" id="particles-container"></div>
-                        <div class="onboarding-container">
-                            <div class="kairos-card p-12 rounded-xl max-w-2xl w-full text-center">
-                                <div class="weaver-text" style="animation-delay: 0.5s;">
-                                    <div class="mb-8">
-                                        <div class="w-24 h-24 mx-auto mb-6" style="
-                                            background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
-                                            border-radius: 50%;
-                                            display: flex;
-                                            align-items: center;
-                                            justify-content: center;
-                                            box-shadow: 0 0 30px rgba(72, 61, 139, 0.5);
-                                        ">
-                                            <i class="fas fa-sparkles  text-2xl"></i>
-                                        </div>
-                                        <h1 class="heading-serif text-4xl font-bold mb-4" style="
-                                            background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
-                                            -webkit-background-clip: text;
-                                            -webkit-text-fill-color: transparent;
-                                        ">Welcome, Soul Traveler</h1>
-                                    </div>
-                                    
-                                    <div class="body-sans space-y-6 text-lg text-gray-700 leading-relaxed">
-                                        <p class="typing-text" id="weaver-text-1" style="animation-delay: 1s;">I am <span class="weaver-voice">The Weaver</span>, your guide in this luminous tapestry of self-discovery.</p>
-                                        <p class="weaver-text" style="animation-delay: 3s;">Together, we will chart the territories of your inner cosmos,</p>
-                                        <p class="weaver-text" style="animation-delay: 4s;">weaving threads of awareness into a map of your authentic self.</p>
-                                        <p class="weaver-text" style="animation-delay: 5s;">This journey begins not with questions, but with presence.</p>
-                                    </div>
-                                    
-                                    <button id="begin-weaving" class="kairos-btn kairos-btn-primary px-8 py-4 rounded-lg text-xl font-semibold mt-12" style="animation-delay: 6s; opacity: 0; animation: weaverReveal 1s ease-out 6s forwards;">
-                                        Begin the Weaving
-                                    </button>
+                        <!-- The Descent Background - Sacred Onboarding -->
+                        <div class="descent-background"></div>
+                        <div class="descent-particles" id="descent-particles-container"></div>
+                        
+                        <div class="threshold-container" style="
+                            min-height: 100vh;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            padding: 2rem;
+                            position: relative;
+                        ">
+                            
+                            <!-- Sacred Weaver Presence Icon -->
+                            <div class="weaver-presence" style="
+                                text-align: center;
+                                margin-bottom: 3rem;
+                                animation: logoEntrance 2s ease-out 0.5s both;
+                            ">
+                                <div style="
+                                    width: 120px;
+                                    height: 120px;
+                                    margin: 0 auto 2rem;
+                                    border-radius: 50%;
+                                    background: radial-gradient(circle at 30% 30%, 
+                                        rgba(212, 175, 55, 0.9) 0%, 
+                                        rgba(72, 61, 139, 0.7) 40%, 
+                                        rgba(72, 61, 139, 0.5) 100%);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    animation: logoBreathing 4s ease-in-out infinite;
+                                    box-shadow: 
+                                        0 0 40px rgba(212, 175, 55, 0.4),
+                                        0 0 80px rgba(72, 61, 139, 0.2),
+                                        inset 0 0 20px rgba(255, 255, 255, 0.1);
+                                ">
+                                    <i class="fas fa-sparkles" style="
+                                        font-size: 2.5rem;
+                                        color: var(--warm-off-white);
+                                        text-shadow: 0 2px 8px rgba(212, 175, 55, 0.5);
+                                    "></i>
                                 </div>
+                                
+                                <h1 style="
+                                    font-family: 'Playfair Display', serif;
+                                    font-size: 3.5rem;
+                                    font-weight: 600;
+                                    background: linear-gradient(135deg, 
+                                        var(--shimmering-gold) 0%, 
+                                        var(--soft-rose-quartz) 50%, 
+                                        var(--deep-indigo) 100%);
+                                    -webkit-background-clip: text;
+                                    -webkit-text-fill-color: transparent;
+                                    text-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
+                                    filter: drop-shadow(0 2px 6px rgba(182, 149, 192, 0.3));
+                                    margin-bottom: 1rem;
+                                ">Welcome, Soul Traveler</h1>
                             </div>
+                            
+                            <!-- Sacred Dialogue -->
+                            <div class="weaver-dialogue" style="
+                                max-width: 600px;
+                                text-align: center;
+                                opacity: 0;
+                                animation: formEntrance 1.5s ease-out 2.5s both;
+                            ">
+                                <div style="
+                                    background: rgba(255, 255, 255, 0.05);
+                                    backdrop-filter: blur(20px);
+                                    border: 1px solid rgba(72, 61, 139, 0.2);
+                                    border-radius: 20px;
+                                    padding: 3rem 2.5rem;
+                                    margin-bottom: 3rem;
+                                ">
+                                    <p style="
+                                        font-family: 'Crimson Text', serif;
+                                        font-size: 1.3rem;
+                                        font-style: italic;
+                                        color: var(--warm-off-white);
+                                        line-height: 1.6;
+                                        margin-bottom: 1.5rem;
+                                        opacity: 0;
+                                        animation: weaverReveal 2s ease-out 3.5s both;
+                                    ">I am <span style="color: var(--shimmering-gold); font-weight: 600;">The Weaver</span>, your guide in this luminous tapestry of self-discovery.</p>
+                                    
+                                    <p style="
+                                        font-family: 'Inter', sans-serif;
+                                        font-size: 1.1rem;
+                                        color: rgba(255, 255, 255, 0.8);
+                                        line-height: 1.7;
+                                        margin-bottom: 1rem;
+                                        opacity: 0;
+                                        animation: weaverReveal 1.8s ease-out 5s both;
+                                    ">Together, we will chart the territories of your inner cosmos,</p>
+                                    
+                                    <p style="
+                                        font-family: 'Inter', sans-serif;
+                                        font-size: 1.1rem;
+                                        color: rgba(255, 255, 255, 0.8);
+                                        line-height: 1.7;
+                                        margin-bottom: 1rem;
+                                        opacity: 0;
+                                        animation: weaverReveal 1.8s ease-out 6.5s both;
+                                    ">weaving threads of awareness into a map of your authentic self.</p>
+                                    
+                                    <p style="
+                                        font-family: 'Inter', sans-serif;
+                                        font-size: 1.1rem;
+                                        color: rgba(255, 255, 255, 0.9);
+                                        line-height: 1.7;
+                                        font-weight: 500;
+                                        opacity: 0;
+                                        animation: weaverReveal 1.8s ease-out 8s both;
+                                    ">This journey begins not with questions, but with presence.</p>
+                                </div>
+                                
+                                <button 
+                                    id="begin-weaving" 
+                                    style="
+                                        background: linear-gradient(135deg, 
+                                            var(--shimmering-gold) 0%, 
+                                            var(--soft-rose-quartz) 50%, 
+                                            var(--deep-indigo) 100%);
+                                        border: none;
+                                        border-radius: 16px;
+                                        padding: 1.25rem 3rem;
+                                        font-family: 'Inter', sans-serif;
+                                        font-size: 1.2rem;
+                                        font-weight: 600;
+                                        letter-spacing: 0.5px;
+                                        color: var(--warm-off-white);
+                                        cursor: pointer;
+                                        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                                        text-transform: uppercase;
+                                        box-shadow: 
+                                            0 8px 25px rgba(212, 175, 55, 0.3),
+                                            0 0 20px rgba(72, 61, 139, 0.2),
+                                            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                                        opacity: 0;
+                                        animation: weaverReveal 1.5s ease-out 9.5s both;
+                                    "
+                                    onmouseover="
+                                        this.style.transform='translateY(-3px) scale(1.02)';
+                                        this.style.boxShadow='0 15px 35px rgba(212,175,55,0.4), 0 0 30px rgba(72,61,139,0.3), inset 0 1px 0 rgba(255,255,255,0.3)';
+                                    "
+                                    onmouseout="
+                                        this.style.transform='translateY(0) scale(1)';
+                                        this.style.boxShadow='0 8px 25px rgba(212,175,55,0.3), 0 0 20px rgba(72,61,139,0.2), inset 0 1px 0 rgba(255,255,255,0.2)';
+                                    "
+                                >
+                                    Begin the Weaving
+                                </button>
+                            </div>
+                            
                         </div>
                     `;
                     
                 case 'energy-check':
                     return `
-                        <div class="cosmic-background"></div>
-                        <div class="particles" id="particles-container"></div>
-                        <div class="onboarding-container">
-                            <div class="kairos-card p-10 rounded-xl max-w-4xl w-full text-center">
-                                <div class="weaver-text">
-                                    <h2 class="text-3xl font-bold mb-6" style="
-                                        background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
-                                        -webkit-background-clip: text;
-                                        -webkit-text-fill-color: transparent;
-                                    ">What energy do you bring with you today?</h2>
+                        <!-- The Descent Background -->
+                        <div class="descent-background"></div>
+                        <div class="descent-particles" id="descent-particles-container"></div>
+                        
+                        <div class="threshold-container" style="
+                            min-height: 100vh;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            padding: 2rem;
+                            text-align: center;
+                        ">
+                            
+                            <!-- Sacred Question -->
+                            <div style="
+                                margin-bottom: 4rem;
+                                animation: logoEntrance 2s ease-out 0.5s both;
+                            ">
+                                <h2 style="
+                                    font-family: 'Playfair Display', serif;
+                                    font-size: 3rem;
+                                    font-weight: 600;
+                                    margin-bottom: 2rem;
+                                    background: linear-gradient(135deg, 
+                                        var(--shimmering-gold) 0%, 
+                                        var(--soft-rose-quartz) 50%, 
+                                        var(--deep-indigo) 100%);
+                                    -webkit-background-clip: text;
+                                    -webkit-text-fill-color: transparent;
+                                    text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+                                    filter: drop-shadow(0 2px 6px rgba(182, 149, 192, 0.3));
+                                    line-height: 1.2;
+                                ">What energy do you bring with you today?</h2>
+                                
+                                <p style="
+                                    font-family: 'Inter', sans-serif;
+                                    font-size: 1.2rem;
+                                    color: rgba(255, 255, 255, 0.8);
+                                    max-width: 600px;
+                                    margin: 0 auto;
+                                    line-height: 1.6;
+                                    opacity: 0;
+                                    animation: formEntrance 1.5s ease-out 2s both;
+                                ">Before we begin weaving your tapestry, let us attune to the luminous frequency you carry in this moment.</p>
+                            </div>
                                     
-                                    <p class="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
-                                        Before we begin weaving your tapestry, let us attune to the luminous frequency you carry in this moment.
-                                    </p>
-                                    
-                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-                                        <div class="energy-bubble" data-energy="curious">
-                                            <div class="text-center">
-                                                <i class="fas fa-eye text-3xl mb-2" style="color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);"></i>
-                                                <p class="text-sm font-medium">Curious</p>
-                                            </div>
-                                        </div>
-                                        <div class="energy-bubble" data-energy="peaceful">
-                                            <div class="text-center">
-                                                <i class="fas fa-spa text-3xl mb-2" style="color: #90EE90; text-shadow: 0 0 10px rgba(144, 238, 144, 0.5);"></i>
-                                                <p class="text-sm font-medium">Peaceful</p>
-                                            </div>
-                                        </div>
-                                        <div class="energy-bubble" data-energy="excited">
-                                            <div class="text-center">
-                                                <i class="fas fa-star text-3xl mb-2" style="color: #FF6347; text-shadow: 0 0 10px rgba(255, 99, 71, 0.5);"></i>
-                                                <p class="text-sm font-medium ">Excited</p>
-                                            </div>
-                                        </div>
-                                        <div class="energy-bubble" data-energy="reflective">
-                                            <div class="text-center">
-                                                <i class="fas fa-moon text-3xl mb-2" style="color: #87CEEB; text-shadow: 0 0 10px rgba(135, 206, 235, 0.5);"></i>
-                                                <p class="text-sm font-medium ">Reflective</p>
-                                            </div>
-                                        </div>
-                                        <div class="energy-bubble" data-energy="uncertain">
-                                            <div class="text-center">
-                                                <i class="fas fa-question-circle text-3xl mb-2" style="color: #D3D3D3; text-shadow: 0 0 10px rgba(211, 211, 211, 0.5);"></i>
-                                                <p class="text-sm font-medium ">Uncertain</p>
-                                            </div>
-                                        </div>
-                                        <div class="energy-bubble" data-energy="hopeful">
-                                            <div class="text-center">
-                                                <i class="fas fa-seedling text-3xl mb-2" style="color: #FFB6C1; text-shadow: 0 0 10px rgba(255, 182, 193, 0.5);"></i>
-                                                <p class="text-sm font-medium ">Hopeful</p>
-                                            </div>
-                                        </div>
-                                        <div class="energy-bubble" data-energy="tired">
-                                            <div class="text-center">
-                                                <i class="fas fa-battery-quarter text-3xl mb-2" style="color: #DDA0DD; text-shadow: 0 0 10px rgba(221, 160, 221, 0.5);"></i>
-                                                <p class="text-sm font-medium ">Tired</p>
-                                            </div>
-                                        </div>
-                                        <div class="energy-bubble" data-energy="open">
-                                            <div class="text-center">
-                                                <i class="fas fa-heart-circle text-3xl mb-2" style="color: #FA8072; text-shadow: 0 0 10px rgba(250, 128, 114, 0.5);"></i>
-                                                <p class="text-sm font-medium ">Open</p>
-                                            </div>
-                                        </div>
+                            <!-- Sacred Energy Bubbles -->
+                            <div style="
+                                display: grid;
+                                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                                gap: 2rem;
+                                max-width: 800px;
+                                width: 100%;
+                                margin-bottom: 4rem;
+                                opacity: 0;
+                                animation: formEntrance 1.8s ease-out 3.5s both;
+                            ">
+                                <div class="energy-bubble" data-energy="curious">
+                                    <i class="fas fa-eye" style="color: var(--shimmering-gold);"></i>
+                                    <p>Curious</p>
+                                </div>
+                                <div class="energy-bubble" data-energy="peaceful">
+                                    <i class="fas fa-spa" style="color: var(--sage-mist);"></i>
+                                    <p>Peaceful</p>
+                                </div>
+                                <div class="energy-bubble" data-energy="excited">
+                                    <i class="fas fa-star" style="color: var(--soft-rose-quartz);"></i>
+                                    <p>Excited</p>
+                                </div>
+                                <div class="energy-bubble" data-energy="reflective">
+                                    <i class="fas fa-moon" style="color: var(--deep-indigo);"></i>
+                                    <p>Reflective</p>
+                                </div>
+                                <div class="energy-bubble" data-energy="uncertain">
+                                    <i class="fas fa-question-circle" style="color: var(--ethereal-lavender);"></i>
+                                    <p>Uncertain</p>
+                                </div>
+                                <div class="energy-bubble" data-energy="hopeful">
+                                    <i class="fas fa-seedling" style="color: var(--sage-mist);"></i>
+                                    <p>Hopeful</p>
+                                </div>
+                                <div class="energy-bubble" data-energy="tired">
+                                    <i class="fas fa-battery-quarter" style="color: var(--muted-stone-gray);"></i>
+                                    <p>Tired</p>
+                                </div>
+                                <div class="energy-bubble" data-energy="open">
+                                    <i class="fas fa-heart" style="color: var(--soft-rose-quartz);"></i>
+                                    <p>Open</p>
+                                </div>
                                     </div>
                                     
-                                    <button id="continue-energy" class="kairos-btn kairos-btn-primary px-8 py-3 rounded-lg font-semibold opacity-50" disabled>
-                                        Beautiful. Let us continue.
-                                    </button>
-                                </div>
-                            </div>
+                            
+                            <!-- Sacred Continue Button -->
+                            <button 
+                                id="continue-energy" 
+                                style="
+                                    background: linear-gradient(135deg, 
+                                        var(--deep-indigo) 0%, 
+                                        var(--soft-rose-quartz) 50%, 
+                                        var(--shimmering-gold) 100%);
+                                    border: none;
+                                    border-radius: 16px;
+                                    padding: 1.25rem 3rem;
+                                    font-family: 'Inter', sans-serif;
+                                    font-size: 1.1rem;
+                                    font-weight: 600;
+                                    letter-spacing: 0.5px;
+                                    color: var(--warm-off-white);
+                                    cursor: pointer;
+                                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                                    text-transform: uppercase;
+                                    opacity: 0.5;
+                                    box-shadow: 
+                                        0 8px 25px rgba(72, 61, 139, 0.2),
+                                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                                    pointer-events: none;
+                                "
+                                disabled
+                            >
+                                Beautiful. Let us continue.
+                            </button>
+                            
                         </div>
                     `;
                     
                 case 'wearables-connect':
                     return `
-                        <div class="cosmic-background"></div>
-                        <div class="particles" id="particles-container"></div>
-                        <div class="onboarding-container">
+                        <div class="descent-background"></div>
+                        <div class="descent-particles" id="descent-particles-container"></div>
+                        <div class="threshold-container" style="
+                            min-height: 100vh;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            padding: 2rem;
+                            position: relative;
+                        ">
                             <div class="kairos-card p-10 rounded-xl max-w-3xl w-full text-center">
-                                <div class="weaver-text">
+                                <div class="weaver-text" style="animation-delay: 0.5s;">
                                     <h2 class="text-3xl font-bold mb-6" style="
                                         background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
                                         -webkit-background-clip: text;
                                         -webkit-text-fill-color: transparent;
                                     ">Connecting to Your Body's Wisdom</h2>
                                     
-                                    <p class="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+                                    <p class="text-lg text-gray-600 mb-8 max-w-2xl mx-auto" style="animation-delay: 1s; opacity: 0; animation: weaverReveal 1s ease-out 1s forwards;">
                                         Your body holds profound intelligence. Let us weave in its voice through your wearable companions.
                                     </p>
                                     
-                                    <div class="grid md:grid-cols-3 gap-6 mb-8">
-                                        <div class="p-6 rounded-lg bg-gradient-to-br from-purple-100 to-indigo-100 hover:from-purple-200 hover:to-indigo-200 transition-all duration-300 cursor-pointer" id="connect-apple">
+                                    <div class="grid md:grid-cols-3 gap-6 mb-8" style="animation-delay: 2s; opacity: 0; animation: weaverReveal 1s ease-out 2s forwards;">
+                                        <div class="p-6 rounded-lg bg-gradient-to-br from-indigo-100 to-blue-100 hover:from-indigo-200 hover:to-blue-200 transition-all duration-300 cursor-pointer" id="connect-apple">
                                             <i class="fab fa-apple text-4xl text-gray-800 mb-4"></i>
                                             <h3 class="font-semibold text-gray-800 mb-2">Apple Health</h3>
                                             <p class="text-sm text-gray-600">Heart rate, sleep, activity</p>
@@ -1638,7 +2577,7 @@
                                         Don't worry - you can always connect these later in your sanctuary.
                                     </p>
                                     
-                                    <div class="flex justify-center gap-4">
+                                    <div class="flex justify-center gap-4" style="animation-delay: 3s; opacity: 0; animation: weaverReveal 1s ease-out 3s forwards;">
                                         <button id="skip-wearables" class="kairos-btn bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300">
                                             Continue Without Devices
                                         </button>
@@ -1665,42 +2604,165 @@
 
         function RegisterPage() {
             return `
-                <div class="cosmic-background"></div>
+                <!-- The Descent Background - Living Inner Cosmos -->
+                <div class="descent-background"></div>
                 <div class="particles" id="particles-container"></div>
-                <div class="min-h-screen flex items-center justify-center p-4 relative">
-                    <div class="kairos-card p-8 rounded-xl max-w-md w-full fade-in">
-                        <h1 class="text-4xl font-bold text-center mb-2" style="
-                            background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
+                
+                <div class="threshold-container" style="
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2rem;
+                    position: relative;
+                ">
+                    
+                    <!-- Breathing Kairos Logo -->
+                    <div class="logo-container" style="
+                        text-align: center;
+                        margin-bottom: 3rem;
+                        animation: logoEntrance 2s ease-out 0.5s both;
+                    ">
+                        <h1 style="
+                            font-family: 'Playfair Display', serif;
+                            font-size: 4rem;
+                            font-weight: 600;
+                            margin-bottom: 1rem;
+                            background: linear-gradient(135deg, 
+                                var(--deep-indigo) 0%, 
+                                var(--soft-rose-quartz) 50%, 
+                                var(--shimmering-gold) 100%);
                             -webkit-background-clip: text;
                             -webkit-text-fill-color: transparent;
-                            background-clip: text;
-                            text-shadow: 0 0 30px rgba(72, 61, 139, 0.5);
-                            filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
-                        ">Begin Your Journey</h1>
-                        <p class="text-center mb-8" style="
-                            color: #6366F1;
-                            text-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
-                            font-weight: 500;
-                        ">Create your Kairos account.</p>
-                        <form id="register-form">
-                            <div class="mb-4">
-                                <label for="email" class="block text-gray-700 mb-2 font-medium">Email</label>
-                                <input type="email" id="email" class="w-full px-4 py-3 bg-white/70 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent backdrop-blur-sm transition-all duration-300" style="box-shadow: 0 0 10px rgba(138, 43, 226, 0.1);" required>
+                            text-shadow: 0 0 40px rgba(72, 61, 139, 0.6);
+                            filter: drop-shadow(0 2px 8px rgba(212, 175, 55, 0.3));
+                            animation: logoBreathing 4s ease-in-out infinite;
+                        ">Kairos</h1>
+                        
+                        <p style="
+                            font-family: 'Playfair Display', serif;
+                            font-size: 1.25rem;
+                            font-weight: 400;
+                            color: var(--warm-off-white);
+                            opacity: 0.9;
+                            letter-spacing: 1px;
+                            text-shadow: 0 1px 3px rgba(72, 61, 139, 0.3);
+                        ">Begin your journey</p>
+                    </div>
+                    
+                    <!-- Sacred Registration Form -->
+                    <div class="threshold-form" style="
+                        width: 100%;
+                        max-width: 400px;
+                        opacity: 0;
+                        animation: formEntrance 1.5s ease-out 2.5s both;
+                    ">
+                        <form id="register-form" style="
+                            display: flex;
+                            flex-direction: column;
+                            gap: 2rem;
+                        ">
+                            <div class="input-sanctuary">
+                                <input 
+                                    type="email" 
+                                    id="email" 
+                                    name="email" 
+                                    placeholder="Email address"
+                                    class="kairos-input"
+                                    required
+                                >
                             </div>
-                            <div class="mb-4">
-                                <label for="password" class="block text-gray-700 mb-2 font-medium">Password</label>
-                                <input type="password" id="password" class="w-full px-4 py-3 bg-white/70 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent backdrop-blur-sm transition-all duration-300" style="box-shadow: 0 0 10px rgba(138, 43, 226, 0.1);" required>
+                            
+                            <div class="input-sanctuary">
+                                <input 
+                                    type="password" 
+                                    id="password" 
+                                    name="password" 
+                                    placeholder="Create password"
+                                    class="kairos-input"
+                                    required
+                                >
                             </div>
-                            <div class="mb-6">
-                                <label for="confirm-password" class="block text-gray-700 mb-2 font-medium">Confirm Password</label>
-                                <input type="password" id="confirm-password" class="w-full px-4 py-3 bg-white/70 border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent backdrop-blur-sm transition-all duration-300" style="box-shadow: 0 0 10px rgba(138, 43, 226, 0.1);" required>
+                            
+                            <div class="input-sanctuary">
+                                <input 
+                                    type="password" 
+                                    id="confirm-password" 
+                                    name="confirm-password" 
+                                    placeholder="Confirm password"
+                                    class="kairos-input"
+                                    required
+                                >
                             </div>
-                            <button type="submit" class="w-full kairos-btn kairos-btn-primary py-3 rounded-lg font-semibold ${state.isLoading ? 'opacity-75 cursor-not-allowed' : ''}" ${state.isLoading ? 'disabled' : ''}>
-                                ${state.isLoading ? '<div class="loader inline-block mr-2" style="width:20px;height:20px;"></div>Creating Account...' : 'Create Account'}
+                            
+                            <button 
+                                type="submit" 
+                                class="threshold-btn"
+                                style="
+                                    background: linear-gradient(135deg, 
+                                        var(--shimmering-gold) 0%, 
+                                        var(--soft-rose-quartz) 50%, 
+                                        var(--deep-indigo) 100%);
+                                    border: none;
+                                    border-radius: 16px;
+                                    padding: 1.25rem 3rem;
+                                    font-family: 'Inter', sans-serif;
+                                    font-size: 1.1rem;
+                                    font-weight: 600;
+                                    letter-spacing: 0.5px;
+                                    color: var(--warm-off-white);
+                                    cursor: pointer;
+                                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                                    text-transform: uppercase;
+                                    box-shadow: 
+                                        0 8px 25px rgba(212, 175, 55, 0.3),
+                                        0 0 20px rgba(72, 61, 139, 0.2),
+                                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                                "
+                                ${state.isLoading ? 'disabled' : ''}
+                            >
+                                ${state.isLoading ? 
+                                    '<div style="display: inline-flex; align-items: center; gap: 0.75rem;"><div class="sacred-loader"></div>Creating Sanctuary...</div>' : 
+                                    'Create Your Sanctuary'
+                                }
                             </button>
-                            ${state.authError ? `<p class="text-red-500 text-sm mt-4 text-center">${state.authError}</p>` : ''}
+                            
+                            ${state.authError ? `
+                                <p style="
+                                    color: var(--soft-rose-quartz);
+                                    font-size: 0.9rem;
+                                    text-align: center;
+                                    margin-top: 1rem;
+                                    padding: 0.75rem;
+                                    background: rgba(182, 149, 192, 0.1);
+                                    border: 1px solid rgba(182, 149, 192, 0.2);
+                                    border-radius: 8px;
+                                    backdrop-filter: blur(10px);
+                                ">${state.authError}</p>
+                            ` : ''}
                         </form>
-                        <p class="text-center mt-6">Already have a sanctuary? <a href="#" id="go-to-login" class="text-indigo-600 font-semibold hover:underline">Enter here</a></p>
+                        
+                        <div style="
+                            text-align: center;
+                            margin-top: 2rem;
+                            opacity: 0;
+                            animation: linkEntrance 1s ease-out 3.5s both;
+                        ">
+                            <p style="
+                                font-family: 'Inter', sans-serif;
+                                color: rgba(255, 255, 255, 0.7);
+                                font-size: 0.95rem;
+                            ">Already have a sanctuary? 
+                                <a href="#" id="go-to-login" style="
+                                    color: var(--shimmering-gold);
+                                    font-weight: 600;
+                                    text-decoration: none;
+                                    transition: all 0.3s ease;
+                                    text-shadow: 0 1px 3px rgba(212, 175, 55, 0.3);
+                                " onmouseover="this.style.textShadow='0 2px 8px rgba(212,175,55,0.6)'" onmouseout="this.style.textShadow='0 1px 3px rgba(212,175,55,0.3)'">Enter here</a>
+                            </p>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1709,86 +2771,152 @@
         function DashboardPage() {
             const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
             
-            // Calculate presence level (mock for now, will use last entry data later)
-            const presenceLevel = entries.length > 0 ? 8 : 7;
-            const lastEntryTone = entries.length > 0 ? 'calm contemplation' : 'peaceful readiness';
+            // Analyze recent entries for presence level and emotional tone
+            const { presenceLevel, emotionalTone, hasGems, hasCompassion } = analyzeRecentEntries();
             
             const recentEntriesHtml = entries.slice(0, 3).map((entry, index) => `
-                <div class="bg-white/80 p-5 rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105 view-entry-btn fade-in" style="animation-delay: ${0.5 + index * 0.1}s" data-id="${entry.id}">
-                    <h3 class="font-semibold text-lg text-gray-800 truncate">${entry.title || 'Untitled Entry'}</h3>
-                    <p class="text-sm text-gray-500">${new Date(entry.date).toLocaleDateString()}</p>
-                    <p class="text-sm text-indigo-600 mt-2 font-medium">${entry.type || 'General'}</p>
+                <div class="p-4 rounded-lg border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-[1.02] view-entry-btn cursor-pointer" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px);" data-id="${entry.id}">
+                    <h4 class="font-semibold text-base truncate" style="color: var(--warm-off-white); font-family: 'Inter', sans-serif;">${entry.title || 'Untitled Entry'}</h4>
+                    <p class="text-sm mt-1" style="color: rgba(255, 255, 255, 0.6);">${new Date(entry.date).toLocaleDateString()}</p>
+                    <p class="text-sm mt-2 font-medium" style="color: var(--shimmering-gold);">${entry.type || 'General'}</p>
                 </div>
             `).join('');
 
             return `
-                <div class="cosmic-background"></div>
-                <div class="particles" id="particles-container"></div>
-                <div class="container mx-auto p-4 md:p-8 max-w-4xl">
-                    <header class="text-center mb-8">
-                        <div class="flex justify-between items-start mb-6">
-                            <div></div>
-                            <div class="text-center">
-                                <h1 class="heading-serif text-5xl font-bold fade-in" style="
-                                    animation-delay: 0.1s;
-                                    background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
-                                    -webkit-background-clip: text;
-                                    -webkit-text-fill-color: transparent;
-                                    background-clip: text;
-                                    text-shadow: 0 0 30px rgba(72, 61, 139, 0.5);
-                                    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
-                                ">The Sanctuary</h1>
-                                <p class="text-lg text-gray-600 mt-3 fade-in" style="animation-delay: 0.2s;">A space for presence and reflection</p>
-                            </div>
-                            <button id="logout-btn" class="kairos-btn bg-white/80 border text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-white transition-all">
-                                <i class="fas fa-sign-out-alt mr-2"></i>Leave
-                            </button>
-                        </div>
-                    </header>
+                <div class="descent-background"></div>
+                <div class="descent-particles" id="descent-particles-container"></div>
+                <div class="sanctuary-container" style="animation: containerBreathe 8s ease-in-out infinite;">
+                    <!-- Floating Logout -->
+                    <button id="logout-btn" class="floating-logout" style="
+                        position: absolute;
+                        top: 2rem;
+                        right: 2rem;
+                        background: rgba(255, 255, 255, 0.1);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        color: var(--warm-off-white);
+                        backdrop-filter: blur(10px);
+                        padding: 0.75rem 1.5rem;
+                        border-radius: 12px;
+                        font-family: 'Inter', sans-serif;
+                        font-weight: 500;
+                        transition: all 0.3s ease;
+                        z-index: 10;
+                    " onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Leave
+                    </button>
 
-                    <!-- The Presence Orb -->
-                    <div class="text-center mb-12 fade-in" style="animation-delay: 0.3s;">
-                        <div class="presence-orb" id="presence-orb">
-                            <div class="presence-orb-inner"></div>
-                        </div>
-                        <div class="presence-summary" id="presence-summary">
-                            <p class="text-sm text-gray-600 mb-2">Your Current Presence</p>
-                            <p class="text-gray-800">Your last entry reflected a sense of <strong>${lastEntryTone}</strong>.</p>
-                            <p class="text-gray-800">You rated your presence as <strong>${presenceLevel}/10</strong>.</p>
+                    <!-- Gentle Welcome -->
+                    <div class="welcome-section fade-in" style="
+                        text-align: center;
+                        margin: 4rem auto 6rem;
+                        animation-delay: 0.2s;
+                    ">
+                        <h1 style="
+                            font-family: 'Playfair Display', serif;
+                            font-size: 2.5rem;
+                            font-weight: 400;
+                            color: var(--warm-off-white);
+                            opacity: 0.9;
+                            margin-bottom: 1rem;
+                            text-shadow: 0 2px 8px rgba(72, 61, 139, 0.3);
+                        ">Welcome back${auth.currentUser?.displayName ? ', ' + auth.currentUser.displayName.split(' ')[0] : ''}</h1>
+                        <p style="
+                            font-family: 'Inter', sans-serif;
+                            font-size: 1.1rem;
+                            color: rgba(255, 255, 255, 0.7);
+                            margin: 0;
+                        ">Enter your sanctuary of presence and reflection</p>
+                    </div>
+
+                    <!-- The Central Presence Orb -->
+                    <div class="orb-section fade-in" style="
+                        display: flex;
+                        justify-content: center;
+                        margin: 8rem auto 12rem;
+                        animation-delay: 0.4s;
+                    ">
+                        <div class="presence-orb" id="presence-orb" onclick="showPresenceModal()">
+                            <div class="presence-orb-core">
+                                <!-- Swirling Light Layers -->
+                                <div class="orb-layer orb-swirl-layer"></div>
+                                <div class="orb-layer orb-depth-layer"></div>
+                                
+                                <!-- Emotional Thread Container -->
+                                <div class="emotional-threads-container" id="emotional-threads"></div>
+                                
+                                <!-- Particle System -->
+                                <div class="presence-orb-particles" id="orb-particles"></div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- The Primary Invitation: Journaling Prompt -->
-                    <div class="mb-12 fade-in" style="animation-delay: 0.5s;">
+                    <div class="invitation-section fade-in" style="
+                        max-width: 600px;
+                        margin: 0 auto 8rem;
+                        padding: 0 2rem;
+                        animation-delay: 0.6s;
+                    ">
                         <div class="journaling-prompt-card" id="primary-prompt">
                             <div class="text-center">
-                                <h2 class="heading-serif text-2xl font-semibold text-gray-800 mb-4">Today's Invitation</h2>
-                                <p class="text-lg text-gray-700 mb-6 italic">"${randomQuote}"</p>
-                                <button id="start-new-entry-btn" class="kairos-btn kairos-btn-primary px-8 py-3 rounded-lg text-lg font-semibold">
-                                    <i class="fas fa-pen-fancy mr-2"></i>Begin Reflection
-                                </button>
+                                <h2 class="heading-serif text-2xl font-semibold mb-4" style="color: var(--warm-off-white); text-shadow: 0 2px 8px rgba(72, 61, 139, 0.3);">Today's Invitation</h2>
+                                <p class="text-lg mb-6 italic" style="color: rgba(255, 255, 255, 0.9); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);">"${randomQuote}"</p>
+                                
+                                <!-- Dual Path Options -->
+                                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                                    <button id="quick-reflect-btn" class="kairos-btn kairos-btn-primary px-6 py-3 rounded-lg text-lg font-semibold" style="
+                                        background: linear-gradient(135deg, 
+                                            var(--shimmering-gold) 0%, 
+                                            var(--soft-rose-quartz) 50%, 
+                                            var(--deep-indigo) 100%);
+                                        border: none;
+                                        min-width: 200px;
+                                    ">
+                                        <i class="fas fa-feather mr-2"></i>Quick Reflection
+                                    </button>
+                                    
+                                    <span style="color: rgba(255, 255, 255, 0.6); font-family: 'Inter', sans-serif; font-size: 0.9rem;">or</span>
+                                    
+                                    <button id="start-new-entry-btn" class="kairos-btn border px-6 py-3 rounded-lg text-lg font-semibold" style="
+                                        background: rgba(255, 255, 255, 0.1);
+                                        border-color: rgba(255, 255, 255, 0.3);
+                                        color: var(--warm-off-white);
+                                        backdrop-filter: blur(15px);
+                                        min-width: 200px;
+                                        transition: all 0.3s ease;
+                                    " onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                                        <i class="fas fa-compass mr-2"></i>Guided Journey
+                                    </button>
+                                </div>
+                                
+                                <p class="text-sm mt-4" style="color: rgba(255, 255, 255, 0.6); font-family: 'Inter', sans-serif; max-width: 400px; margin: 1rem auto 0;">
+                                    Start with a quick reflection or dive deep with our guided experience
+                                </p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Secondary Actions - Minimized -->
-                    <div class="flex justify-center gap-4 mb-8 fade-in" style="animation-delay: 0.6s;">
-                        <button id="go-to-synthesis-btn" class="kairos-btn bg-white/60 border text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-white/80 transition-all text-sm">
+                    <!-- Floating Secondary Actions -->
+                    <div class="secondary-actions fade-in" style="
+                        display: flex;
+                        justify-content: center;
+                        gap: 2rem;
+                        margin-bottom: 6rem;
+                        animation-delay: 0.8s;
+                        flex-wrap: wrap;
+                        padding: 0 2rem;
+                    ">
+                        <button id="go-to-synthesis-btn" class="kairos-btn border px-6 py-3 rounded-lg font-medium transition-all" style="background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15); color: var(--warm-off-white); backdrop-filter: blur(15px); font-family: 'Inter', sans-serif;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
                             <i class="fas fa-project-diagram mr-2"></i>Synthesis
                         </button>
-                        <button id="go-to-advisor-btn" class="kairos-btn bg-white/60 border text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-white/80 transition-all text-sm">
+                        <button id="go-to-advisor-btn" class="kairos-btn border px-6 py-3 rounded-lg font-medium transition-all" style="background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15); color: var(--warm-off-white); backdrop-filter: blur(15px); font-family: 'Inter', sans-serif;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
                             <i class="fas fa-user-graduate mr-2"></i>Advisor
                         </button>
-                        <button id="retake-onboarding-btn" class="kairos-btn bg-white/60 border text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-white/80 transition-all text-sm" title="Retake the archetype discovery">
-                            <i class="fas fa-redo-alt mr-2"></i>Onboarding
-                        </button>
-                        ${entries.length > 0 ? `<button id="view-entries-btn" class="kairos-btn bg-white/60 border text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-white/80 transition-all text-sm">
+                        ${entries.length > 0 ? `<button id="view-entries-btn" class="kairos-btn border px-6 py-3 rounded-lg font-medium transition-all" style="background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15); color: var(--warm-off-white); backdrop-filter: blur(15px); font-family: 'Inter', sans-serif;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
                             <i class="fas fa-book-open mr-2"></i>Recent Entries
                         </button>` : ''}
                     </div>
 
-                    </div>
-                    
                 </div>
             `;
         }
@@ -1873,7 +3001,7 @@
                 if (content.guidance) {
                     advisorContentHtml = `
                         <div class="kairos-card p-6 rounded-xl shadow-lg text-center">
-                            <h2 class="text-2xl font-bold mb-4 text-indigo-800">A Path to Deeper Insight</h2>
+                            <h2 class="text-2xl font-bold mb-4" style="color: var(--deep-indigo);">A Path to Deeper Insight</h2>
                             <p class="text-lg text-gray-700">${content.guidance}</p>
                             <button id="start-guided-entry-btn" class="kairos-btn kairos-btn-primary mt-6 px-6 py-2 rounded-lg font-semibold">Begin a New Entry</button>
                         </div>
@@ -1883,12 +3011,12 @@
                         <div class="space-y-8">
                             <!-- Compassionate Truth -->
                             <div class="kairos-card p-6 rounded-xl shadow-lg">
-                                <h2 class="text-2xl font-bold mb-4 text-indigo-800">The Compassionate Truth</h2>
+                                <h2 class="text-2xl font-bold mb-4" style="color: var(--deep-indigo);">The Compassionate Truth</h2>
                                 <p class="text-lg text-gray-700">${content.truth}</p>
                             </div>
                             <!-- Integration Plan -->
                             <div class="kairos-card p-6 rounded-xl shadow-lg">
-                                <h2 class="text-2xl font-bold mb-4 text-indigo-800">The Integration Plan</h2>
+                                <h2 class="text-2xl font-bold mb-4" style="color: var(--deep-indigo);">The Integration Plan</h2>
                                 <div class="grid md:grid-cols-2 gap-6">
                                     <div>
                                         <h3 class="font-semibold text-xl mb-2"><i class="fas fa-leaf mr-2 text-green-600"></i>Inner Work</h3>
@@ -1926,14 +3054,448 @@
 
 
         function SomaticCheckPage1() { 
-            return `<div class="min-h-screen flex flex-col items-center justify-center text-center p-4 fade-in"><h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Before we begin, let's connect with your body.</h1><p class="text-lg md:text-xl text-gray-600 mb-12 max-w-2xl">Right now, without needing to change anything, would you say your inner state feels more activated or more settled?</p><div class="grid md:grid-cols-2 gap-8 w-full max-w-4xl"><div class="somatic-option kairos-card p-8 rounded-xl shadow-lg" data-state="activated"><i class="fas fa-bolt text-5xl text-yellow-500 mb-4"></i><h2 class="text-2xl font-semibold mb-2">Activated</h2><p class="text-gray-600">Restless, tense, racing thoughts, energized.</p></div><div class="somatic-option kairos-card p-8 rounded-xl shadow-lg" data-state="settled"><i class="fas fa-feather-alt text-5xl text-blue-500 mb-4"></i><h2 class="text-2xl font-semibold mb-2">Settled</h2><p class="text-gray-600">Grounded, calm, relaxed, at ease.</p></div></div></div>`;
+            return `
+                <div class="descent-background"></div>
+                <div class="descent-particles" id="descent-particles-container"></div>
+                
+                <div class="threshold-container" style="
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2rem;
+                    position: relative;
+                ">
+                    <div class="kairos-card p-12 rounded-xl max-w-4xl w-full text-center">
+                        <div class="weaver-text" style="animation-delay: 0.5s;">
+                            <h1 style="
+                                font-family: 'Playfair Display', serif;
+                                font-size: 3rem;
+                                font-weight: 600;
+                                margin-bottom: 2rem;
+                                color: var(--warm-off-white);
+                                text-shadow: 
+                                    0 2px 8px rgba(72, 61, 139, 0.8),
+                                    0 0 20px rgba(212, 175, 55, 0.3);
+                            ">Before we begin, let's connect with your body.</h1>
+                            
+                            <p style="
+                                font-family: 'Inter', sans-serif;
+                                font-size: 1.25rem;
+                                color: var(--warm-off-white);
+                                margin-bottom: 3rem;
+                                max-width: 600px;
+                                margin-left: auto;
+                                margin-right: auto;
+                                line-height: 1.6;
+                                text-shadow: 0 1px 3px rgba(72, 61, 139, 0.7);
+                                font-weight: 400;
+                                animation-delay: 1s; 
+                                opacity: 0; 
+                                animation: weaverReveal 1s ease-out 1s forwards;
+                            ">Right now, without needing to change anything, would you say your inner state feels more activated or more settled?</p>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-2 gap-8 w-full max-w-4xl mx-auto" style="animation-delay: 2s; opacity: 0; animation: weaverReveal 1s ease-out 2s forwards;">
+                            <div class="somatic-option threshold-card p-8 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105" 
+                                 data-state="activated"
+                                 style="
+                                     background: rgba(255, 255, 255, 0.1);
+                                     backdrop-filter: blur(10px);
+                                     border: 1px solid rgba(212, 175, 55, 0.3);
+                                     box-shadow: 0 8px 25px rgba(212, 175, 55, 0.1);
+                                 ">
+                                <div style="
+                                    width: 80px;
+                                    height: 80px;
+                                    margin: 0 auto 1.5rem;
+                                    background: radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, transparent 70%);
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    animation: sparklingBurst 3.5s ease-in-out infinite;
+                                ">
+                                    <i class="fas fa-bolt" style="
+                                        font-size: 2.5rem;
+                                        color: var(--shimmering-gold);
+                                        text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+                                    "></i>
+                                </div>
+                                <h2 style="
+                                    font-family: 'Playfair Display', serif;
+                                    font-size: 1.75rem;
+                                    font-weight: 600;
+                                    color: var(--warm-off-white);
+                                    margin-bottom: 1rem;
+                                ">Activated</h2>
+                                <p style="
+                                    font-family: 'Inter', sans-serif;
+                                    color: rgba(255, 255, 255, 0.9);
+                                    font-size: 1.1rem;
+                                    line-height: 1.5;
+                                    text-shadow: 0 1px 2px rgba(72, 61, 139, 0.5);
+                                ">Restless, tense, racing thoughts, energized.</p>
+                            </div>
+                            
+                            <div class="somatic-option threshold-card p-8 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105" 
+                                 data-state="settled"
+                                 style="
+                                     background: rgba(255, 255, 255, 0.1);
+                                     backdrop-filter: blur(10px);
+                                     border: 1px solid rgba(182, 149, 192, 0.3);
+                                     box-shadow: 0 8px 25px rgba(182, 149, 192, 0.1);
+                                 ">
+                                <div style="
+                                    width: 80px;
+                                    height: 80px;
+                                    margin: 0 auto 1.5rem;
+                                    background: radial-gradient(circle, rgba(182, 149, 192, 0.2) 0%, transparent 70%);
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    animation: warmEmbrace 5s ease-in-out infinite;
+                                ">
+                                    <i class="fas fa-feather-alt" style="
+                                        font-size: 2.5rem;
+                                        color: var(--soft-rose-quartz);
+                                        text-shadow: 0 0 20px rgba(182, 149, 192, 0.5);
+                                    "></i>
+                                </div>
+                                <h2 style="
+                                    font-family: 'Playfair Display', serif;
+                                    font-size: 1.75rem;
+                                    font-weight: 600;
+                                    color: var(--warm-off-white);
+                                    margin-bottom: 1rem;
+                                ">Settled</h2>
+                                <p style="
+                                    font-family: 'Inter', sans-serif;
+                                    color: rgba(255, 255, 255, 0.9);
+                                    font-size: 1.1rem;
+                                    line-height: 1.5;
+                                    text-shadow: 0 1px 2px rgba(72, 61, 139, 0.5);
+                                ">Grounded, calm, relaxed, at ease.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
         function SomaticCheckPage2() { 
             const prompt = state.somaticState === 'activated' ? "It's courageous to acknowledge that energy." : "It's a gift to find moments of peace.";
-            return `<div class="min-h-screen flex flex-col items-center justify-center text-center p-4 fade-in"><p class="text-lg text-gray-600 mb-4">${prompt}</p><h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-12 max-w-3xl">What is your capacity to be with this state of ${state.somaticState}ness right now?</h1><div class="space-y-6 w-full max-w-2xl"><div class="somatic-option kairos-card p-6 rounded-xl shadow-lg text-left" data-capacity="deep"><h2 class="text-xl font-semibold">I have the space to explore this deeply.</h2></div><div class="somatic-option kairos-card p-6 rounded-xl shadow-lg text-left" data-capacity="gentle"><h2 class="text-xl font-semibold">I can be with it, but prefer gentle observation.</h2></div><div class="somatic-option kairos-card p-6 rounded-xl shadow-lg text-left" data-capacity="grounding"><h2 class="text-xl font-semibold">I feel overwhelmed and need to focus on grounding first.</h2></div></div></div>`;
+            return `
+                <div class="descent-background"></div>
+                <div class="descent-particles" id="descent-particles-container"></div>
+                
+                <div class="threshold-container" style="
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2rem;
+                    position: relative;
+                ">
+                    <div class="kairos-card p-12 rounded-xl max-w-4xl w-full text-center">
+                        <div class="weaver-text" style="animation-delay: 0.5s;">
+                            <p style="
+                                font-family: 'Inter', sans-serif;
+                                font-size: 1.25rem;
+                                color: var(--shimmering-gold);
+                                margin-bottom: 2rem;
+                                font-weight: 500;
+                                text-shadow: 0 1px 3px rgba(212, 175, 55, 0.3);
+                            ">${prompt}</p>
+                            
+                            <h1 style="
+                                font-family: 'Playfair Display', serif;
+                                font-size: 2.5rem;
+                                font-weight: 600;
+                                margin-bottom: 3rem;
+                                background: linear-gradient(135deg, 
+                                    var(--deep-indigo) 0%, 
+                                    var(--soft-rose-quartz) 50%, 
+                                    var(--shimmering-gold) 100%);
+                                -webkit-background-clip: text;
+                                -webkit-text-fill-color: transparent;
+                                text-shadow: 0 0 40px rgba(72, 61, 139, 0.6);
+                                max-width: 800px;
+                                margin-left: auto;
+                                margin-right: auto;
+                                line-height: 1.2;
+                                animation-delay: 1s; 
+                                opacity: 0; 
+                                animation: weaverReveal 1s ease-out 1s forwards;
+                            ">What is your capacity to be with this state of ${state.somaticState}ness right now?</h1>
+                        </div>
+                        
+                        <div class="space-y-6 w-full max-w-3xl mx-auto" style="animation-delay: 2s; opacity: 0; animation: weaverReveal 1s ease-out 2s forwards;">
+                            <div class="somatic-option threshold-card p-8 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 text-left" 
+                                 data-capacity="deep"
+                                 style="
+                                     background: rgba(255, 255, 255, 0.1);
+                                     backdrop-filter: blur(10px);
+                                     border: 1px solid rgba(72, 61, 139, 0.3);
+                                     box-shadow: 0 8px 25px rgba(72, 61, 139, 0.1);
+                                 ">
+                                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                    <div style="
+                                        width: 60px;
+                                        height: 60px;
+                                        background: radial-gradient(circle, rgba(72, 61, 139, 0.2) 0%, transparent 70%);
+                                        border-radius: 50%;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        animation: contemplativeLens 7s ease-in-out infinite;
+                                        flex-shrink: 0;
+                                    ">
+                                        <i class="fas fa-seedling" style="
+                                            font-size: 1.75rem;
+                                            color: var(--deep-indigo);
+                                            text-shadow: 0 0 15px rgba(72, 61, 139, 0.5);
+                                        "></i>
+                                    </div>
+                                    <h2 style="
+                                        font-family: 'Playfair Display', serif;
+                                        font-size: 1.5rem;
+                                        font-weight: 600;
+                                        color: var(--warm-off-white);
+                                        line-height: 1.3;
+                                    ">I have the space to explore this deeply.</h2>
+                                </div>
+                            </div>
+                            
+                            <div class="somatic-option threshold-card p-8 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 text-left" 
+                                 data-capacity="gentle"
+                                 style="
+                                     background: rgba(255, 255, 255, 0.1);
+                                     backdrop-filter: blur(10px);
+                                     border: 1px solid rgba(182, 149, 192, 0.3);
+                                     box-shadow: 0 8px 25px rgba(182, 149, 192, 0.1);
+                                 ">
+                                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                    <div style="
+                                        width: 60px;
+                                        height: 60px;
+                                        background: radial-gradient(circle, rgba(182, 149, 192, 0.2) 0%, transparent 70%);
+                                        border-radius: 50%;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        animation: warmEmbrace 5s ease-in-out infinite;
+                                        flex-shrink: 0;
+                                    ">
+                                        <i class="fas fa-eye" style="
+                                            font-size: 1.75rem;
+                                            color: var(--soft-rose-quartz);
+                                            text-shadow: 0 0 15px rgba(182, 149, 192, 0.5);
+                                        "></i>
+                                    </div>
+                                    <h2 style="
+                                        font-family: 'Playfair Display', serif;
+                                        font-size: 1.5rem;
+                                        font-weight: 600;
+                                        color: var(--warm-off-white);
+                                        line-height: 1.3;
+                                    ">I can be with it, but prefer gentle observation.</h2>
+                                </div>
+                            </div>
+                            
+                            <div class="somatic-option threshold-card p-8 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 text-left" 
+                                 data-capacity="grounding"
+                                 style="
+                                     background: rgba(255, 255, 255, 0.1);
+                                     backdrop-filter: blur(10px);
+                                     border: 1px solid rgba(212, 175, 55, 0.3);
+                                     box-shadow: 0 8px 25px rgba(212, 175, 55, 0.1);
+                                 ">
+                                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                    <div style="
+                                        width: 60px;
+                                        height: 60px;
+                                        background: radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, transparent 70%);
+                                        border-radius: 50%;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        animation: sparklingBurst 3.5s ease-in-out infinite;
+                                        flex-shrink: 0;
+                                    ">
+                                        <i class="fas fa-mountain" style="
+                                            font-size: 1.75rem;
+                                            color: var(--shimmering-gold);
+                                            text-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+                                        "></i>
+                                    </div>
+                                    <h2 style="
+                                        font-family: 'Playfair Display', serif;
+                                        font-size: 1.5rem;
+                                        font-weight: 600;
+                                        color: var(--warm-off-white);
+                                        line-height: 1.3;
+                                    ">I feel overwhelmed and need to focus on grounding first.</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
         function GroundingPage() { 
             return `<div class="min-h-screen flex flex-col items-center justify-center text-center p-4 fade-in"><h1 class="text-3xl font-bold mb-4">A wise choice. Let's ground ourselves.</h1><p class="text-lg text-gray-600 mb-8">Follow the rhythm. Breathe in as the circle expands, and out as it contracts.</p><div class="w-48 h-48 bg-blue-200 rounded-full flex items-center justify-center" style="animation: breathe 8s ease-in-out infinite;"><span id="breath-text" class="text-blue-800 font-semibold">Breathe In...</span></div><button id="continue-to-setup" class="kairos-btn bg-white/80 border mt-12 px-8 py-3 rounded-lg font-semibold hover:bg-white">Continue when ready</button><style>@keyframes breathe { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(0.8); } }</style></div>`;
+        }
+
+        function QuickJournalPage() {
+            return `
+                <div class="descent-background"></div>
+                <div class="descent-particles" id="descent-particles-container"></div>
+                
+                <div class="threshold-container" style="
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2rem;
+                    position: relative;
+                ">
+                    <!-- Back Button -->
+                    <button id="back-to-dashboard" style="
+                        position: absolute;
+                        top: 2rem;
+                        left: 2rem;
+                        background: rgba(255, 255, 255, 0.1);
+                        backdrop-filter: blur(10px);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        border-radius: 12px;
+                        padding: 0.75rem;
+                        color: var(--warm-off-white);
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        font-family: 'Inter', sans-serif;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                    " onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                        <i class="fas fa-arrow-left"></i>
+                        Dashboard
+                    </button>
+                    
+                    <div class="kairos-card p-8 rounded-xl max-w-4xl w-full">
+                        <div class="weaver-text text-center mb-8" style="animation-delay: 0.5s;">
+                            <h1 style="
+                                font-family: 'Playfair Display', serif;
+                                font-size: 2.5rem;
+                                font-weight: 600;
+                                margin-bottom: 1rem;
+                                color: var(--warm-off-white);
+                                text-shadow: 
+                                    0 2px 8px rgba(72, 61, 139, 0.8),
+                                    0 0 20px rgba(212, 175, 55, 0.3);
+                            ">What's on your mind?</h1>
+                            
+                            <p style="
+                                font-family: 'Inter', sans-serif;
+                                font-size: 1.1rem;
+                                color: rgba(255, 255, 255, 0.8);
+                                max-width: 500px;
+                                margin: 0 auto;
+                                line-height: 1.6;
+                                animation-delay: 1s; 
+                                opacity: 0; 
+                                animation: weaverReveal 1s ease-out 1s forwards;
+                            ">Share whatever's in your heart. No structure needed—just let your thoughts flow.</p>
+                        </div>
+
+                        <form id="quick-journal-form" style="animation-delay: 1.5s; opacity: 0; animation: weaverReveal 1s ease-out 1.5s forwards;">
+                            <!-- Title Input -->
+                            <div class="input-sanctuary mb-6">
+                                <input 
+                                    type="text"
+                                    id="quick-title"
+                                    name="title"
+                                    placeholder="Give this moment a title (optional)"
+                                    class="kairos-input"
+                                    style="
+                                        font-size: 1.25rem;
+                                        font-weight: 500;
+                                        padding: 1rem 1.5rem;
+                                    "
+                                >
+                            </div>
+
+                            <!-- Main Journal Area -->
+                            <div class="input-sanctuary mb-8">
+                                <textarea 
+                                    id="quick-content"
+                                    name="content"
+                                    placeholder="Today I'm thinking about...
+
+Write about anything: your feelings, what happened, what you're grateful for, what's worrying you, or simply what's present for you right now."
+                                    class="kairos-input"
+                                    rows="12"
+                                    required
+                                    style="
+                                        resize: vertical;
+                                        min-height: 300px;
+                                        font-size: 1.1rem;
+                                        line-height: 1.6;
+                                        font-family: 'Inter', sans-serif;
+                                    "
+                                ></textarea>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex justify-between items-center">
+                                <button type="button" id="explore-deeper-btn" style="
+                                    background: rgba(255, 255, 255, 0.1);
+                                    backdrop-filter: blur(10px);
+                                    border: 1px solid rgba(182, 149, 192, 0.3);
+                                    border-radius: 12px;
+                                    padding: 0.75rem 1.5rem;
+                                    color: var(--soft-rose-quartz);
+                                    cursor: pointer;
+                                    font-family: 'Inter', sans-serif;
+                                    font-weight: 500;
+                                    transition: all 0.3s ease;
+                                " onmouseover="this.style.background='rgba(182,149,192,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                                    <i class="fas fa-compass mr-2"></i>
+                                    Explore deeper
+                                </button>
+
+                                <button type="submit" style="
+                                    background: linear-gradient(135deg, 
+                                        var(--shimmering-gold) 0%, 
+                                        var(--soft-rose-quartz) 50%, 
+                                        var(--deep-indigo) 100%);
+                                    border: none;
+                                    border-radius: 16px;
+                                    padding: 1rem 2.5rem;
+                                    font-family: 'Inter', sans-serif;
+                                    font-size: 1.1rem;
+                                    font-weight: 600;
+                                    letter-spacing: 0.5px;
+                                    color: var(--warm-off-white);
+                                    cursor: pointer;
+                                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                                    text-transform: uppercase;
+                                    box-shadow: 
+                                        0 8px 25px rgba(212, 175, 55, 0.3),
+                                        0 0 20px rgba(72, 61, 139, 0.2),
+                                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                                ">
+                                    <i class="fas fa-heart mr-2"></i>
+                                    Save Reflection
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
         }
         function EntrySetupPage() { 
             return `<div class="container mx-auto p-4 md:p-8 max-w-3xl fade-in"><div class="kairos-card p-8 rounded-xl shadow-lg"><h1 class="text-3xl font-bold mb-2">Let's Begin</h1><p class="text-gray-600 mb-6">Start by capturing the essence of what's on your mind.</p><form id="entry-setup-form" class="space-y-4"><input type="text" name="title" placeholder="Give this entry a title (optional)" class="w-full text-2xl font-semibold border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-indigo-400 p-1 bg-transparent"><textarea name="situation.description" class="w-full border-gray-300 rounded-md mt-4" rows="6" placeholder="Describe the situation, interaction, or internal state you want to explore..."></textarea><div class="flex justify-end pt-4"><button type="submit" class="kairos-btn kairos-btn-primary px-8 py-3 rounded-lg font-semibold">Continue</button></div></form></div></div>`;
@@ -1948,7 +3510,7 @@
             const sectionDetails = entrySections[currentSectionKey];
             const progressPercentage = ((currentStepIndex + 1) / steps.length) * 100;
             const isLastStep = currentStepIndex === steps.length - 1;
-            return `<div class="container mx-auto p-4 md:p-8 max-w-3xl fade-in"><div class="kairos-card p-8 rounded-xl shadow-lg"><div class="mb-6"><div class="flex justify-between items-center mb-2"><h2 class="text-2xl font-bold text-indigo-800">${sectionDetails.title}</h2><span class="text-sm font-semibold text-gray-500">Step ${currentStepIndex + 1} of ${steps.length}</span></div><div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-indigo-500 h-2.5 rounded-full" style="width: ${progressPercentage}%; transition: width 0.5s ease;"></div></div></div><div id="section-content">${renderSectionContent(currentSectionKey)}</div><div class="flex justify-between items-center mt-8 pt-4 border-t"><button id="flow-back-btn" class="kairos-btn bg-gray-200 px-6 py-2 rounded-lg font-semibold ${currentStepIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${currentStepIndex === 0 ? 'disabled' : ''}>Back</button><button id="flow-next-btn" class="kairos-btn kairos-btn-primary px-8 py-3 rounded-lg font-semibold">${isLastStep ? 'Review & Save' : 'Next'}</button></div></div></div>`;
+            return `<div class="container mx-auto p-4 md:p-8 max-w-3xl fade-in"><div class="kairos-card p-8 rounded-xl shadow-lg"><div class="mb-6"><div class="flex justify-between items-center mb-2"><h2 class="text-2xl font-bold" style="color: var(--deep-indigo);">${sectionDetails.title}</h2><span class="text-sm font-semibold text-gray-500">Step ${currentStepIndex + 1} of ${steps.length}</span></div><div class="w-full bg-gray-200 rounded-full h-2.5"><div class="h-2.5 rounded-full" style="background: var(--deep-indigo); width: ${progressPercentage}%; transition: width 0.5s ease;"></div></div></div><div id="section-content">${renderSectionContent(currentSectionKey)}</div><div class="flex justify-between items-center mt-8 pt-4 border-t"><button id="flow-back-btn" class="kairos-btn bg-gray-200 px-6 py-2 rounded-lg font-semibold ${currentStepIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${currentStepIndex === 0 ? 'disabled' : ''}>Back</button><button id="flow-next-btn" class="kairos-btn kairos-btn-primary px-8 py-3 rounded-lg font-semibold">${isLastStep ? 'Review & Save' : 'Next'}</button></div></div></div>`;
         }
 
         // --- SECTION CONTENT RENDERER (with AI features) ---
@@ -1976,7 +3538,7 @@
                 case 'inquiry': return `<div class="space-y-6"><div><label class="block font-semibold text-gray-700 mb-2">What is the primary story or judgment you are telling yourself about this?</label><textarea name="inquiry.story" class="w-full border-gray-300 rounded-md" rows="3" placeholder="e.g., 'They were intentionally trying to undermine me.'">${entry.inquiry?.story || ''}</textarea></div><div><label class="block font-semibold text-gray-700 mb-2">Beneath that story, what is the core emotion you feel?</label><textarea name="inquiry.emotion" class="w-full border-gray-300 rounded-md" rows="2" placeholder="e.g., 'I feel rejected.'">${entry.inquiry?.emotion || ''}</textarea></div><div><label class="block font-semibold text-gray-700 mb-2">And this entire pattern seems connected to a deeper belief. Does a thought like 'I am not safe' or 'I am not worthy' resonate here?</label><textarea name="inquiry.belief" class="w-full border-gray-300 rounded-md" rows="2" placeholder="e.g., 'I am not worthy of respect.'">${entry.inquiry?.belief || ''}</textarea></div></div>`;
                 case 'cognitive': return `<textarea name="cognitive.thoughts" class="w-full border-gray-300 rounded-md" rows="4" placeholder="What thoughts went through your mind?">${entry.cognitive?.thoughts || ''}</textarea><textarea name="cognitive.beliefs" class="w-full border-gray-300 rounded-md mt-4" rows="3" placeholder="Did any deep beliefs surface? (e.g., 'I'm not good enough')">${entry.cognitive?.beliefs || ''}</textarea>`;
                 case 'emotional': const emotions = ["Happy", "Sad", "Angry", "Fearful", "Surprised", "Disgusted", "Calm"]; return `<div id="emotion-chips" class="flex flex-wrap gap-2 mb-4">${emotions.map(e => `<button type="button" class="emotion-chip bg-gray-200 px-3 py-1 rounded-full text-sm" data-emotion="${e}">${e}</button>`).join('')}</div><div id="emotion-sliders" class="space-y-3"></div><textarea name="emotional.nuance" class="w-full border-gray-300 rounded-md mt-4" rows="2" placeholder="Describe any complex or mixed emotions...">${entry.emotional?.nuance || ''}</textarea>`;
-                case 'physical': const bodyFront = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const bodyBack = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; return `<div class="flex justify-center gap-4 mb-4"><button id="body-view-front" class="body-view-btn px-4 py-2 rounded-lg ${state.bodyMapView === 'front' ? 'bg-indigo-500 ' : 'bg-gray-200'}">Front View</button><button id="body-view-back" class="body-view-btn px-4 py-2 rounded-lg ${state.bodyMapView === 'back' ? 'bg-indigo-500 ' : 'bg-gray-200'}">Back View</button></div><p class="text-gray-600 mb-4 text-center">Click on the body map to log where you felt sensations.</p><div class="relative max-w-[200px] mx-auto"><svg id="body-map-svg" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">${state.bodyMapView === 'front' ? bodyFront : bodyBack}</svg><div id="sensation-dots"></div></div><div id="logged-sensations" class="mt-4 space-y-2"></div>`;
+                case 'physical': const bodyFront = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const bodyBack = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; return `<div class="flex justify-center gap-4 mb-4"><button id="body-view-front" class="body-view-btn px-4 py-2 rounded-lg ${state.bodyMapView === 'front' ? 'text-white" style="background: var(--deep-indigo);"' : 'bg-gray-200'}">Front View</button><button id="body-view-back" class="body-view-btn px-4 py-2 rounded-lg ${state.bodyMapView === 'back' ? 'text-white" style="background: var(--deep-indigo);"' : 'bg-gray-200'}">Back View</button></div><p class="text-gray-600 mb-4 text-center">Click on the body map to log where you felt sensations.</p><div class="relative max-w-[200px] mx-auto"><svg id="body-map-svg" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">${state.bodyMapView === 'front' ? bodyFront : bodyBack}</svg><div id="sensation-dots"></div></div><div id="logged-sensations" class="mt-4 space-y-2"></div>`;
                 case 'behavioral': return `<textarea name="behavioral.actions" class="w-full border-gray-300 rounded-md" rows="3" placeholder="What did you do or say in response?">${entry.behavioral?.actions || ''}</textarea><textarea name="behavioral.urges" class="w-full border-gray-300 rounded-md mt-4" rows="2" placeholder="Did you feel strong urges that you didn't act on?">${entry.behavioral?.urges || ''}</textarea>`;
                 case 'reflection': return `<textarea name="reflection.patterns" class="w-full border-gray-300 rounded-md" rows="3" placeholder="Does this feel familiar? Any patterns you've noticed?">${entry.reflection?.patterns || ''}</textarea><textarea name="reflection.pastConnections" class="w-full border-gray-300 rounded-md mt-4" rows="3" placeholder="Does this remind you of past situations or feelings?">${entry.reflection?.pastConnections || ''}</textarea>`;
                 case 'integration': return `<textarea name="integration.insights" class="w-full border-gray-300 rounded-md" rows="3" placeholder="What insights came from reflecting on this experience?">${entry.integration?.insights || ''}</textarea><textarea name="integration.intentions" class="w-full border-gray-300 rounded-md mt-4" rows="3" placeholder="What is your intention moving forward?">${entry.integration?.intentions || ''}</textarea>`;
@@ -2118,9 +3680,17 @@
         function renderEnneagramCard() {
             if (state.enneagramStep === 0) {
                 return `
-                    <div class="cosmic-background"></div>
-                    <div class="particles" id="particles-container"></div>
-                    <div class="onboarding-container">
+                    <div class="descent-background"></div>
+                    <div class="descent-particles" id="descent-particles-container"></div>
+                    <div class="threshold-container" style="
+                        min-height: 100vh;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 2rem;
+                        position: relative;
+                    ">
                         <div class="kairos-card p-12 rounded-xl max-w-4xl w-full text-center">
                             <div class="weaver-text" style="animation-delay: 0.5s;">
                                 <h2 class="heading-serif text-3xl font-bold mb-6" style="
@@ -2151,14 +3721,22 @@
             }
 
             return `
-                <div class="cosmic-background"></div>
-                <div class="particles" id="particles-container"></div>
-                <div class="onboarding-container">
+                <div class="descent-background"></div>
+                <div class="descent-particles" id="descent-particles-container"></div>
+                <div class="threshold-container" style="
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2rem;
+                    position: relative;
+                ">
                     <div class="max-w-5xl w-full">
                         <div class="text-center mb-8">
                             <div class="flex justify-center items-center gap-2 mb-4">
                                 ${Array.from({length: enneagramScenarios.length}, (_, i) => 
-                                    `<div class="w-3 h-3 rounded-full ${i < state.enneagramStep ? 'bg-purple-500' : 'bg-purple-200'}"></div>`
+                                    `<div class="w-3 h-3 rounded-full ${i < state.enneagramStep ? 'bg-indigo-500' : 'bg-indigo-200'}"></div>`
                                 ).join('')}
                             </div>
                             <p class="text-sm text-gray-500">Question ${state.enneagramStep} of ${enneagramScenarios.length}</p>
@@ -2245,9 +3823,17 @@
             };
 
             return `
-                <div class="cosmic-background"></div>
-                <div class="particles" id="particles-container"></div>
-                <div class="onboarding-container">
+                <div class="descent-background"></div>
+                <div class="descent-particles" id="descent-particles-container"></div>
+                <div class="threshold-container" style="
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2rem;
+                    position: relative;
+                ">
                     <div class="kairos-card p-12 rounded-xl max-w-4xl w-full text-center">
                         <div class="fade-in">
                             <div class="core-light-avatar">
@@ -2287,12 +3873,12 @@
                                     ${profile.description}
                                 </p>
                                 
-                                <div class="bg-gradient-to-r from-purple-100 to-pink-100 p-6 rounded-xl">
+                                <div class="bg-gradient-to-r from-indigo-100 to-rose-100 p-6 rounded-xl">
                                     <h4 class="font-bold text-gray-800 mb-4 text-xl">Your Sacred Gifts</h4>
                                     <ul class="text-left space-y-2 max-w-2xl mx-auto">
                                         ${profile.gifts.map(gift => `
                                             <li class="flex items-start gap-3">
-                                                <span class="text-purple-500 mt-1">✨</span>
+                                                <span class="text-indigo-500 mt-1">✨</span>
                                                 <span class="text-gray-700">${gift}</span>
                                             </li>
                                         `).join('')}
@@ -2317,9 +3903,9 @@
                 let contentHtml;
                 if (key === 'physical' && content.sensations && content.sensations.length > 0) { const bodyFront = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const bodyBack = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const frontDots = content.sensations.filter(s => s.view === 'front').map(s => `<div class="sensation-dot" style="left:${s.x}%; top:${s.y}%; width:${8+s.intensity}px; height:${8+s.intensity}px; background-color: hsla(0, 100%, 50%, ${s.intensity/10});"></div>`).join(''); const backDots = content.sensations.filter(s => s.view === 'back').map(s => `<div class="sensation-dot" style="left:${s.x}%; top:${s.y}%; width:${8+s.intensity}px; height:${8+s.intensity}px; background-color: hsla(0, 100%, 50%, ${s.intensity/10});"></div>`).join(''); contentHtml = `<div class="grid grid-cols-2 gap-4"><div><h4 class="font-semibold text-center mb-2">Front</h4><div class="relative max-w-[200px] mx-auto"><svg viewBox="0 0 200 400">${bodyFront}</svg><div class="absolute top-0 left-0 w-full h-full">${frontDots}</div></div></div><div><h4 class="font-semibold text-center mb-2">Back</h4><div class="relative max-w-[200px] mx-auto"><svg viewBox="0 0 200 400">${bodyBack}</svg><div class="absolute top-0 left-0 w-full h-full">${backDots}</div></div></div></div><div class="mt-4">${content.sensations.map(s => `<p><strong>${s.part} (${s.view}):</strong> ${s.quality} (Intensity: ${s.intensity})</p>`).join('')}</div>`; } else { contentHtml = Object.entries(content).map(([k, value]) => { if (!value || (Array.isArray(value) && value.length === 0)) return ''; let formattedValue; if (k === 'emotions' && Array.isArray(value)) { formattedValue = value.map(e => `${e.name} (Intensity: ${e.intensity})`).join('<br>'); } else if (Array.isArray(value)) { formattedValue = value.join(', '); } else { formattedValue = value.toString().replace(/\n/g, '<br>'); } const formattedKey = k.charAt(0).toUpperCase() + k.slice(1).replace(/([A-Z])/g, ' $1'); return `<div class="mb-3"><strong class="font-semibold text-gray-600 block">${formattedKey}</strong><p class="text-gray-800 mt-1">${formattedValue}</p></div>`; }).join(''); }
                 if (!contentHtml.trim()) return '';
-                return `<div class="mb-8"><h3 class="text-2xl font-bold border-b-2 border-indigo-200 pb-2 mb-4 text-indigo-800">${title}</h3><div class="prose max-w-none">${contentHtml}</div></div>`;
+                return `<div class="mb-8"><h3 class="text-2xl font-bold pb-2 mb-4" style="border-bottom: 2px solid rgba(72, 61, 139, 0.2); color: var(--deep-indigo);">${title}</h3><div class="prose max-w-none">${contentHtml}</div></div>`;
             };
-            return `<div class="container mx-auto p-4 md:p-8 max-w-4xl fade-in"><div class="bg-white p-6 md:p-10 rounded-xl shadow-lg"><div class="flex justify-between items-start mb-6 border-b pb-6"><div><h1 class="text-4xl font-bold text-gray-800">${entry.title || 'Untitled Entry'}</h1><p class="text-gray-500 mt-2">${new Date(entry.date).toLocaleString()} | ${entry.type || 'General'}</p></div><div class="flex gap-2"><button id="delete-entry-btn" data-id="${entry.id}" class="kairos-btn bg-red-500  px-4 py-2 rounded-lg hover:bg-red-600"><i class="fas fa-trash"></i></button></div></div>${renderViewSection('The Situation', entry.situation, 'situation')}${Object.keys(entrySections).map(key => renderViewSection(entrySections[key].title, entry[key], key)).join('')}<div class="mt-8 pt-6 border-t"><strong class="font-semibold text-gray-600 block mb-2">Tags:</strong><div class="flex flex-wrap gap-2">${entry.tags?.map(tag => `<span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">${tag}</span>`).join('') || '<span class="text-gray-500">No tags</span>'}</div></div><button id="back-to-dashboard" class="kairos-btn bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold mt-12"><i class="fas fa-arrow-left mr-2"></i>Back to Dashboard</button></div></div>`;
+            return `<div class="container mx-auto p-4 md:p-8 max-w-4xl fade-in"><div class="bg-white p-6 md:p-10 rounded-xl shadow-lg"><div class="flex justify-between items-start mb-6 border-b pb-6"><div><h1 class="text-4xl font-bold text-gray-800">${entry.title || 'Untitled Entry'}</h1><p class="text-gray-500 mt-2">${new Date(entry.date).toLocaleString()} | ${entry.type || 'General'}</p></div><div class="flex gap-2"><button id="delete-entry-btn" data-id="${entry.id}" class="kairos-btn bg-red-500  px-4 py-2 rounded-lg hover:bg-red-600"><i class="fas fa-trash"></i></button></div></div>${renderViewSection('The Situation', entry.situation, 'situation')}${Object.keys(entrySections).map(key => renderViewSection(entrySections[key].title, entry[key], key)).join('')}<div class="mt-8 pt-6 border-t"><strong class="font-semibold text-gray-600 block mb-2">Tags:</strong><div class="flex flex-wrap gap-2">${entry.tags?.map(tag => `<span class="text-sm font-medium px-3 py-1 rounded-full" style="background: rgba(72, 61, 139, 0.1); color: var(--deep-indigo);">${tag}</span>`).join('') || '<span class="text-gray-500">No tags</span>'}</div></div><button id="back-to-dashboard" class="kairos-btn bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold mt-12"><i class="fas fa-arrow-left mr-2"></i>Back to Dashboard</button></div></div>`;
         }
         function ModalComponent({ title, content, onConfirm, confirmText = 'Confirm', cancelText = 'Cancel', bodyHtml = '' }) { 
              return `<div class="modal-overlay fade-in"><div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"><h2 class="text-xl font-bold mb-4">${title}</h2><div class="text-gray-600 mb-6">${content || ''}${bodyHtml}</div><div class="flex justify-end gap-4"><button id="modal-cancel" class="kairos-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">${cancelText}</button>${onConfirm ? `<button id="modal-confirm" class="kairos-btn kairos-btn-primary px-4 py-2 rounded-lg">${confirmText}</button>` : ''}</div></div></div>`;
@@ -2331,10 +3917,30 @@
             document.getElementById('go-to-synthesis-btn')?.addEventListener('click', () => { state.currentPage = 'synthesis'; render(); });
             document.getElementById('go-to-advisor-btn')?.addEventListener('click', () => { state.currentPage = 'advisor'; render(); });
             document.getElementById('start-guided-entry-btn')?.addEventListener('click', () => { state.currentPage = 'somaticCheck1'; render(); });
+            
+            // Quick Journal Page handlers
+            document.getElementById('quick-journal-form')?.addEventListener('submit', handleQuickJournalSubmit);
+            document.getElementById('explore-deeper-btn')?.addEventListener('click', () => {
+                // Save current input to state and transition to guided flow
+                const titleInput = document.getElementById('quick-title');
+                const contentInput = document.getElementById('quick-content');
+                
+                if (contentInput && contentInput.value.trim()) {
+                    state.entryBuilder = {
+                        date: new Date().toISOString(),
+                        initialPrompt: contentInput.value.trim(),
+                        title: titleInput ? titleInput.value.trim() : ''
+                    };
+                    state.currentPage = 'somaticCheck1';
+                    render();
+                } else {
+                    showToast('Please write something first', 'warning');
+                }
+            });
 
             document.querySelectorAll('.constellation-btn').forEach(btn => btn.addEventListener('click', (e) => {
-                const entryId = parseInt(e.currentTarget.dataset.id);
-                const entry = entries.find(en => en.id === entryId);
+                const entryId = e.currentTarget.dataset.id;
+                const entry = entries.find(en => en.id === entryId || en.id === parseInt(entryId));
                 document.getElementById('constellation-display').innerHTML = renderConstellation(entry);
             }));
             document.querySelectorAll('.body-view-btn').forEach(btn => btn.addEventListener('click', (e) => {
@@ -2349,6 +3955,7 @@
             document.getElementById('go-to-register')?.addEventListener('click', (e) => { e.preventDefault(); state.currentPage = 'register'; render(); });
             document.getElementById('go-to-login')?.addEventListener('click', (e) => { e.preventDefault(); state.currentPage = 'login'; render(); });
             document.getElementById('start-new-entry-btn')?.addEventListener('click', () => { state.entryBuilder = { date: new Date().toISOString() }; state.currentPage = 'somaticCheck1'; render(); });
+            document.getElementById('quick-reflect-btn')?.addEventListener('click', () => { state.currentPage = 'quickJournal'; render(); });
             document.getElementById('back-to-dashboard')?.addEventListener('click', () => { state.currentPage = 'dashboard'; render(); });
             document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
             
@@ -2719,6 +4326,81 @@
         }
 
 
+        async function handleQuickJournalSubmit(e) {
+            e.preventDefault();
+            
+            const titleInput = document.getElementById('quick-title');
+            const contentInput = document.getElementById('quick-content');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            
+            const title = titleInput ? titleInput.value.trim() : '';
+            const content = contentInput ? contentInput.value.trim() : '';
+            
+            if (!content) {
+                showToast('Please write something first', 'warning');
+                return;
+            }
+            
+            // Show loading state
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            submitBtn.disabled = true;
+            
+            try {
+                // Prepare entry data for Firebase
+                const entryData = {
+                    title: title || `Reflection - ${new Date().toLocaleDateString()}`,
+                    content: content,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    // Add some basic analysis
+                    emotionalAnalysis: {
+                        quickEntry: true,
+                        wordCount: content.split(/\s+/).length
+                    },
+                    themes: [], // Could extract basic themes if desired
+                    mood: null  // User didn't specify mood in quick entry
+                };
+                
+                // Save to Firebase
+                const token = await state.currentUser.getIdToken();
+                const response = await fetch('/.netlify/functions/firebase-backend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        action: 'createEntry',
+                        data: entryData
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to save entry: ${response.status}`);
+                }
+                
+                const savedEntry = await response.json();
+                
+                // Add to local entries array
+                entries.unshift(savedEntry);
+                
+                showToast('Reflection saved successfully!', 'success');
+                
+                // Navigate back to dashboard
+                state.currentPage = 'dashboard';
+                render();
+                
+            } catch (error) {
+                console.error('Error saving quick journal entry:', error);
+                showToast('Failed to save reflection. Please try again.', 'error');
+                
+                // Restore button state
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
         async function handleWeaveInsights() {
             const container = document.getElementById('dream-insights-container');
             const description = document.querySelector('textarea[name="dream.description"]').value;
@@ -2765,8 +4447,8 @@
                 
                 container.innerHTML = `
                     <div class="border-t pt-4 mt-4">
-                        <h3 class="font-semibold text-lg mb-2 text-indigo-800">The Subconscious Bridge</h3>
-                        <div class="prose prose-sm max-w-none text-gray-700 bg-indigo-50 p-4 rounded-lg">${text}</div>
+                        <h3 class="font-semibold text-lg mb-2" style="color: var(--deep-indigo);">The Subconscious Bridge</h3>
+                        <div class="prose prose-sm max-w-none text-gray-700 p-4 rounded-lg" style="background: rgba(72, 61, 139, 0.05);">${text}</div>
                     </div>
                 `;
                 if(!state.entryBuilder.dream) state.entryBuilder.dream = {};
@@ -2860,7 +4542,12 @@
                     return 'An error occurred. Please try again.';
             }
         }
-        function handleViewEntry(e) { const entryId = parseInt(e.currentTarget.dataset.id); state.currentEntry = entries.find(entry => entry.id === entryId); state.currentPage = 'viewEntry'; render(); }
+        function handleViewEntry(e) { 
+            const entryId = e.currentTarget.dataset.id; 
+            state.currentEntry = entries.find(entry => entry.id === entryId || entry.id === parseInt(entryId)); 
+            state.currentPage = 'viewEntry'; 
+            render(); 
+        }
         function handleDeleteEntry(e) { 
             const entryId = e.currentTarget.dataset.id; 
             showModal({ 
@@ -2908,11 +4595,13 @@
                     // Call secure backend to create entry
                     const savedEntry = await callFirebaseBackend('createEntry', finalEntry);
                     
-                    // Add to local entries array for immediate display
-                    entries.unshift({
+                    const completeEntry = {
                         ...savedEntry,
                         date: new Date().toISOString()
-                    });
+                    };
+                    
+                    // Trigger The Weaver's thread system
+                    onJournalEntryCompleted(completeEntry);
                     
                     showToast('Entry saved successfully!', 'success'); 
                     state.currentPage = 'dashboard'; 
@@ -2929,8 +4618,229 @@
         function mapCoordsToPart(x, y) { if (y < 25) return "Head"; if (y < 35) return "Neck/Throat"; if (y < 50 && x > 25 && x < 75) return "Chest"; if (y < 50) return "Shoulders/Arms"; if (y < 60) return "Stomach/Gut"; return "Legs"; }
         function handlePerspectiveLensClick(e) { const lensType = e.currentTarget.dataset.lens; const promptArea = document.getElementById('perspective-prompt-area'); let promptText = ''; const firstEmotion = state.entryBuilder.emotional?.emotions?.[0]?.name.toLowerCase() || 'that feeling'; if (lensType === 'child') { promptText = `Taking a moment to connect with your younger self... What does the part of you that felt ${firstEmotion} really need to hear right now?`; } else if (lensType === 'future') { promptText = `Imagine your wise, future self looking back at this moment with compassion. What insight or guidance would they offer you?`; } promptArea.innerHTML = `<div class="mt-4 border-t pt-4 fade-in"><p class="text-gray-600 italic mb-2">${promptText}</p><textarea name="${lensType}Perspective" class="w-full border-gray-300 rounded-md" rows="4" placeholder="Write your reflection here..."></textarea></div>`; }
 
+        // Deep emotional analysis for The Weaver's thread system
+        function analyzeEmotionalContent(entry) {
+            if (!entry) return [];
+            
+            const threads = [];
+            
+            // Analyze emotional content
+            if (entry.emotional?.emotions) {
+                entry.emotional.emotions.forEach(emotion => {
+                    switch(emotion.name.toLowerCase()) {
+                        case 'happy':
+                        case 'surprised':
+                            threads.push({ type: 'gold', intensity: emotion.intensity });
+                            break;
+                        case 'calm':
+                            threads.push({ type: 'gold', intensity: emotion.intensity });
+                            threads.push({ type: 'rose', intensity: emotion.intensity * 0.7 });
+                            break;
+                        case 'sad':
+                        case 'disgusted':
+                            threads.push({ type: 'silver', intensity: emotion.intensity });
+                            break;
+                        case 'angry':
+                        case 'fearful':
+                            threads.push({ type: 'indigo', intensity: emotion.intensity });
+                            break;
+                    }
+                });
+            }
+            
+            // Analyze text content for deeper insights
+            const textContent = [
+                entry.integration?.insights,
+                entry.reflection?.patterns,
+                entry.inquiry?.story,
+                entry.situation?.description
+            ].filter(Boolean).join(' ').toLowerCase();
+            
+            // Gems and insights
+            const insightWords = ['insight', 'understanding', 'clarity', 'breakthrough', 'realization', 'awareness'];
+            const gratitudeWords = ['grateful', 'thankful', 'blessed', 'appreciation', 'joy'];
+            
+            insightWords.forEach(word => {
+                if (textContent.includes(word)) {
+                    threads.push({ type: 'gold', intensity: 7 });
+                }
+            });
+            
+            gratitudeWords.forEach(word => {
+                if (textContent.includes(word)) {
+                    threads.push({ type: 'gold', intensity: 8 });
+                }
+            });
+            
+            // Compassion and connection
+            const compassionWords = ['compassion', 'love', 'connection', 'empathy', 'kindness', 'healing', 'forgiveness'];
+            
+            compassionWords.forEach(word => {
+                if (textContent.includes(word)) {
+                    threads.push({ type: 'rose', intensity: 7 });
+                }
+            });
+            
+            // Shadow work and growth
+            const shadowWords = ['fear', 'anxiety', 'worry', 'stress', 'overwhelm', 'triggered', 'shadow'];
+            
+            shadowWords.forEach(word => {
+                if (textContent.includes(word)) {
+                    threads.push({ type: 'indigo', intensity: 6 });
+                }
+            });
+            
+            return threads;
+        }
+
+        // Simplified analysis for basic display
+        function analyzeRecentEntries() {
+            if (entries.length === 0) {
+                return {
+                    presenceLevel: 7,
+                    emotionalTone: 'peaceful readiness',
+                    hasGems: false,
+                    hasCompassion: false
+                };
+            }
+            
+            const recentEntry = entries[0];
+            const threads = analyzeEmotionalContent(recentEntry);
+            
+            let presenceLevel = 7;
+            let emotionalTone = 'neutral presence';
+            let hasGems = threads.some(t => t.type === 'gold');
+            let hasCompassion = threads.some(t => t.type === 'rose');
+            
+            // Calculate presence based on emotional complexity
+            const avgIntensity = threads.length > 0 ? threads.reduce((sum, t) => sum + t.intensity, 0) / threads.length : 5;
+            presenceLevel = Math.round(Math.max(3, Math.min(10, avgIntensity)));
+            
+            if (hasGems && hasCompassion) {
+                emotionalTone = 'integrated awareness';
+            } else if (hasGems) {
+                emotionalTone = 'illuminated understanding';
+            } else if (hasCompassion) {
+                emotionalTone = 'compassionate presence';
+            } else if (threads.some(t => t.type === 'indigo')) {
+                emotionalTone = 'gentle awareness';
+            }
+            
+            return { presenceLevel, emotionalTone, hasGems, hasCompassion };
+        }
+
+        // Presence Orb Functions
+        function showPresenceModal() {
+            const { presenceLevel, emotionalTone } = analyzeRecentEntries();
+            
+            showModal({
+                title: "Your Current Presence",
+                content: `Your last reflection held a sense of ${emotionalTone}. You felt your presence was ${presenceLevel}/10.`,
+                confirmText: "Begin New Reflection",
+                cancelText: "Close",
+                onConfirm: () => {
+                    state.currentPage = 'somaticCheck1';
+                    render();
+                }
+            });
+        }
+
+        // The Weaver's Thread Integration System
+        function weaveEmotionalThreads(entry) {
+            if (!entry) return;
+            
+            const threads = analyzeEmotionalContent(entry);
+            const threadsContainer = document.getElementById('emotional-threads');
+            
+            if (!threadsContainer) return;
+            
+            // Weave each emotional thread with a staggered delay
+            threads.forEach((thread, index) => {
+                setTimeout(() => {
+                    createEmotionalThread(thread, threadsContainer);
+                }, index * 800); // 800ms delay between threads
+            });
+        }
+
+        function createEmotionalThread(threadData, container) {
+            const thread = document.createElement('div');
+            thread.className = `emotional-thread ${threadData.type}`;
+            
+            // Position thread at a random starting point
+            const startY = Math.random() * 60 + 20; // 20-80% from top
+            thread.style.top = `${startY}%`;
+            
+            // Scale thread intensity based on emotion strength
+            const scale = (threadData.intensity / 10) * 1.5 + 0.5; // 0.5 to 2x scale
+            thread.style.transform = `scaleY(${scale})`;
+            
+            container.appendChild(thread);
+            
+            // Remove thread after animation completes
+            setTimeout(() => {
+                if (thread.parentNode) {
+                    thread.parentNode.removeChild(thread);
+                }
+            }, 8000);
+        }
+
+        function initializeOrbParticles() {
+            const orbParticles = document.getElementById('orb-particles');
+            if (!orbParticles) return;
+            
+            const { hasGems, hasCompassion } = analyzeRecentEntries();
+            
+            // Clear existing particles
+            orbParticles.innerHTML = '';
+            
+            // Add ambient particles based on emotional state
+            for (let i = 0; i < (hasGems || hasCompassion ? 6 : 3); i++) {
+                const particle = document.createElement('div');
+                particle.className = `presence-orb-particle ${hasCompassion && Math.random() > 0.5 ? 'rose' : ''}`;
+                
+                // Random positioning and sizing
+                const size = Math.random() * 3 + 1.5;
+                const x = Math.random() * 80 + 10;
+                const delay = Math.random() * 15;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${x}%`;
+                particle.style.animationDelay = `${delay}s`;
+                
+                orbParticles.appendChild(particle);
+            }
+        }
+
+        // Hook into entry completion to trigger thread weaving
+        function onJournalEntryCompleted(entry) {
+            // Add to entries
+            entries.unshift(entry);
+            
+            // Weave the emotional threads after returning to dashboard
+            setTimeout(() => {
+                if (state.currentPage === 'dashboard') {
+                    weaveEmotionalThreads(entry);
+                }
+            }, 1500); // Delay to allow navigation to dashboard
+            
+            // Update orb state with new emotional particles
+            setTimeout(() => {
+                if (state.currentPage === 'dashboard') {
+                    initializeOrbParticles();
+                }
+            }, 2500);
+        }
+
         // --- INITIAL RENDER ---
         render();
+        
+        // Initialize orb particles when dashboard loads
+        setTimeout(() => {
+            if (state.currentPage === 'dashboard') {
+                initializeOrbParticles();
+            }
+        }, 500);
     </script>
 </body>
 </html>
