@@ -1748,7 +1748,8 @@
             createUserWithEmailAndPassword, 
             signInWithEmailAndPassword, 
             signOut, 
-            onAuthStateChanged 
+            onAuthStateChanged,
+            onIdTokenChanged
         } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
         // Import Firebase Firestore functions
@@ -1942,6 +1943,78 @@
             throw new Error('Unable to obtain authentication token after multiple attempts');
         }
 
+        // Token management system
+        let currentIdToken = null;
+        let tokenRefreshTimer = null;
+        
+        // Function to schedule token refresh before expiration
+        function scheduleTokenRefresh(token) {
+            // Clear any existing timer
+            if (tokenRefreshTimer) {
+                clearTimeout(tokenRefreshTimer);
+                tokenRefreshTimer = null;
+            }
+            
+            if (!token) return;
+            
+            try {
+                // Parse the token to get expiration time
+                const tokenParts = token.split('.');
+                if (tokenParts.length === 3) {
+                    const payload = JSON.parse(atob(tokenParts[1]));
+                    const now = Math.floor(Date.now() / 1000);
+                    const expiresIn = payload.exp - now;
+                    
+                    // Refresh token 5 minutes before it expires (300 seconds)
+                    const refreshIn = Math.max(0, (expiresIn - 300) * 1000);
+                    
+                    console.log(`Token expires in ${expiresIn} seconds, scheduling refresh in ${refreshIn / 1000} seconds`);
+                    
+                    tokenRefreshTimer = setTimeout(async () => {
+                        if (state.currentUser) {
+                            try {
+                                console.log('Proactively refreshing token...');
+                                const newToken = await state.currentUser.getIdToken(true);
+                                currentIdToken = newToken;
+                                scheduleTokenRefresh(newToken); // Schedule next refresh
+                                console.log('Token refreshed proactively');
+                            } catch (error) {
+                                console.error('Failed to refresh token proactively:', error);
+                            }
+                        }
+                    }, refreshIn);
+                }
+            } catch (error) {
+                console.error('Failed to parse token for refresh scheduling:', error);
+            }
+        }
+        
+        // Token change listener - this handles automatic token refresh
+        onIdTokenChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    // Get the fresh token
+                    const token = await user.getIdToken();
+                    currentIdToken = token;
+                    
+                    // Schedule the next refresh
+                    scheduleTokenRefresh(token);
+                    
+                    console.log('ID token updated and refresh scheduled');
+                } catch (error) {
+                    console.error('Failed to get token in onIdTokenChanged:', error);
+                    currentIdToken = null;
+                }
+            } else {
+                // User signed out, clear token and timer
+                currentIdToken = null;
+                if (tokenRefreshTimer) {
+                    clearTimeout(tokenRefreshTimer);
+                    tokenRefreshTimer = null;
+                }
+            }
+        });
+        
         // Authentication state management
         let authInitializationTimeout = null;
         let isAuthProcessing = false;
@@ -2114,13 +2187,18 @@
             }
 
             try {
-                // Try to get current token first, then force refresh if needed
-                let idToken;
-                try {
-                    idToken = await state.currentUser.getIdToken(false);
-                } catch (error) {
-                    console.log('Current token not valid, forcing refresh...');
-                    idToken = await state.currentUser.getIdToken(true);
+                // Use the managed token from onIdTokenChanged, fallback to manual retrieval
+                let idToken = currentIdToken;
+                
+                if (!idToken) {
+                    console.log('No managed token available, retrieving manually...');
+                    try {
+                        idToken = await state.currentUser.getIdToken(false);
+                    } catch (error) {
+                        console.log('Current token not valid, forcing refresh...');
+                        idToken = await state.currentUser.getIdToken(true);
+                        currentIdToken = idToken; // Update managed token
+                    }
                 }
                 
                 if (!idToken) {
@@ -2146,13 +2224,41 @@
                         errorMessage = `HTTP ${response.status}: ${response.statusText}`;
                     }
                     
-                    // If we get a 401, the user needs to re-authenticate
+                    // If we get a 401, try refreshing the token once before giving up
                     if (response.status === 401) {
-                        console.warn('Authentication expired, redirecting to login');
-                        state.currentUser = null;
-                        state.currentPage = 'login';
-                        render();
-                        throw new Error('Authentication expired. Please log in again.');
+                        console.warn('401 error received, attempting token refresh...');
+                        
+                        try {
+                            // Force refresh the token
+                            const freshToken = await state.currentUser.getIdToken(true);
+                            currentIdToken = freshToken;
+                            
+                            // Retry the request with the fresh token
+                            const retryResponse = await fetch(`/.netlify/functions/firebase-backend`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${freshToken}`
+                                },
+                                body: JSON.stringify({ action, data })
+                            });
+                            
+                            if (retryResponse.ok) {
+                                console.log('Request succeeded after token refresh');
+                                return await retryResponse.json();
+                            } else {
+                                console.warn('Request still failed after token refresh, logging out');
+                                throw new Error('Authentication failed even after token refresh');
+                            }
+                        } catch (refreshError) {
+                            console.error('Token refresh failed:', refreshError);
+                            // Token refresh failed, user needs to log in again
+                            state.currentUser = null;
+                            currentIdToken = null;
+                            state.currentPage = 'login';
+                            render();
+                            throw new Error('Authentication expired. Please log in again.');
+                        }
                     }
                     
                     throw new Error(errorMessage);
