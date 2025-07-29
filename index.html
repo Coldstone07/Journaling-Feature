@@ -1772,32 +1772,12 @@
 
         // Function to write user profile data to Firestore
         async function writeUserData(userId, name, email, imageUrl) {
-            // Check if running locally and skip Firestore operations
-            const isLocalDevelopment = window.location.hostname === 'localhost' || 
-                                     window.location.hostname === '127.0.0.1' || 
-                                     window.location.hostname.includes('localhost') ||
-                                     window.location.protocol === 'file:' ||
-                                     (window.location.port && window.location.port !== '80' && window.location.port !== '443');
+            // ALWAYS skip direct Firestore operations - use backend instead
+            console.log('Skipping direct Firestore user data write, using backend for:', name);
             
-            if (isLocalDevelopment) {
-                console.log('Local development mode: Skipping Firestore user data write for:', name);
-                return; // Skip Firestore operations in local development
-            }
-            
-            const userRef = doc(db, 'users', userId);
-            
-            try {
-                await setDoc(userRef, {
-                    username: name,
-                    email: email,
-                    profile_picture: imageUrl,
-                    created_at: new Date().toISOString(),
-                    last_login: new Date().toISOString()
-                });
-                console.log("User data saved successfully!");
-            } catch (error) {
-                console.error("Error writing user data: ", error);
-            }
+            // In the future, this could call the backend to save user profile data
+            // For now, user data is handled by Firebase Auth and backend operations
+            return;
         }
 
         // Function to save a journal entry for the current user
@@ -1899,8 +1879,8 @@
         }
 
         // Helper function to wait for Firebase token to be ready
-        async function waitForTokenReady(user, maxRetries = 3, delay = 1500) {
-            console.log('Waiting for Firebase token to be ready...');
+        async function waitForTokenReady(user) {
+            console.log('Simplified token ready check...');
             
             // Check if running locally and return mock token
             const isLocalDevelopment = window.location.hostname === 'localhost' || 
@@ -1911,167 +1891,29 @@
             
             if (isLocalDevelopment) {
                 console.log('Local development mode: Using mock token');
-                currentIdToken = 'mock-token-for-local-dev';
-                return currentIdToken;
+                return 'mock-token-for-local-dev';
             }
             
-            // First, wait a moment for auth state to stabilize
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    // Try getting the token without forcing refresh first
-                    const token = await user.getIdToken(false);
-                    if (token && token.length > 0) {
-                        console.log('Firebase token is ready');
-                        
-                        // Validate the token by checking if it's not expired
-                        const tokenParts = token.split('.');
-                        if (tokenParts.length === 3) {
-                            try {
-                                const payload = JSON.parse(atob(tokenParts[1]));
-                                const now = Math.floor(Date.now() / 1000);
-                                if (payload.exp && payload.exp > now) {
-                                    console.log('Token is valid and not expired');
-                                    currentIdToken = token; // Set the managed token
-                                    scheduleTokenRefresh(token); // Schedule refresh
-                                    return token;
-                                } else {
-                                    console.log('Token is expired, will force refresh');
-                                }
-                            } catch (parseError) {
-                                console.log('Could not parse token, will force refresh');
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.log(`Token not ready yet, attempt ${i + 1}/${maxRetries}:`, error.message);
-                }
-                
-                // If we don't have a valid token, try force refresh
-                try {
-                    console.log('Attempting force token refresh...');
-                    const freshToken = await user.getIdToken(true);
-                    if (freshToken && freshToken.length > 0) {
-                        console.log('Firebase token obtained after force refresh');
-                        currentIdToken = freshToken; // Set the managed token
-                        scheduleTokenRefresh(freshToken); // Schedule refresh
-                        return freshToken;
-                    }
-                } catch (refreshError) {
-                    console.log(`Force refresh failed on attempt ${i + 1}:`, refreshError.message);
-                }
-                
-                if (i < maxRetries - 1) {
-                    console.log(`Waiting ${delay}ms before retry...`);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            }
-            
-            console.error('Failed to get valid token after all attempts');
-            throw new Error('Unable to obtain authentication token after multiple attempts');
+            // In production, just wait a moment for auth to stabilize
+            console.log('Production mode: Waiting for auth to stabilize...');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            console.log('Auth stabilization complete');
+            return 'auth-ready';
         }
 
         // Token management system
         let currentIdToken = null;
         let tokenRefreshTimer = null;
         
-        // Function to schedule token refresh before expiration
+        // Token refresh scheduling DISABLED to prevent Firestore connections
         function scheduleTokenRefresh(token) {
-            // Clear any existing timer
-            if (tokenRefreshTimer) {
-                clearTimeout(tokenRefreshTimer);
-                tokenRefreshTimer = null;
-            }
-            
-            if (!token) return;
-            
-            // Skip token refresh scheduling in local development
-            const isLocalDevelopment = window.location.hostname === 'localhost' || 
-                                     window.location.hostname === '127.0.0.1' || 
-                                     window.location.hostname.includes('localhost') ||
-                                     window.location.protocol === 'file:' ||
-                                     (window.location.port && window.location.port !== '80' && window.location.port !== '443');
-            
-            if (isLocalDevelopment) {
-                console.log('Local development mode: Skipping token refresh scheduling');
-                return;
-            }
-            
-            try {
-                // Parse the token to get expiration time
-                const tokenParts = token.split('.');
-                if (tokenParts.length === 3) {
-                    const payload = JSON.parse(atob(tokenParts[1]));
-                    const now = Math.floor(Date.now() / 1000);
-                    const expiresIn = payload.exp - now;
-                    
-                    // Refresh token 5 minutes before it expires (300 seconds)
-                    const refreshIn = Math.max(0, (expiresIn - 300) * 1000);
-                    
-                    console.log(`Token expires in ${expiresIn} seconds, scheduling refresh in ${refreshIn / 1000} seconds`);
-                    
-                    tokenRefreshTimer = setTimeout(async () => {
-                        if (state.currentUser) {
-                            try {
-                                console.log('Proactively refreshing token...');
-                                const newToken = await state.currentUser.getIdToken(true);
-                                currentIdToken = newToken;
-                                scheduleTokenRefresh(newToken); // Schedule next refresh
-                                console.log('Token refreshed proactively');
-                            } catch (error) {
-                                console.error('Failed to refresh token proactively:', error);
-                            }
-                        }
-                    }, refreshIn);
-                }
-            } catch (error) {
-                console.error('Failed to parse token for refresh scheduling:', error);
-            }
+            console.log('Token refresh scheduling disabled');
+            return;
         }
         
-        // Token change listener - this handles automatic token refresh
-        onIdTokenChanged(auth, async (user) => {
-            // Skip token operations in local development
-            const isLocalDevelopment = window.location.hostname === 'localhost' || 
-                                     window.location.hostname === '127.0.0.1' || 
-                                     window.location.hostname.includes('localhost') ||
-                                     window.location.protocol === 'file:' ||
-                                     (window.location.port && window.location.port !== '80' && window.location.port !== '443');
-            
-            if (isLocalDevelopment) {
-                console.log('Local development mode: Skipping onIdTokenChanged operations');
-                if (user) {
-                    currentIdToken = 'mock-token-for-local-dev';
-                } else {
-                    currentIdToken = null;
-                }
-                return;
-            }
-            
-            if (user) {
-                try {
-                    // Get the fresh token
-                    const token = await user.getIdToken();
-                    currentIdToken = token;
-                    
-                    // Schedule the next refresh
-                    scheduleTokenRefresh(token);
-                    
-                    console.log('ID token updated and refresh scheduled');
-                } catch (error) {
-                    console.error('Failed to get token in onIdTokenChanged:', error);
-                    currentIdToken = null;
-                }
-            } else {
-                // User signed out, clear token and timer
-                currentIdToken = null;
-                if (tokenRefreshTimer) {
-                    clearTimeout(tokenRefreshTimer);
-                    tokenRefreshTimer = null;
-                }
-            }
-        });
+        // Token change listener - DISABLED to prevent Firestore connections
+        // onIdTokenChanged causes direct Firestore connections which get blocked
+        console.log('Token management system disabled to prevent Firestore connection issues');
         
         // Authentication state management
         let authInitializationTimeout = null;
@@ -2214,44 +2056,20 @@
         });
 
         // Helper function to ensure we have a valid token
-        async function ensureValidToken(maxWaitTime = 5000) {
-            const startTime = Date.now();
-            
-            while (Date.now() - startTime < maxWaitTime) {
-                if (currentIdToken) {
-                    // Validate the token is not expired
-                    try {
-                        const tokenParts = currentIdToken.split('.');
-                        if (tokenParts.length === 3) {
-                            const payload = JSON.parse(atob(tokenParts[1]));
-                            const now = Math.floor(Date.now() / 1000);
-                            if (payload.exp && payload.exp > now + 60) { // Token should be valid for at least 1 more minute
-                                return currentIdToken;
-                            }
-                        }
-                    } catch (error) {
-                        console.log('Error validating managed token:', error);
-                    }
-                }
-                
-                // Wait a bit and try again
-                await new Promise(resolve => setTimeout(resolve, 100));
+        async function ensureValidToken() {
+            if (!state.currentUser) {
+                throw new Error('User not authenticated');
             }
             
-            // If we still don't have a valid token, try to get one manually
-            if (state.currentUser) {
-                try {
-                    console.log('Managed token not available, getting token manually...');
-                    const token = await state.currentUser.getIdToken(true);
-                    currentIdToken = token;
-                    scheduleTokenRefresh(token);
-                    return token;
-                } catch (error) {
-                    console.error('Failed to get token manually:', error);
-                    throw new Error('Unable to obtain valid authentication token');
-                }
-            } else {
-                throw new Error('User not authenticated');
+            try {
+                console.log('Getting fresh token for backend call...');
+                // Always get a fresh token to avoid expiration issues
+                const token = await state.currentUser.getIdToken(true);
+                console.log('Fresh token obtained successfully');
+                return token;
+            } catch (error) {
+                console.error('Failed to get fresh token:', error);
+                throw new Error('Unable to obtain valid authentication token');
             }
         }
 
@@ -2360,11 +2178,9 @@
                             // Wait a moment before attempting refresh to avoid race conditions
                             await new Promise(resolve => setTimeout(resolve, 500));
                             
-                            // Force refresh the token and update managed token
+                            // Force refresh the token
                             console.log('Forcing token refresh due to 401...');
                             const freshToken = await state.currentUser.getIdToken(true);
-                            currentIdToken = freshToken;
-                            scheduleTokenRefresh(freshToken); // Schedule next refresh
                             
                             // Log new token info
                             try {
