@@ -155,10 +155,88 @@
             }
         }
 
+        /* App container smooth transitions */
+        #app {
+            transition: opacity 0.5s ease-in-out;
+        }
+
         /* Hide content during transition */
         .transitioning {
             opacity: 0;
             pointer-events: none;
+        }
+
+        /* Mobile responsiveness improvements */
+        @media (max-width: 768px) {
+            /* Improve padding on mobile */
+            .threshold-container {
+                padding: 1rem !important;
+            }
+            
+            .kairos-card {
+                padding: 1.5rem !important;
+                margin: 1rem !important;
+            }
+            
+            /* Gateway choice icons */
+            .gateway-option {
+                margin: 0 1rem !important;
+            }
+            
+            .gateway-icon {
+                width: 100px !important;
+                height: 100px !important;
+            }
+            
+            /* Text journaling form */
+            #text-journal-form input,
+            #text-journal-form textarea {
+                font-size: 16px !important; /* Prevents zoom on iOS */
+            }
+            
+            /* Body map sizing */
+            .body-map svg {
+                max-width: 150px !important;
+            }
+            
+            /* Button improvements */
+            button {
+                min-height: 44px; /* Touch target size */
+                font-size: 16px !important; /* Prevents zoom on iOS */
+            }
+            
+            /* Improve spacing for mobile header */
+            .mobile-header {
+                padding: 0.5rem 1rem !important;
+            }
+            
+            .mobile-header h1 {
+                font-size: 1.5rem !important;
+                line-height: 1.3 !important;
+                margin-bottom: 0.5rem !important;
+            }
+            
+            .mobile-header p {
+                font-size: 0.9rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            /* Extra small mobile adjustments */
+            .gateway-choice-container {
+                flex-direction: column !important;
+                gap: 2rem !important;
+            }
+            
+            .kairos-card {
+                padding: 1rem !important;
+            }
+            
+            /* Ensure buttons don't overlap */
+            .floating-logout {
+                padding: 0.5rem 0.75rem !important;
+                min-width: 70px !important;
+            }
         }
 
         /* Typography hierarchy */
@@ -1803,14 +1881,56 @@
                 throw new Error('User must be authenticated');
             }
 
+            // Check if running locally and return mock data immediately
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.warn('Running in local development mode. Using mock data for backend calls.');
+                
+                // Return appropriate mock data based on action
+                switch (action) {
+                    case 'getUserEntries':
+                        // Load from localStorage for persistence in local development
+                        const storedEntries = loadLocalEntries();
+                        return storedEntries.length > 0 ? storedEntries : [
+                            {
+                                id: 'mock-entry-1',
+                                title: 'Welcome to Kairos - Your First Entry',
+                                date: new Date().toISOString(),
+                                type: 'General',
+                                situation: { description: 'This is a sample entry to show how your recent entries will appear. Try creating your own entry using the Gateway Choice feature!' },
+                                createdAt: { _seconds: Math.floor(Date.now() / 1000) }
+                            },
+                            {
+                                id: 'mock-entry-2', 
+                                title: 'Local Development Guide',
+                                date: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+                                type: 'Reflection',
+                                situation: { description: 'In local development, your entries will persist in localStorage until you clear browser data. All features work with mock data.' },
+                                createdAt: { _seconds: Math.floor((Date.now() - 86400000) / 1000) }
+                            }
+                        ];
+                    case 'createEntry':
+                        const newEntry = { 
+                            id: 'local-' + Date.now(), 
+                            ...data,
+                            createdAt: { _seconds: Math.floor(Date.now() / 1000) }
+                        };
+                        // Don't add to entries array here - that's handled by onJournalEntryCompleted
+                        return newEntry;
+                    case 'deleteEntry':
+                        // Remove from localStorage
+                        const currentEntries = loadLocalEntries();
+                        const filteredEntries = currentEntries.filter(e => e.id !== data.entryId);
+                        localStorage.setItem('kairos-local-entries', JSON.stringify(filteredEntries));
+                        return { success: true };
+                    default:
+                        return { mockData: true, success: true };
+                }
+            }
+
             try {
                 const idToken = await state.currentUser.getIdToken();
                 
-                // Use different URL for local development
-                const baseUrl = window.location.hostname === 'localhost' ? 
-                    'http://localhost:8888' : '';
-                
-                const response = await fetch(`${baseUrl}/.netlify/functions/firebase-backend`, {
+                const response = await fetch(`/.netlify/functions/firebase-backend`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1820,23 +1940,71 @@
                 });
 
                 if (!response.ok) {
-                    // Handle 404 errors for local development
-                    if (response.status === 404) {
-                        console.warn('Netlify functions not available in local development. Using mock data.');
-                        return { mockData: true, entries: [] };
-                    }
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Backend operation failed');
                 }
 
                 return await response.json();
             } catch (error) {
-                // Handle network errors for local development
-                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    console.warn('Backend not available in local development. Using mock data.');
-                    return { mockData: true, entries: [] };
-                }
                 console.error('Firebase backend error:', error);
+                throw error;
+            }
+        }
+
+        // Local development storage helpers
+        function saveLocalEntries() {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                localStorage.setItem('kairos-local-entries', JSON.stringify(entries));
+            }
+        }
+
+        function loadLocalEntries() {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                const stored = localStorage.getItem('kairos-local-entries');
+                return stored ? JSON.parse(stored) : [];
+            }
+            return [];
+        }
+
+        // Helper function to handle Gemini API calls with local development support
+        async function callGeminiAPI(prompt, structured = false) {
+            // Check if running locally and return mock data
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.warn('Running in local development mode. Using mock response for Gemini API calls.');
+                
+                if (structured) {
+                    // Return structured mock response for synthesis and advisor
+                    return {
+                        guidance: "This is a mock response for local development. The AI features will work fully when deployed.",
+                        themes: ["Local Development", "Mock Data"],
+                        insights: "Deploy the app to see full AI functionality."
+                    };
+                } else {
+                    // Return simple text response
+                    return {
+                        text: "This is a mock response for local development. The AI features will work fully when deployed to see the complete Gemini AI integration."
+                    };
+                }
+            }
+
+            // Production API call
+            try {
+                const apiUrl = '/.netlify/functions/call-gemini';
+                const payload = { prompt, structured };
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Serverless function failed with status ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
                 throw error;
             }
         }
@@ -1848,19 +2016,14 @@
             try {
                 const result = await callFirebaseBackend('getUserEntries', { limit: 50 });
                 
-                // Handle mock data for local development
-                if (result.mockData) {
-                    entries = [];
-                    console.log('Using mock data - no entries loaded');
-                    return;
-                }
-                
                 entries = result.map(entry => ({
                     ...entry,
                     // Convert Firestore timestamp to ISO string for compatibility
                     date: entry.createdAt?.toDate?.()?.toISOString() || 
                           (entry.createdAt?._seconds ? new Date(entry.createdAt._seconds * 1000).toISOString() : new Date().toISOString())
                 }));
+                
+                console.log(`Loaded ${entries.length} entries:`, entries.map(e => ({ id: e.id, title: e.title, date: e.date })));
             } catch (error) {
                 console.error('Error loading entries:', error);
                 // Don't show error toast for local development
@@ -1978,20 +2141,16 @@
                     case 'register': appContainer.innerHTML = RegisterPage(); break;
                     case 'onboarding': appContainer.innerHTML = OnboardingPage(); break;
                     case 'dashboard': appContainer.innerHTML = DashboardPage(); break;
-                    case 'somaticCheck1': appContainer.innerHTML = SomaticCheckPage1(); break;
-                    case 'somaticCheck2': appContainer.innerHTML = SomaticCheckPage2(); break;
-                    case 'grounding': appContainer.innerHTML = GroundingPage(); break;
-                    case 'entrySetup': appContainer.innerHTML = EntrySetupPage(); break;
-                    case 'thematicCheck': appContainer.innerHTML = ThematicCheckPage(); break;
-                    case 'entryFlow': appContainer.innerHTML = EntryFlowPage(); break;
+                    case 'gatewayChoice': appContainer.innerHTML = GatewayChoicePage(); break;
+                    case 'textJournaling': appContainer.innerHTML = TextJournalingPage(); break;
+                    case 'voiceJournaling': appContainer.innerHTML = VoiceJournalingPage(); break;
                     case 'viewEntry': appContainer.innerHTML = ViewEntryPage(); break;
-                    case 'quickJournal': appContainer.innerHTML = QuickJournalPage(); break;
                 }
             }
             modalContainer.innerHTML = state.modal.visible ? ModalComponent(state.modal) : '';
             
             // Create particles for different page types
-            if (state.currentPage === 'login' || state.currentPage === 'register' || state.currentPage === 'onboarding' || state.currentPage === 'quickJournal') {
+            if (state.currentPage === 'login' || state.currentPage === 'register' || state.currentPage === 'onboarding' || state.currentPage === 'gatewayChoice' || state.currentPage === 'textJournaling' || state.currentPage === 'voiceJournaling') {
                 setTimeout(() => createDescentParticles(), 100);
             } else if (state.currentPage === 'dashboard') {
                 setTimeout(() => {
@@ -2786,47 +2945,60 @@
                 <div class="descent-background"></div>
                 <div class="descent-particles" id="descent-particles-container"></div>
                 <div class="sanctuary-container" style="animation: containerBreathe 8s ease-in-out infinite;">
-                    <!-- Floating Logout -->
-                    <button id="logout-btn" class="floating-logout" style="
-                        position: absolute;
-                        top: 2rem;
-                        right: 2rem;
-                        background: rgba(255, 255, 255, 0.1);
-                        border: 1px solid rgba(255, 255, 255, 0.2);
-                        color: var(--warm-off-white);
-                        backdrop-filter: blur(10px);
-                        padding: 0.75rem 1.5rem;
-                        border-radius: 12px;
-                        font-family: 'Inter', sans-serif;
-                        font-weight: 500;
-                        transition: all 0.3s ease;
-                        z-index: 10;
-                    " onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Leave
-                    </button>
-
-                    <!-- Gentle Welcome -->
-                    <div class="welcome-section fade-in" style="
-                        text-align: center;
-                        margin: 4rem auto 6rem;
-                        animation-delay: 0.2s;
+                    <!-- Mobile-Responsive Header -->
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-start;
+                        padding: 1rem 2rem;
+                        margin-bottom: 2rem;
                     ">
-                        <h1 style="
-                            font-family: 'Playfair Display', serif;
-                            font-size: 2.5rem;
-                            font-weight: 400;
+                        <!-- Spacer for centering -->
+                        <div style="width: 80px;"></div>
+                        
+                        <!-- Welcome Text (Mobile Responsive) -->
+                        <div class="welcome-section fade-in" style="
+                            text-align: center;
+                            flex: 1;
+                            animation-delay: 0.2s;
+                        ">
+                            <h1 style="
+                                font-family: 'Playfair Display', serif;
+                                font-size: clamp(1.8rem, 5vw, 2.5rem);
+                                font-weight: 400;
+                                color: var(--warm-off-white);
+                                opacity: 0.9;
+                                margin: 0 0 1rem 0;
+                                text-shadow: 0 2px 8px rgba(72, 61, 139, 0.3);
+                                line-height: 1.2;
+                            ">Welcome back${auth.currentUser?.displayName ? ', ' + auth.currentUser.displayName.split(' ')[0] : ''}</h1>
+                            <p style="
+                                font-family: 'Inter', sans-serif;
+                                font-size: clamp(0.9rem, 3vw, 1.1rem);
+                                color: rgba(255, 255, 255, 0.7);
+                                margin: 0;
+                            ">Enter your sanctuary of presence and reflection</p>
+                        </div>
+                        
+                        <!-- Logout Button -->
+                        <button id="logout-btn" class="floating-logout" style="
+                            background: rgba(255, 255, 255, 0.1);
+                            border: 1px solid rgba(255, 255, 255, 0.2);
                             color: var(--warm-off-white);
-                            opacity: 0.9;
-                            margin-bottom: 1rem;
-                            text-shadow: 0 2px 8px rgba(72, 61, 139, 0.3);
-                        ">Welcome back${auth.currentUser?.displayName ? ', ' + auth.currentUser.displayName.split(' ')[0] : ''}</h1>
-                        <p style="
+                            backdrop-filter: blur(10px);
+                            padding: 0.75rem 1rem;
+                            border-radius: 12px;
                             font-family: 'Inter', sans-serif;
-                            font-size: 1.1rem;
-                            color: rgba(255, 255, 255, 0.7);
-                            margin: 0;
-                        ">Enter your sanctuary of presence and reflection</p>
+                            font-weight: 500;
+                            transition: all 0.3s ease;
+                            z-index: 10;
+                            min-width: 80px;
+                            white-space: nowrap;
+                        " onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Leave
+                        </button>
                     </div>
+
 
                     <!-- The Central Presence Orb -->
                     <div class="orb-section fade-in" style="
@@ -2917,6 +3089,527 @@
                         </button>` : ''}
                     </div>
 
+                    <!-- Recent Entries Section -->
+                    ${entries.length > 0 ? `
+                    <div id="recent-entries-section" style="display: none; max-width: 800px; margin: 2rem auto 0; padding: 0 2rem;">
+                        <div class="fade-in" style="animation-delay: 0.8s;">
+                            <h3 style="
+                                font-family: 'Playfair Display', serif;
+                                font-size: 1.5rem;
+                                font-weight: 500;
+                                color: var(--warm-off-white);
+                                text-align: center;
+                                margin-bottom: 2rem;
+                                text-shadow: 0 2px 8px rgba(72, 61, 139, 0.3);
+                            ">Your Recent Reflections</h3>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                ${recentEntriesHtml}
+                            </div>
+                        </div>
+                    </div>` : ''}
+
+                </div>
+            `;
+        }
+
+        function GatewayChoicePage() {
+            return `
+                <div class="descent-background"></div>
+                <div class="descent-particles" id="descent-particles-container"></div>
+                
+                <div class="threshold-container" style="
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2rem;
+                    position: relative;
+                ">
+                    <!-- Back Button -->
+                    <button id="back-to-dashboard" style="
+                        position: absolute;
+                        top: 2rem;
+                        left: 2rem;
+                        background: rgba(255, 255, 255, 0.1);
+                        backdrop-filter: blur(10px);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        border-radius: 12px;
+                        padding: 0.75rem;
+                        color: var(--warm-off-white);
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        font-family: 'Inter', sans-serif;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                    " onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                        <i class="fas fa-arrow-left"></i>
+                        Dashboard
+                    </button>
+                    
+                    <div class="kairos-card p-12 rounded-xl max-w-4xl w-full text-center">
+                        <div class="weaver-text" style="animation-delay: 0.5s;">
+                            <h1 style="
+                                font-family: 'Playfair Display', serif;
+                                font-size: 3rem;
+                                font-weight: 600;
+                                margin-bottom: 2rem;
+                                color: var(--warm-off-white);
+                                text-shadow: 
+                                    0 2px 8px rgba(72, 61, 139, 0.8),
+                                    0 0 20px rgba(212, 175, 55, 0.3);
+                            ">How would you like to begin?</h1>
+                            
+                            <p style="
+                                font-family: 'Inter', sans-serif;
+                                font-size: 1.25rem;
+                                color: var(--warm-off-white);
+                                opacity: 0.8;
+                                margin-bottom: 4rem;
+                                line-height: 1.6;
+                            ">Choose your preferred way of expressing what's present for you now.</p>
+                        </div>
+
+                        <!-- Gateway Choice Options -->
+                        <div class="flex justify-center gap-16 mt-8 gateway-choice-container">
+                            <!-- Speak Option -->
+                            <div class="gateway-option speak-option" id="speak-option" style="
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                cursor: pointer;
+                                transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                                transform: scale(1);
+                            ">
+                                <div class="gateway-icon" style="
+                                    width: 120px;
+                                    height: 120px;
+                                    border-radius: 50%;
+                                    background: rgba(255, 255, 255, 0.1);
+                                    backdrop-filter: blur(10px);
+                                    border: 2px solid rgba(255, 255, 255, 0.2);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    margin-bottom: 1.5rem;
+                                    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                                    position: relative;
+                                    overflow: hidden;
+                                ">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="
+                                        color: var(--warm-off-white);
+                                        transition: all 0.3s ease;
+                                    ">
+                                        <path d="M12 1C10.62 1 9.5 2.12 9.5 3.5V12.5C9.5 13.88 10.62 15 12 15S14.5 13.88 14.5 12.5V3.5C14.5 2.12 13.38 1 12 1Z" fill="currentColor"/>
+                                        <path d="M19 10V12C19 16.42 15.42 20 11 20H9V22H15C19.42 22 23 18.42 23 14V10H19ZM5 10V12C5 16.42 8.58 20 13 20H15V22H9C4.58 22 1 18.42 1 14V10H5Z" fill="currentColor" opacity="0.7"/>
+                                    </svg>
+                                    <div class="gateway-glow" style="
+                                        position: absolute;
+                                        top: -50%;
+                                        left: -50%;
+                                        width: 200%;
+                                        height: 200%;
+                                        background: radial-gradient(circle, var(--soft-rose-quartz) 0%, transparent 70%);
+                                        opacity: 0;
+                                        transition: opacity 0.5s ease;
+                                        pointer-events: none;
+                                    "></div>
+                                </div>
+                                <span class="gateway-label" style="
+                                    font-family: 'Inter', sans-serif;
+                                    font-size: 1.25rem;
+                                    font-weight: 500;
+                                    color: var(--warm-off-white);
+                                    opacity: 0;
+                                    transform: translateY(10px);
+                                    transition: all 0.3s ease;
+                                ">Speak</span>
+                            </div>
+
+                            <!-- Write Option -->
+                            <div class="gateway-option write-option" id="write-option" style="
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                cursor: pointer;
+                                transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                                transform: scale(1);
+                            ">
+                                <div class="gateway-icon" style="
+                                    width: 120px;
+                                    height: 120px;
+                                    border-radius: 50%;
+                                    background: rgba(255, 255, 255, 0.1);
+                                    backdrop-filter: blur(10px);
+                                    border: 2px solid rgba(255, 255, 255, 0.2);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    margin-bottom: 1.5rem;
+                                    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                                    position: relative;
+                                    overflow: hidden;
+                                ">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="
+                                        color: var(--warm-off-white);
+                                        transition: all 0.3s ease;
+                                    ">
+                                        <path d="M3 17.25V21H6.75L17.81 9.94L14.06 6.19L3 17.25ZM20.71 7.04C21.1 6.65 21.1 6.02 20.71 5.63L18.37 3.29C17.98 2.9 17.35 2.9 16.96 3.29L15.13 5.12L18.88 8.87L20.71 7.04Z" fill="currentColor"/>
+                                    </svg>
+                                    <div class="gateway-glow" style="
+                                        position: absolute;
+                                        top: -50%;
+                                        left: -50%;
+                                        width: 200%;
+                                        height: 200%;
+                                        background: radial-gradient(circle, var(--deep-indigo) 0%, transparent 70%);
+                                        opacity: 0;
+                                        transition: opacity 0.5s ease;
+                                        pointer-events: none;
+                                    "></div>
+                                </div>
+                                <span class="gateway-label" style="
+                                    font-family: 'Inter', sans-serif;
+                                    font-size: 1.25rem;
+                                    font-weight: 500;
+                                    color: var(--warm-off-white);
+                                    opacity: 0;
+                                    transform: translateY(10px);
+                                    transition: all 0.3s ease;
+                                ">Write</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function TextJournalingPage() {
+            return `
+                <div class="descent-background"></div>
+                <div class="descent-particles" id="descent-particles-container"></div>
+                
+                <div class="threshold-container" style="
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: flex-start;
+                    padding: 2rem;
+                    position: relative;
+                ">
+                    <!-- Back Button -->
+                    <button id="back-to-gateway" style="
+                        position: absolute;
+                        top: 2rem;
+                        left: 2rem;
+                        background: rgba(255, 255, 255, 0.1);
+                        backdrop-filter: blur(10px);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        border-radius: 12px;
+                        padding: 0.75rem;
+                        color: var(--warm-off-white);
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        font-family: 'Inter', sans-serif;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                    " onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                        <i class="fas fa-arrow-left"></i>
+                        Back
+                    </button>
+                    
+                    <div class="kairos-card rounded-xl max-w-4xl w-full" style="margin-top: 4rem; padding: 3rem;">
+                        <div class="text-center mb-8">
+                            <h1 style="
+                                font-family: 'Playfair Display', serif;
+                                font-size: 2.5rem;
+                                font-weight: 600;
+                                margin-bottom: 1rem;
+                                color: var(--warm-off-white);
+                                text-shadow: 
+                                    0 2px 8px rgba(72, 61, 139, 0.8),
+                                    0 0 20px rgba(212, 175, 55, 0.3);
+                            ">The Scribe - Text</h1>
+                            
+                            <p style="
+                                font-family: 'Inter', sans-serif;
+                                font-size: 1.1rem;
+                                color: var(--warm-off-white);
+                                opacity: 0.8;
+                                line-height: 1.6;
+                            ">Express your thoughts and feelings through writing</p>
+                        </div>
+
+                        <form id="text-journal-form">
+                            <!-- Title Input -->
+                            <div class="mb-6">
+                                <label style="
+                                    font-family: 'Inter', sans-serif;
+                                    font-size: 1rem;
+                                    font-weight: 500;
+                                    color: var(--warm-off-white);
+                                    opacity: 0.9;
+                                    display: block;
+                                    margin-bottom: 0.75rem;
+                                ">Entry Title</label>
+                                <input 
+                                    type="text" 
+                                    id="entry-title" 
+                                    name="title"
+                                    placeholder="What would you like to call this reflection?"
+                                    required
+                                    style="
+                                        width: 100%;
+                                        padding: 1rem;
+                                        background: rgba(255, 255, 255, 0.1);
+                                        border: 1px solid rgba(255, 255, 255, 0.2);
+                                        border-radius: 12px;
+                                        color: var(--warm-off-white);
+                                        font-family: 'Inter', sans-serif;
+                                        font-size: 1rem;
+                                        backdrop-filter: blur(10px);
+                                        transition: all 0.3s ease;
+                                    "
+                                    onfocus="this.style.borderColor='rgba(212, 175, 55, 0.5)'; this.style.boxShadow='0 0 20px rgba(212, 175, 55, 0.2)'"
+                                    onblur="this.style.borderColor='rgba(255, 255, 255, 0.2)'; this.style.boxShadow='none'"
+                                />
+                            </div>
+
+                            <!-- Thoughts Textarea -->
+                            <div class="mb-6">
+                                <label style="
+                                    font-family: 'Inter', sans-serif;
+                                    font-size: 1rem;
+                                    font-weight: 500;
+                                    color: var(--warm-off-white);
+                                    opacity: 0.9;
+                                    display: block;
+                                    margin-bottom: 0.75rem;
+                                ">Your Thoughts & Feelings</label>
+                                <textarea 
+                                    id="entry-content" 
+                                    name="content"
+                                    placeholder="What's present for you right now? Share whatever feels important - your experiences, emotions, insights, or anything that's on your mind..."
+                                    required
+                                    rows="8"
+                                    style="
+                                        width: 100%;
+                                        padding: 1.5rem;
+                                        background: rgba(255, 255, 255, 0.1);
+                                        border: 1px solid rgba(255, 255, 255, 0.2);
+                                        border-radius: 12px;
+                                        color: var(--warm-off-white);
+                                        font-family: 'Inter', sans-serif;
+                                        font-size: 1rem;
+                                        line-height: 1.6;
+                                        backdrop-filter: blur(10px);
+                                        transition: all 0.3s ease;
+                                        resize: vertical;
+                                        min-height: 200px;
+                                    "
+                                    onfocus="this.style.borderColor='rgba(212, 175, 55, 0.5)'; this.style.boxShadow='0 0 20px rgba(212, 175, 55, 0.2)'"
+                                    onblur="this.style.borderColor='rgba(255, 255, 255, 0.2)'; this.style.boxShadow='none'"
+                                ></textarea>
+                            </div>
+
+                            <!-- Somatic Awareness Section -->
+                            <div class="mb-8">
+                                <label style="
+                                    font-family: 'Inter', sans-serif;
+                                    font-size: 1rem;
+                                    font-weight: 500;
+                                    color: var(--warm-off-white);
+                                    opacity: 0.9;
+                                    display: block;
+                                    margin-bottom: 0.75rem;
+                                ">Where do you feel this in your body? <span style="opacity: 0.7; font-weight: 400;">(Optional)</span></label>
+                                
+                                <div style="
+                                    background: rgba(255, 255, 255, 0.05);
+                                    border: 1px solid rgba(255, 255, 255, 0.1);
+                                    border-radius: 12px;
+                                    padding: 1.5rem;
+                                    backdrop-filter: blur(10px);
+                                ">
+                                    <p style="
+                                        font-family: 'Inter', sans-serif;
+                                        font-size: 0.9rem;
+                                        color: var(--warm-off-white);
+                                        opacity: 0.7;
+                                        margin-bottom: 1rem;
+                                        text-align: center;
+                                    ">Click on body areas where you notice sensations</p>
+                                    
+                                    <!-- Simple Body Map -->
+                                    <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+                                        <svg width="200" height="300" viewBox="0 0 200 300" style="cursor: pointer;">
+                                            <!-- Head -->
+                                            <ellipse cx="100" cy="40" rx="30" ry="35" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="2" class="body-part" data-part="head"/>
+                                            
+                                            <!-- Torso -->
+                                            <rect x="70" y="70" width="60" height="80" rx="15" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="2" class="body-part" data-part="chest"/>
+                                            <rect x="70" y="150" width="60" height="60" rx="15" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="2" class="body-part" data-part="stomach"/>
+                                            
+                                            <!-- Arms -->
+                                            <rect x="30" y="80" width="35" height="70" rx="17" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="2" class="body-part" data-part="left-arm"/>
+                                            <rect x="135" y="80" width="35" height="70" rx="17" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="2" class="body-part" data-part="right-arm"/>
+                                            
+                                            <!-- Legs -->
+                                            <rect x="75" y="215" width="20" height="80" rx="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="2" class="body-part" data-part="left-leg"/>
+                                            <rect x="105" y="215" width="20" height="80" rx="10" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="2" class="body-part" data-part="right-leg"/>
+                                        </svg>
+                                    </div>
+                                    
+                                    <!-- Selected sensations display -->
+                                    <div id="selected-sensations" style="
+                                        min-height: 50px;
+                                        padding: 1rem;
+                                        background: rgba(255, 255, 255, 0.05);
+                                        border-radius: 8px;
+                                        border: 1px solid rgba(255, 255, 255, 0.1);
+                                    ">
+                                        <p style="
+                                            font-family: 'Inter', sans-serif;
+                                            font-size: 0.9rem;
+                                            color: var(--warm-off-white);
+                                            opacity: 0.7;
+                                            text-align: center;
+                                            margin: 0;
+                                        ">Selected body sensations will appear here</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="text-center">
+                                <button 
+                                    type="submit" 
+                                    id="submit-entry-btn"
+                                    style="
+                                        background: linear-gradient(135deg, 
+                                            var(--shimmering-gold) 0%, 
+                                            var(--soft-rose-quartz) 50%, 
+                                            var(--deep-indigo) 100%);
+                                        border: none;
+                                        padding: 1rem 3rem;
+                                        border-radius: 12px;
+                                        color: white;
+                                        font-family: 'Inter', sans-serif;
+                                        font-size: 1.1rem;
+                                        font-weight: 600;
+                                        cursor: pointer;
+                                        transition: all 0.3s ease;
+                                        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                                    "
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(212, 175, 55, 0.4)'"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'"
+                                >
+                                    Save Reflection
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        function VoiceJournalingPage() {
+            return `
+                <div class="descent-background"></div>
+                <div class="descent-particles" id="descent-particles-container"></div>
+                
+                <div class="threshold-container" style="
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2rem;
+                    position: relative;
+                ">
+                    <!-- Back Button -->
+                    <button id="back-to-gateway" style="
+                        position: absolute;
+                        top: 2rem;
+                        left: 2rem;
+                        background: rgba(255, 255, 255, 0.1);
+                        backdrop-filter: blur(10px);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        border-radius: 12px;
+                        padding: 0.75rem;
+                        color: var(--warm-off-white);
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        font-family: 'Inter', sans-serif;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                    " onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                        <i class="fas fa-arrow-left"></i>
+                        Back
+                    </button>
+                    
+                    <div class="kairos-card p-12 rounded-xl max-w-4xl w-full text-center">
+                        <div class="weaver-text" style="animation-delay: 0.5s;">
+                            <h1 style="
+                                font-family: 'Playfair Display', serif;
+                                font-size: 3rem;
+                                font-weight: 600;
+                                margin-bottom: 2rem;
+                                color: var(--warm-off-white);
+                                text-shadow: 
+                                    0 2px 8px rgba(72, 61, 139, 0.8),
+                                    0 0 20px rgba(212, 175, 55, 0.3);
+                            ">The Scribe - Voice</h1>
+                            
+                            <p style="
+                                font-family: 'Inter', sans-serif;
+                                font-size: 1.25rem;
+                                color: var(--warm-off-white);
+                                opacity: 0.8;
+                                margin-bottom: 4rem;
+                                line-height: 1.6;
+                            ">Coming Soon - Voice journaling with AI agent integration</p>
+                        </div>
+
+                        <!-- Placeholder for voice interface -->
+                        <div style="
+                            background: rgba(255, 255, 255, 0.05);
+                            border: 2px dashed rgba(255, 255, 255, 0.2);
+                            border-radius: 16px;
+                            padding: 4rem 2rem;
+                            margin: 2rem 0;
+                        ">
+                            <div style="
+                                width: 120px;
+                                height: 120px;
+                                border-radius: 50%;
+                                background: rgba(182, 149, 192, 0.2);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                margin: 0 auto 2rem;
+                                border: 2px dashed var(--soft-rose-quartz);
+                            ">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="color: var(--soft-rose-quartz);">
+                                    <path d="M12 1C10.62 1 9.5 2.12 9.5 3.5V12.5C9.5 13.88 10.62 15 12 15S14.5 13.88 14.5 12.5V3.5C14.5 2.12 13.38 1 12 1Z" fill="currentColor"/>
+                                    <path d="M19 10V12C19 16.42 15.42 20 11 20H9V22H15C19.42 22 23 18.42 23 14V10H19ZM5 10V12C5 16.42 8.58 20 13 20H15V22H9C4.58 22 1 18.42 1 14V10H5Z" fill="currentColor" opacity="0.7"/>
+                                </svg>
+                            </div>
+                            <p style="
+                                font-family: 'Inter', sans-serif;
+                                font-size: 1.1rem;
+                                color: var(--warm-off-white);
+                                opacity: 0.7;
+                                margin: 0;
+                            ">Voice journaling agent will be implemented here<br/>
+                            <small style="opacity: 0.6;">Real-time transcription • Emotional tone analysis • Interactive dialogue</small></p>
+                        </div>
+                    </div>
                 </div>
             `;
         }
@@ -3345,11 +4038,129 @@
                 </div>
             `;
         }
-        function GroundingPage() { 
-            return `<div class="min-h-screen flex flex-col items-center justify-center text-center p-4 fade-in"><h1 class="text-3xl font-bold mb-4">A wise choice. Let's ground ourselves.</h1><p class="text-lg text-gray-600 mb-8">Follow the rhythm. Breathe in as the circle expands, and out as it contracts.</p><div class="w-48 h-48 bg-blue-200 rounded-full flex items-center justify-center" style="animation: breathe 8s ease-in-out infinite;"><span id="breath-text" class="text-blue-800 font-semibold">Breathe In...</span></div><button id="continue-to-setup" class="kairos-btn bg-white/80 border mt-12 px-8 py-3 rounded-lg font-semibold hover:bg-white">Continue when ready</button><style>@keyframes breathe { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(0.8); } }</style></div>`;
-        }
+        
+        function ViewEntryPage() { 
+            const entry = state.currentEntry;
+            if (!entry) {
+                return `
+                    <div class="descent-background"></div>
+                    <div class="descent-particles" id="descent-particles-container"></div>
+                    <div class="threshold-container" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+                        <div class="kairos-card p-8 rounded-xl text-center">
+                            <h2 style="color: var(--warm-off-white); font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 1rem;">Entry not found</h2>
+                            <button id="back-to-dashboard" style="
+                                background: linear-gradient(135deg, var(--shimmering-gold) 0%, var(--soft-rose-quartz) 100%);
+                                border: none;
+                                padding: 0.75rem 2rem;
+                                border-radius: 12px;
+                                color: white;
+                                font-family: 'Inter', sans-serif;
+                                font-weight: 600;
+                                cursor: pointer;
+                            ">Back to Dashboard</button>
+                        </div>
+                    </div>
+                `;
+            }
 
-        function QuickJournalPage() {
+            // Helper function to format content based on entry type
+            const formatEntryContent = (entry) => {
+                if (entry.method === 'write' && entry.content) {
+                    // New simple text entries
+                    return `
+                        <div style="margin-bottom: 2rem;">
+                            <h3 style="
+                                font-family: 'Playfair Display', serif;
+                                font-size: 1.25rem;
+                                color: var(--shimmering-gold);
+                                margin-bottom: 1rem;
+                                opacity: 0.9;
+                            ">Reflection</h3>
+                            <div style="
+                                background: rgba(255, 255, 255, 0.05);
+                                border: 1px solid rgba(255, 255, 255, 0.1);
+                                border-radius: 12px;
+                                padding: 1.5rem;
+                                backdrop-filter: blur(10px);
+                            ">
+                                <p style="
+                                    font-family: 'Inter', sans-serif;
+                                    font-size: 1rem;
+                                    line-height: 1.6;
+                                    color: var(--warm-off-white);
+                                    margin: 0;
+                                    white-space: pre-wrap;
+                                ">${entry.content}</p>
+                            </div>
+                        </div>
+
+                        ${entry.bodySensations && entry.bodySensations.length > 0 ? `
+                        <div style="margin-bottom: 2rem;">
+                            <h3 style="
+                                font-family: 'Playfair Display', serif;
+                                font-size: 1.25rem;
+                                color: var(--shimmering-gold);
+                                margin-bottom: 1rem;
+                                opacity: 0.9;
+                            ">Body Awareness</h3>
+                            <div style="
+                                background: rgba(255, 255, 255, 0.05);
+                                border: 1px solid rgba(255, 255, 255, 0.1);
+                                border-radius: 12px;
+                                padding: 1.5rem;
+                                backdrop-filter: blur(10px);
+                            ">
+                                ${entry.bodySensations.map(sensation => `
+                                    <div style="
+                                        display: inline-block;
+                                        background: rgba(212, 175, 55, 0.2);
+                                        border: 1px solid rgba(212, 175, 55, 0.3);
+                                        border-radius: 8px;
+                                        padding: 0.5rem 1rem;
+                                        margin: 0.25rem;
+                                        font-family: 'Inter', sans-serif;
+                                        font-size: 0.9rem;
+                                        color: var(--warm-off-white);
+                                    ">
+                                        ${sensation.part.replace('-', ' ')}: ${sensation.sensation}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>` : ''}
+                    `;
+                } else {
+                    // Legacy complex entries - format situation description
+                    const description = entry.situation?.description || entry.content || 'No content available';
+                    return `
+                        <div style="margin-bottom: 2rem;">
+                            <h3 style="
+                                font-family: 'Playfair Display', serif;
+                                font-size: 1.25rem;
+                                color: var(--shimmering-gold);
+                                margin-bottom: 1rem;
+                                opacity: 0.9;
+                            ">Entry Content</h3>
+                            <div style="
+                                background: rgba(255, 255, 255, 0.05);
+                                border: 1px solid rgba(255, 255, 255, 0.1);
+                                border-radius: 12px;
+                                padding: 1.5rem;
+                                backdrop-filter: blur(10px);
+                            ">
+                                <p style="
+                                    font-family: 'Inter', sans-serif;
+                                    font-size: 1rem;
+                                    line-height: 1.6;
+                                    color: var(--warm-off-white);
+                                    margin: 0;
+                                    white-space: pre-wrap;
+                                ">${description}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            };
+
             return `
                 <div class="descent-background"></div>
                 <div class="descent-particles" id="descent-particles-container"></div>
@@ -3359,553 +4170,107 @@
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    justify-content: center;
+                    justify-content: flex-start;
                     padding: 2rem;
                     position: relative;
                 ">
-                    <!-- Back Button -->
-                    <button id="back-to-dashboard" style="
-                        position: absolute;
-                        top: 2rem;
-                        left: 2rem;
-                        background: rgba(255, 255, 255, 0.1);
-                        backdrop-filter: blur(10px);
-                        border: 1px solid rgba(255, 255, 255, 0.2);
-                        border-radius: 12px;
-                        padding: 0.75rem;
-                        color: var(--warm-off-white);
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        font-family: 'Inter', sans-serif;
+                    <!-- Mobile-Responsive Header -->
+                    <div style="
                         display: flex;
-                        align-items: center;
-                        gap: 0.5rem;
-                    " onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
-                        <i class="fas fa-arrow-left"></i>
-                        Dashboard
-                    </button>
+                        justify-content: space-between;
+                        align-items: flex-start;
+                        width: 100%;
+                        max-width: 56rem;
+                        margin-bottom: 2rem;
+                    ">
+                        <!-- Back Button -->
+                        <button id="back-to-dashboard" style="
+                            background: rgba(255, 255, 255, 0.1);
+                            backdrop-filter: blur(10px);
+                            border: 1px solid rgba(255, 255, 255, 0.2);
+                            border-radius: 12px;
+                            padding: 0.75rem;
+                            color: var(--warm-off-white);
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            font-family: 'Inter', sans-serif;
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                        " onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                            <i class="fas fa-arrow-left"></i>
+                            Back
+                        </button>
+                        
+                        <!-- Delete Button -->
+                        <button id="delete-entry-btn" data-id="${entry.id}" style="
+                            background: rgba(239, 68, 68, 0.2);
+                            backdrop-filter: blur(10px);
+                            border: 1px solid rgba(239, 68, 68, 0.3);
+                            border-radius: 12px;
+                            padding: 0.75rem;
+                            color: #ef4444;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            font-family: 'Inter', sans-serif;
+                        " onmouseover="this.style.background='rgba(239, 68, 68, 0.3)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.2)'">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                     
-                    <div class="kairos-card p-8 rounded-xl max-w-4xl w-full">
-                        <div class="weaver-text text-center mb-8" style="animation-delay: 0.5s;">
+                    <!-- Entry Content -->
+                    <div class="kairos-card rounded-xl max-w-4xl w-full" style="margin-top: 2rem; padding: 3rem;">
+                        <!-- Entry Header -->
+                        <div style="text-align: center; margin-bottom: 3rem;">
                             <h1 style="
                                 font-family: 'Playfair Display', serif;
-                                font-size: 2.5rem;
+                                font-size: clamp(2rem, 5vw, 3rem);
                                 font-weight: 600;
                                 margin-bottom: 1rem;
                                 color: var(--warm-off-white);
                                 text-shadow: 
                                     0 2px 8px rgba(72, 61, 139, 0.8),
                                     0 0 20px rgba(212, 175, 55, 0.3);
-                            ">What's on your mind?</h1>
+                                line-height: 1.2;
+                            ">${entry.title || 'Untitled Entry'}</h1>
                             
-                            <p style="
-                                font-family: 'Inter', sans-serif;
-                                font-size: 1.1rem;
-                                color: rgba(255, 255, 255, 0.8);
-                                max-width: 500px;
-                                margin: 0 auto;
-                                line-height: 1.6;
-                                animation-delay: 1s; 
-                                opacity: 0; 
-                                animation: weaverReveal 1s ease-out 1s forwards;
-                            ">Share whatever's in your heart. No structure needed—just let your thoughts flow.</p>
-                        </div>
-
-                        <form id="quick-journal-form" style="animation-delay: 1.5s; opacity: 0; animation: weaverReveal 1s ease-out 1.5s forwards;">
-                            <!-- Title Input -->
-                            <div class="input-sanctuary mb-6">
-                                <input 
-                                    type="text"
-                                    id="quick-title"
-                                    name="title"
-                                    placeholder="Give this moment a title (optional)"
-                                    class="kairos-input"
-                                    style="
-                                        font-size: 1.25rem;
-                                        font-weight: 500;
-                                        padding: 1rem 1.5rem;
-                                    "
-                                >
-                            </div>
-
-                            <!-- Main Journal Area -->
-                            <div class="input-sanctuary mb-8">
-                                <textarea 
-                                    id="quick-content"
-                                    name="content"
-                                    placeholder="Today I'm thinking about...
-
-Write about anything: your feelings, what happened, what you're grateful for, what's worrying you, or simply what's present for you right now."
-                                    class="kairos-input"
-                                    rows="12"
-                                    required
-                                    style="
-                                        resize: vertical;
-                                        min-height: 300px;
-                                        font-size: 1.1rem;
-                                        line-height: 1.6;
-                                        font-family: 'Inter', sans-serif;
-                                    "
-                                ></textarea>
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="flex justify-between items-center">
-                                <button type="button" id="explore-deeper-btn" style="
-                                    background: rgba(255, 255, 255, 0.1);
-                                    backdrop-filter: blur(10px);
-                                    border: 1px solid rgba(182, 149, 192, 0.3);
-                                    border-radius: 12px;
-                                    padding: 0.75rem 1.5rem;
-                                    color: var(--soft-rose-quartz);
-                                    cursor: pointer;
+                            <div style="
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                gap: 1rem;
+                                flex-wrap: wrap;
+                                margin-bottom: 2rem;
+                            ">
+                                <span style="
                                     font-family: 'Inter', sans-serif;
-                                    font-weight: 500;
-                                    transition: all 0.3s ease;
-                                " onmouseover="this.style.background='rgba(182,149,192,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
-                                    <i class="fas fa-compass mr-2"></i>
-                                    Explore deeper
-                                </button>
-
-                                <button type="submit" style="
-                                    background: linear-gradient(135deg, 
-                                        var(--shimmering-gold) 0%, 
-                                        var(--soft-rose-quartz) 50%, 
-                                        var(--deep-indigo) 100%);
-                                    border: none;
-                                    border-radius: 16px;
-                                    padding: 1rem 2.5rem;
+                                    font-size: 0.9rem;
+                                    color: rgba(255, 255, 255, 0.7);
+                                ">${new Date(entry.date).toLocaleDateString('en-US', { 
+                                    weekday: 'long', 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                })}</span>
+                                
+                                <span style="
+                                    background: rgba(212, 175, 55, 0.2);
+                                    border: 1px solid rgba(212, 175, 55, 0.3);
+                                    border-radius: 20px;
+                                    padding: 0.25rem 0.75rem;
                                     font-family: 'Inter', sans-serif;
-                                    font-size: 1.1rem;
-                                    font-weight: 600;
-                                    letter-spacing: 0.5px;
-                                    color: var(--warm-off-white);
-                                    cursor: pointer;
-                                    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-                                    text-transform: uppercase;
-                                    box-shadow: 
-                                        0 8px 25px rgba(212, 175, 55, 0.3),
-                                        0 0 20px rgba(72, 61, 139, 0.2),
-                                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-                                ">
-                                    <i class="fas fa-heart mr-2"></i>
-                                    Save Reflection
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            `;
-        }
-        function EntrySetupPage() { 
-            return `<div class="container mx-auto p-4 md:p-8 max-w-3xl fade-in"><div class="kairos-card p-8 rounded-xl shadow-lg"><h1 class="text-3xl font-bold mb-2">Let's Begin</h1><p class="text-gray-600 mb-6">Start by capturing the essence of what's on your mind.</p><form id="entry-setup-form" class="space-y-4"><input type="text" name="title" placeholder="Give this entry a title (optional)" class="w-full text-2xl font-semibold border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-indigo-400 p-1 bg-transparent"><textarea name="situation.description" class="w-full border-gray-300 rounded-md mt-4" rows="6" placeholder="Describe the situation, interaction, or internal state you want to explore..."></textarea><div class="flex justify-end pt-4"><button type="submit" class="kairos-btn kairos-btn-primary px-8 py-3 rounded-lg font-semibold">Continue</button></div></form></div></div>`;
-        }
-        function ThematicCheckPage() { 
-            const optionsHtml = Object.entries(entrySections).map(([key, {title, icon}]) => `<div class="thematic-option kairos-card p-6 rounded-xl shadow-lg border-2 border-transparent" data-section="${key}"><i class="fas ${icon} text-3xl text-indigo-500 mb-3"></i><h2 class="text-xl font-semibold">${title}</h2></div>`).join('');
-            return `<div class="container mx-auto p-4 md:p-8 max-w-4xl text-center fade-in"><h1 class="text-3xl font-bold mb-4">How would you like to explore this?</h1><p class="text-lg text-gray-600 mb-10">Select the layers of your experience that feel most alive right now.</p><div id="thematic-options" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">${optionsHtml}</div><button id="start-reflection-btn" class="kairos-btn kairos-btn-primary px-12 py-4 rounded-lg text-xl font-bold shadow-lg opacity-50" disabled>Start Reflection</button></div>`;
-        }
-        function EntryFlowPage() { 
-            const { steps, currentStepIndex } = state.entryBuilder.flow;
-            const currentSectionKey = steps[currentStepIndex];
-            const sectionDetails = entrySections[currentSectionKey];
-            const progressPercentage = ((currentStepIndex + 1) / steps.length) * 100;
-            const isLastStep = currentStepIndex === steps.length - 1;
-            return `<div class="container mx-auto p-4 md:p-8 max-w-3xl fade-in"><div class="kairos-card p-8 rounded-xl shadow-lg"><div class="mb-6"><div class="flex justify-between items-center mb-2"><h2 class="text-2xl font-bold" style="color: var(--deep-indigo);">${sectionDetails.title}</h2><span class="text-sm font-semibold text-gray-500">Step ${currentStepIndex + 1} of ${steps.length}</span></div><div class="w-full bg-gray-200 rounded-full h-2.5"><div class="h-2.5 rounded-full" style="background: var(--deep-indigo); width: ${progressPercentage}%; transition: width 0.5s ease;"></div></div></div><div id="section-content">${renderSectionContent(currentSectionKey)}</div><div class="flex justify-between items-center mt-8 pt-4 border-t"><button id="flow-back-btn" class="kairos-btn bg-gray-200 px-6 py-2 rounded-lg font-semibold ${currentStepIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${currentStepIndex === 0 ? 'disabled' : ''}>Back</button><button id="flow-next-btn" class="kairos-btn kairos-btn-primary px-8 py-3 rounded-lg font-semibold">${isLastStep ? 'Review & Save' : 'Next'}</button></div></div></div>`;
-        }
-
-        // --- SECTION CONTENT RENDERER (with AI features) ---
-        function renderSectionContent(sectionKey) {
-            const entry = state.entryBuilder;
-            switch(sectionKey) {
-                case 'dream': return `
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block font-semibold text-gray-700 mb-2">Describe the dream or synchronicity</label>
-                            <textarea name="dream.description" class="w-full border-gray-300 rounded-md" rows="5" placeholder="What happened? What did you see, hear, or feel?">${entry.dream?.description || ''}</textarea>
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-gray-700 mb-2">Key Symbols or Themes</label>
-                            <input type="text" name="dream.symbols" class="w-full border-gray-300 rounded-md" placeholder="e.g., water, flying, a recurring number" value="${entry.dream?.symbols || ''}">
-                        </div>
-                        <div class="text-center">
-                            <button type="button" id="weave-insights-btn" class="kairos-btn kairos-btn-primary px-6 py-2 rounded-lg font-semibold">
-                                ✨ Weave Insights
-                            </button>
-                        </div>
-                        <div id="dream-insights-container" class="mt-4">${entry.dream?.insights ? `<div class="border-t pt-4 mt-4"><h3 class="font-semibold text-lg mb-2 text-indigo-800">The Subconscious Bridge</h3><div class="prose prose-sm max-w-none text-gray-700 bg-indigo-50 p-4 rounded-lg">${entry.dream.insights}</div></div>` : ''}</div>
-                    </div>
-                `;
-                case 'inquiry': return `<div class="space-y-6"><div><label class="block font-semibold text-gray-700 mb-2">What is the primary story or judgment you are telling yourself about this?</label><textarea name="inquiry.story" class="w-full border-gray-300 rounded-md" rows="3" placeholder="e.g., 'They were intentionally trying to undermine me.'">${entry.inquiry?.story || ''}</textarea></div><div><label class="block font-semibold text-gray-700 mb-2">Beneath that story, what is the core emotion you feel?</label><textarea name="inquiry.emotion" class="w-full border-gray-300 rounded-md" rows="2" placeholder="e.g., 'I feel rejected.'">${entry.inquiry?.emotion || ''}</textarea></div><div><label class="block font-semibold text-gray-700 mb-2">And this entire pattern seems connected to a deeper belief. Does a thought like 'I am not safe' or 'I am not worthy' resonate here?</label><textarea name="inquiry.belief" class="w-full border-gray-300 rounded-md" rows="2" placeholder="e.g., 'I am not worthy of respect.'">${entry.inquiry?.belief || ''}</textarea></div></div>`;
-                case 'cognitive': return `<textarea name="cognitive.thoughts" class="w-full border-gray-300 rounded-md" rows="4" placeholder="What thoughts went through your mind?">${entry.cognitive?.thoughts || ''}</textarea><textarea name="cognitive.beliefs" class="w-full border-gray-300 rounded-md mt-4" rows="3" placeholder="Did any deep beliefs surface? (e.g., 'I'm not good enough')">${entry.cognitive?.beliefs || ''}</textarea>`;
-                case 'emotional': const emotions = ["Happy", "Sad", "Angry", "Fearful", "Surprised", "Disgusted", "Calm"]; return `<div id="emotion-chips" class="flex flex-wrap gap-2 mb-4">${emotions.map(e => `<button type="button" class="emotion-chip bg-gray-200 px-3 py-1 rounded-full text-sm" data-emotion="${e}">${e}</button>`).join('')}</div><div id="emotion-sliders" class="space-y-3"></div><textarea name="emotional.nuance" class="w-full border-gray-300 rounded-md mt-4" rows="2" placeholder="Describe any complex or mixed emotions...">${entry.emotional?.nuance || ''}</textarea>`;
-                case 'physical': const bodyFront = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const bodyBack = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; return `<div class="flex justify-center gap-4 mb-4"><button id="body-view-front" class="body-view-btn px-4 py-2 rounded-lg ${state.bodyMapView === 'front' ? 'text-white" style="background: var(--deep-indigo);"' : 'bg-gray-200'}">Front View</button><button id="body-view-back" class="body-view-btn px-4 py-2 rounded-lg ${state.bodyMapView === 'back' ? 'text-white" style="background: var(--deep-indigo);"' : 'bg-gray-200'}">Back View</button></div><p class="text-gray-600 mb-4 text-center">Click on the body map to log where you felt sensations.</p><div class="relative max-w-[200px] mx-auto"><svg id="body-map-svg" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">${state.bodyMapView === 'front' ? bodyFront : bodyBack}</svg><div id="sensation-dots"></div></div><div id="logged-sensations" class="mt-4 space-y-2"></div>`;
-                case 'behavioral': return `<textarea name="behavioral.actions" class="w-full border-gray-300 rounded-md" rows="3" placeholder="What did you do or say in response?">${entry.behavioral?.actions || ''}</textarea><textarea name="behavioral.urges" class="w-full border-gray-300 rounded-md mt-4" rows="2" placeholder="Did you feel strong urges that you didn't act on?">${entry.behavioral?.urges || ''}</textarea>`;
-                case 'reflection': return `<textarea name="reflection.patterns" class="w-full border-gray-300 rounded-md" rows="3" placeholder="Does this feel familiar? Any patterns you've noticed?">${entry.reflection?.patterns || ''}</textarea><textarea name="reflection.pastConnections" class="w-full border-gray-300 rounded-md mt-4" rows="3" placeholder="Does this remind you of past situations or feelings?">${entry.reflection?.pastConnections || ''}</textarea>`;
-                case 'integration': return `<textarea name="integration.insights" class="w-full border-gray-300 rounded-md" rows="3" placeholder="What insights came from reflecting on this experience?">${entry.integration?.insights || ''}</textarea><textarea name="integration.intentions" class="w-full border-gray-300 rounded-md mt-4" rows="3" placeholder="What is your intention moving forward?">${entry.integration?.intentions || ''}</textarea>`;
-                case 'perspective': return `<div class="space-y-4"><p class="text-gray-600 mb-4">Sometimes, looking at an experience from a different angle can reveal new wisdom. Choose a lens to explore.</p><div class="perspective-lens border p-4 rounded-lg cursor-pointer hover:bg-gray-50" data-lens="child"><h3 class="font-semibold text-lg">The Inner Child Lens</h3><p class="text-sm text-gray-500">Connect with your younger self.</p></div><div class="perspective-lens border p-4 rounded-lg cursor-pointer hover:bg-gray-50" data-lens="future"><h3 class="font-semibold text-lg">The Future Self Lens</h3><p class="text-sm text-gray-500">Access the wisdom of who you are becoming.</p></div><div id="perspective-prompt-area" class="mt-4"></div></div>`;
-                default: return `<p>Section not found.</p>`;
-            }
-        }
-
-        // Enneagram Discovery Experience Data
-        const enneagramScenarios = [
-            {
-                title: "On Facing a Difficult Group Project",
-                subtitle: "You are part of a team working on a high-stakes project. Tensions are rising, and progress has stalled due to disagreement.",
-                question: "Your deepest, most instinctual focus is on:",
-                options: [
-                    { text: "Maintaining harmony within the group. You instinctively try to mediate, smooth over conflicts, and ensure everyone feels heard and included, believing the project's success depends on the team's cohesion.", types: [9], art: "type-9" },
-                    { text: "Taking decisive charge. You feel a pull to step up, direct the action, and push the team toward the goal, protecting the project's mission and ensuring it doesn't fail under pressure.", types: [8], art: "type-8" },
-                    { text: "Understanding the entire situation before acting. You feel a need to step back, analyze the problem from all angles, anticipate future obstacles, and formulate a secure, well-thought-out plan to ensure safety and certainty.", types: [6], art: "type-6" }
-                ]
-            },
-            {
-                title: "On Receiving Unexpected, Heartfelt Praise",
-                subtitle: "A respected colleague publicly gives you sole credit for a major success, praising your unique talent and contribution.",
-                question: "Your initial, private feeling is most likely:",
-                options: [
-                    { text: "A sense of deep connection and gratitude. You feel valued for your contribution to their success and see it as a reflection of a strong, supportive relationship, which you cherish above all.", types: [2], art: "type-2" },
-                    { text: "A feeling of validation and accomplishment. You feel seen for your competence and success, affirming your value and motivating you to strive for the next achievement.", types: [3], art: "type-3" },
-                    { text: "A quiet sense of melancholy or a feeling that they don't see the real you. You might feel that the praise is for a persona, and you long for them to understand the deeper, more complex emotional world behind your work.", types: [4], art: "type-4" }
-                ]
-            },
-            {
-                title: "On How You Prepare for the Future",
-                subtitle: "You are planning for the next five years of your life.",
-                question: "Your natural approach is to:",
-                options: [
-                    { text: "Create a detailed map of knowledge and skills you need to acquire. You prioritize becoming more competent and self-sufficient, ensuring you have the resources to be capable and unintrusive in the world.", types: [5], art: "type-5" },
-                    { text: "Envision exciting experiences and possibilities. You focus on keeping your options open, planning for joy, and ensuring you won't be trapped in boredom or miss out on what life has to offer.", types: [7], art: "type-7" },
-                    { text: "Define a clear set of principles and standards to live by. You feel a strong inner critic that pushes you to improve yourself and the world around you, striving for a life that is good, orderly, and purposeful.", types: [1], art: "type-1" }
-                ]
-            },
-            {
-                title: "On Responding to a Friend in Crisis",
-                subtitle: "A close friend calls you, distraught over a sudden personal crisis.",
-                question: "Your most immediate, gut-level impulse is to:",
-                options: [
-                    { text: "Immediately offer practical help and support. You feel a strong pull to be indispensable, to give them what they need, and to be seen as a caring and loving presence in their life.", types: [2], art: "type-2" },
-                    { text: "Protect them and fight on their behalf. You feel a surge of protective energy and want to take on their problem directly, confronting whoever or whatever is causing them harm.", types: [8], art: "type-8" },
-                    { text: "Create a process for improvement. You feel a responsibility to guide them toward the right and moral way to handle the situation, helping them see the principles at stake and how to act with integrity.", types: [1], art: "type-1" }
-                ]
-            },
-            {
-                title: "On What You Fundamentally Seek from Life",
-                subtitle: "If you could be granted one of the following states of being, which would you choose?",
-                question: "The state that calls to you most deeply is:",
-                options: [
-                    { text: "A state of profound understanding. To have the clarity and insight that comes from deep knowledge and objective observation, feeling fully capable and self-reliant within your own mind.", types: [5], art: "type-5" },
-                    { text: "A state of unwavering inner peace. To move through life without internal conflict, feeling connected to the world and accepting of others, free from pressure and turmoil.", types: [9], art: "type-9" },
-                    { text: "A state of authentic self-expression. To have your unique identity and emotional depth be seen and understood by others, creating a life that is rich with meaning and significance.", types: [4], art: "type-4" }
-                ]
-            },
-            {
-                title: "On Your Relationship with Rules and Structure",
-                subtitle: "You are in a situation governed by rules you find inefficient or illogical.",
-                question: "Your internal response is to:",
-                options: [
-                    { text: "Seek security and guidance. You analyze the risks of the rules, question the authority behind them, and look for a trustworthy system or person to believe in, feeling anxious until you find that certainty.", types: [6], art: "type-6" },
-                    { text: "Find joyful loopholes and new possibilities. You see the rules as limiting and instinctively look for ways around them to create a more enjoyable and stimulating experience for yourself and others.", types: [7], art: "type-7" },
-                    { text: "Feel a drive to be efficient and effective. You see the flaws in the system as an obstacle to success and look for the best way to adapt or present an image of compliance while achieving your goals.", types: [3], art: "type-3" }
-                ]
-            }
-        ];
-
-        const archetypeProfiles = {
-            1: { 
-                name: "The Perfectionist",
-                coreLight: "Integrity & Excellence",
-                description: "Your Core Light shines through your commitment to doing what is right and bringing order to chaos. You are driven by a deep sense of purpose and an intuitive understanding of how things could be improved.",
-                avatar: "🔷",
-                gifts: ["Natural wisdom about quality and correctness", "Strong moral compass", "Ability to see potential for improvement", "Dedication to making things better"]
-            },
-            2: { 
-                name: "The Helper", 
-                coreLight: "Love & Service",
-                description: "Your Core Light radiates through your genuine care for others and your natural ability to sense what people need. You bring warmth and support that helps others flourish.",
-                avatar: "❤️",
-                gifts: ["Deep empathy and emotional intelligence", "Natural ability to support others", "Generous heart and giving spirit", "Creates connections and harmony"]
-            },
-            3: { 
-                name: "The Achiever",
-                coreLight: "Brilliance & Success", 
-                description: "Your Core Light shines through your drive to excel and your ability to inspire others to reach their potential. You naturally understand what it takes to succeed and can adapt to meet any challenge.",
-                avatar: "⭐",
-                gifts: ["Natural leadership and motivation", "Ability to achieve goals efficiently", "Inspiring others to excellence", "Adaptability and resourcefulness"]
-            },
-            4: { 
-                name: "The Individualist",
-                coreLight: "Authenticity & Depth",
-                description: "Your Core Light illuminates the profound and the beautiful. You see what others miss and bring unique perspectives that enrich the world with meaning and creativity.",
-                avatar: "🌙",
-                gifts: ["Deep emotional insight and sensitivity", "Unique creative vision", "Ability to find beauty in darkness", "Authentic self-expression"]
-            },
-            5: { 
-                name: "The Investigator",
-                coreLight: "Wisdom & Understanding",
-                description: "Your Core Light emanates through your quest for knowledge and your ability to understand complex systems. You bring clarity and insight that illuminates truth.",
-                avatar: "🔍",
-                gifts: ["Deep analytical thinking", "Independent and self-reliant", "Objective perspective", "Mastery of chosen domains"]
-            },
-            6: { 
-                name: "The Loyalist",
-                coreLight: "Courage & Devotion",
-                description: "Your Core Light shines through your commitment to what you believe in and your ability to anticipate challenges. You bring security and reliability to uncertain situations.",
-                avatar: "🛡️",
-                gifts: ["Strong loyalty and commitment", "Excellent troubleshooting abilities", "Responsible and dependable", "Courage to face difficulties"]
-            },
-            7: { 
-                name: "The Enthusiast",
-                coreLight: "Joy & Possibility",
-                description: "Your Core Light sparkles with enthusiasm and vision for what's possible. You bring optimism and creative energy that opens new horizons for yourself and others.",
-                avatar: "✨",
-                gifts: ["Natural optimism and enthusiasm", "Ability to synthesize ideas", "Brings joy and energy to situations", "Visionary thinking"]
-            },
-            8: { 
-                name: "The Challenger",
-                coreLight: "Power & Protection",
-                description: "Your Core Light blazes with strength and the courage to stand up for what matters. You naturally protect others and have the power to create significant change.",
-                avatar: "🔥",
-                gifts: ["Natural leadership and authority", "Courage to take on challenges", "Protects the vulnerable", "Ability to make tough decisions"]
-            },
-            9: { 
-                name: "The Peacemaker",
-                coreLight: "Harmony & Wholeness",
-                description: "Your Core Light glows with the ability to see all perspectives and bring people together. You create peace and stability in a world that often feels fragmented.",
-                avatar: "🕊️",
-                gifts: ["Natural ability to see multiple perspectives", "Creates harmony and peace", "Calming presence for others", "Accepts others unconditionally"]
-            }
-        };
-
-        function renderEnneagramCard() {
-            if (state.enneagramStep === 0) {
-                return `
-                    <div class="descent-background"></div>
-                    <div class="descent-particles" id="descent-particles-container"></div>
-                    <div class="threshold-container" style="
-                        min-height: 100vh;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        padding: 2rem;
-                        position: relative;
-                    ">
-                        <div class="kairos-card p-12 rounded-xl max-w-4xl w-full text-center">
-                            <div class="weaver-text" style="animation-delay: 0.5s;">
-                                <h2 class="heading-serif text-3xl font-bold mb-6" style="
-                                    background: linear-gradient(135deg, #483D8B 0%, #5D4E9A 50%, #6A5ACD 100%);
-                                    -webkit-background-clip: text;
-                                    -webkit-text-fill-color: transparent;
-                                ">Discovering Your Archetype's Core Light</h2>
-                                
-                                <div class="body-sans space-y-6 text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto">
-                                    <p class="weaver-text" style="animation-delay: 1s;">Within you is a core light, a fundamental way your energy engages with the world.</p>
-                                    <p class="weaver-text" style="animation-delay: 2s;">Let us uncover its unique pattern together. <span class="weaver-voice">The Weaver</span> will guide you through resonant choices that reveal your authentic essence.</p>
-                                    <p class="weaver-text" style="animation-delay: 3s;">There are no right or wrong answers, only your truth. Choose the reflection that feels most like home.</p>
-                                </div>
-                                
-                                <button id="begin-archetype-discovery" class="kairos-btn kairos-btn-primary px-8 py-4 rounded-lg text-xl font-semibold mt-12" style="animation-delay: 4s; opacity: 0; animation: weaverReveal 1s ease-out 4s forwards;">
-                                    Begin the Discovery
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            const scenario = enneagramScenarios[state.enneagramStep - 1];
-            if (!scenario) {
-                state.enneagramStep = 'complete';
-                return renderCoreLight();
-            }
-
-            return `
-                <div class="descent-background"></div>
-                <div class="descent-particles" id="descent-particles-container"></div>
-                <div class="threshold-container" style="
-                    min-height: 100vh;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 2rem;
-                    position: relative;
-                ">
-                    <div class="max-w-5xl w-full">
-                        <div class="text-center mb-8">
-                            <div class="flex justify-center items-center gap-2 mb-4">
-                                ${Array.from({length: enneagramScenarios.length}, (_, i) => 
-                                    `<div class="w-3 h-3 rounded-full ${i < state.enneagramStep ? 'bg-indigo-500' : 'bg-indigo-200'}"></div>`
-                                ).join('')}
-                            </div>
-                            <p class="text-sm text-gray-500">Question ${state.enneagramStep} of ${enneagramScenarios.length}</p>
-                        </div>
-
-                        <div class="scenario-question mb-8">
-                            <div class="resonance-art" id="resonance-art"></div>
-                            <div class="text-center">
-                                <h3 class="heading-serif text-2xl font-semibold text-indigo-900 mb-4">
-                                    ${scenario.title}
-                                </h3>
-                                <p class="body-sans text-xl leading-relaxed heading-entrance" style="
-                                    color: var(--muted-stone-gray);
-                                    font-style: italic;
+                                    font-size: 0.8rem;
+                                    color: var(--shimmering-gold);
                                     font-weight: 500;
-                                    max-width: 600px;
-                                    margin: 0 auto 2rem auto;
-                                    animation-delay: 0.4s;
-                                ">
-                                    ${scenario.subtitle}
-                                </p>
-                                <div class="question-container mt-8 mb-12">
-                                    <div class="question-backdrop"></div>
-                                    <h4 class="heading-serif text-2xl font-bold text-center heading-entrance" style="
-                                        background: linear-gradient(135deg, var(--deep-indigo) 0%, var(--ethereal-lavender) 100%);
-                                        -webkit-background-clip: text;
-                                        -webkit-text-fill-color: transparent;
-                                        background-clip: text;
-                                        text-shadow: 0 2px 6px rgba(72, 61, 139, 0.15);
-                                        filter: drop-shadow(0 1px 3px rgba(182, 149, 192, 0.1));
-                                        line-height: 1.4;
-                                        max-width: 700px;
-                                        margin: 0 auto;
-                                        padding: 2rem;
-                                        position: relative;
-                                        z-index: 2;
-                                        animation-delay: 0.6s;
-                                    ">
-                                        ${scenario.question}
-                                    </h4>
-                                </div>
+                                ">${entry.type || 'General'}</span>
                             </div>
                         </div>
 
-                        <div class="grid gap-4 max-w-4xl mx-auto">
-                            ${scenario.options.map((option, index) => `
-                                <div class="resonance-option" data-types="${option.types.join(',')}" data-art="${option.art}" data-option="${index}">
-                                    <p class="body-sans text-indigo-900 font-medium">${option.text}</p>
-                                </div>
-                            `).join('')}
-                        </div>
-
+                        <!-- Entry Content -->
+                        ${formatEntryContent(entry)}
                     </div>
                 </div>
             `;
-        }
-
-        function renderCoreLight() {
-            const typeScores = {};
-            state.enneagramAnswers.forEach(answer => {
-                answer.forEach(type => {
-                    typeScores[type] = (typeScores[type] || 0) + 1;
-                });
-            });
-
-            const dominantType = Object.keys(typeScores).reduce((a, b) => 
-                typeScores[a] > typeScores[b] ? a : b
-            );
-
-            state.discoveredArchetype = parseInt(dominantType);
-            const profile = archetypeProfiles[state.discoveredArchetype];
-            
-            // Define unique color schemes for each archetype
-            const archetypeColors = {
-                1: "background: linear-gradient(135deg, #E53E3E 0%, #C53030 50%, #9B2C2C 100%);", // Red - Perfectionist
-                2: "background: linear-gradient(135deg, #D69E2E 0%, #B7791F 50%, #975A16 100%);", // Orange - Helper  
-                3: "background: linear-gradient(135deg, #38A169 0%, #2F855A 50%, #276749 100%);", // Green - Achiever
-                4: "background: linear-gradient(135deg, #805AD5 0%, #6B46C1 50%, #553C9A 100%);", // Purple - Individualist
-                5: "background: linear-gradient(135deg, #3182CE 0%, #2C5282 50%, #2A4365 100%);", // Blue - Investigator
-                6: "background: linear-gradient(135deg, #DD6B20 0%, #C05621 50%, #9C4221 100%);", // Burnt Orange - Loyalist
-                7: "background: linear-gradient(135deg, #ECC94B 0%, #D69E2E 50%, #B7791F 100%);", // Yellow - Enthusiast
-                8: "background: linear-gradient(135deg, #E53E3E 0%, #C53030 50%, #9B2C2C 100%);", // Dark Red - Challenger
-                9: "background: linear-gradient(135deg, #48BB78 0%, #38A169 50%, #2F855A 100%);"  // Sage Green - Peacemaker
-            };
-
-            return `
-                <div class="descent-background"></div>
-                <div class="descent-particles" id="descent-particles-container"></div>
-                <div class="threshold-container" style="
-                    min-height: 100vh;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 2rem;
-                    position: relative;
-                ">
-                    <div class="kairos-card p-12 rounded-xl max-w-4xl w-full text-center">
-                        <div class="fade-in">
-                            <div class="core-light-avatar">
-                                <span style="font-size: 4rem;">${profile.avatar}</span>
-                            </div>
-                            
-                            <div class="mb-6 text-center">
-                                <p class="weaver-voice text-xl text-gray-700 leading-relaxed mb-4">
-                                    "Thank you for sharing your resonance. The pattern is clear. It is not a box, but a starting point—a lens through which to view your journey. Your Core Light is ready to be seen."
-                                </p>
-                            </div>
-                            
-                            <h2 class="heading-serif text-4xl font-bold mb-4" style="
-                                background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
-                                -webkit-background-clip: text;
-                                -webkit-text-fill-color: transparent;
-                                text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
-                                filter: drop-shadow(0 2px 4px rgba(255, 140, 0, 0.3));
-                            ">Your Core Light resonates with</h2>
-                            
-                            <h3 class="heading-serif text-5xl font-bold mb-6" style="
-                                ${archetypeColors[state.discoveredArchetype]}
-                                -webkit-background-clip: text;
-                                -webkit-text-fill-color: transparent;
-                                text-shadow: 
-                                    0 2px 4px rgba(0, 0, 0, 0.3),
-                                    0 0 8px rgba(0, 0, 0, 0.2);
-                                filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-                            ">${profile.name}</h3>
-                            
-                            <div class="body-sans max-w-3xl mx-auto space-y-6">
-                                <div class="text-xl text-gray-700 leading-relaxed">
-                                    <strong class="weaver-voice text-2xl">Core Light:</strong> ${profile.coreLight}
-                                </div>
-                                
-                                <p class="text-lg text-gray-600 leading-relaxed">
-                                    ${profile.description}
-                                </p>
-                                
-                                <div class="bg-gradient-to-r from-indigo-100 to-rose-100 p-6 rounded-xl">
-                                    <h4 class="font-bold text-gray-800 mb-4 text-xl">Your Sacred Gifts</h4>
-                                    <ul class="text-left space-y-2 max-w-2xl mx-auto">
-                                        ${profile.gifts.map(gift => `
-                                            <li class="flex items-start gap-3">
-                                                <span class="text-indigo-500 mt-1">✨</span>
-                                                <span class="text-gray-700">${gift}</span>
-                                            </li>
-                                        `).join('')}
-                                    </ul>
-                                </div>
-                            </div>
-                            
-                            <button id="continue-to-wearables" class="kairos-btn kairos-btn-primary px-8 py-4 rounded-lg text-xl font-semibold mt-12">
-                                Continue the Weaving
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function ViewEntryPage() { 
-            const entry = state.currentEntry;
-            if (!entry) return `<div class="text-center p-8"><p>Entry not found.</p><button id="back-to-dashboard" class="kairos-btn bg-gray-200 mt-4 px-6 py-2 rounded-lg">Back to Dashboard</button></div>`;
-            const renderViewSection = (title, content, key) => {
-                if (!content || Object.values(content).every(v => !v || (Array.isArray(v) && v.length === 0))) return '';
-                let contentHtml;
-                if (key === 'physical' && content.sensations && content.sensations.length > 0) { const bodyFront = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const bodyBack = `<path d="M100 20C75 20 60 40 60 60s-5 40 0 50c5 10 10 20 10 40v120c0 20-10 80-10 80h80c0 0-10-60-10-80V150c0-20 5-30 10-40 5-10 0-30 0-50S125 20 100 20z" />`; const frontDots = content.sensations.filter(s => s.view === 'front').map(s => `<div class="sensation-dot" style="left:${s.x}%; top:${s.y}%; width:${8+s.intensity}px; height:${8+s.intensity}px; background-color: hsla(0, 100%, 50%, ${s.intensity/10});"></div>`).join(''); const backDots = content.sensations.filter(s => s.view === 'back').map(s => `<div class="sensation-dot" style="left:${s.x}%; top:${s.y}%; width:${8+s.intensity}px; height:${8+s.intensity}px; background-color: hsla(0, 100%, 50%, ${s.intensity/10});"></div>`).join(''); contentHtml = `<div class="grid grid-cols-2 gap-4"><div><h4 class="font-semibold text-center mb-2">Front</h4><div class="relative max-w-[200px] mx-auto"><svg viewBox="0 0 200 400">${bodyFront}</svg><div class="absolute top-0 left-0 w-full h-full">${frontDots}</div></div></div><div><h4 class="font-semibold text-center mb-2">Back</h4><div class="relative max-w-[200px] mx-auto"><svg viewBox="0 0 200 400">${bodyBack}</svg><div class="absolute top-0 left-0 w-full h-full">${backDots}</div></div></div></div><div class="mt-4">${content.sensations.map(s => `<p><strong>${s.part} (${s.view}):</strong> ${s.quality} (Intensity: ${s.intensity})</p>`).join('')}</div>`; } else { contentHtml = Object.entries(content).map(([k, value]) => { if (!value || (Array.isArray(value) && value.length === 0)) return ''; let formattedValue; if (k === 'emotions' && Array.isArray(value)) { formattedValue = value.map(e => `${e.name} (Intensity: ${e.intensity})`).join('<br>'); } else if (Array.isArray(value)) { formattedValue = value.join(', '); } else { formattedValue = value.toString().replace(/\n/g, '<br>'); } const formattedKey = k.charAt(0).toUpperCase() + k.slice(1).replace(/([A-Z])/g, ' $1'); return `<div class="mb-3"><strong class="font-semibold text-gray-600 block">${formattedKey}</strong><p class="text-gray-800 mt-1">${formattedValue}</p></div>`; }).join(''); }
-                if (!contentHtml.trim()) return '';
-                return `<div class="mb-8"><h3 class="text-2xl font-bold pb-2 mb-4" style="border-bottom: 2px solid rgba(72, 61, 139, 0.2); color: var(--deep-indigo);">${title}</h3><div class="prose max-w-none">${contentHtml}</div></div>`;
-            };
-            return `<div class="container mx-auto p-4 md:p-8 max-w-4xl fade-in"><div class="bg-white p-6 md:p-10 rounded-xl shadow-lg"><div class="flex justify-between items-start mb-6 border-b pb-6"><div><h1 class="text-4xl font-bold text-gray-800">${entry.title || 'Untitled Entry'}</h1><p class="text-gray-500 mt-2">${new Date(entry.date).toLocaleString()} | ${entry.type || 'General'}</p></div><div class="flex gap-2"><button id="delete-entry-btn" data-id="${entry.id}" class="kairos-btn bg-red-500  px-4 py-2 rounded-lg hover:bg-red-600"><i class="fas fa-trash"></i></button></div></div>${renderViewSection('The Situation', entry.situation, 'situation')}${Object.keys(entrySections).map(key => renderViewSection(entrySections[key].title, entry[key], key)).join('')}<div class="mt-8 pt-6 border-t"><strong class="font-semibold text-gray-600 block mb-2">Tags:</strong><div class="flex flex-wrap gap-2">${entry.tags?.map(tag => `<span class="text-sm font-medium px-3 py-1 rounded-full" style="background: rgba(72, 61, 139, 0.1); color: var(--deep-indigo);">${tag}</span>`).join('') || '<span class="text-gray-500">No tags</span>'}</div></div><button id="back-to-dashboard" class="kairos-btn bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold mt-12"><i class="fas fa-arrow-left mr-2"></i>Back to Dashboard</button></div></div>`;
         }
         function ModalComponent({ title, content, onConfirm, confirmText = 'Confirm', cancelText = 'Cancel', bodyHtml = '' }) { 
              return `<div class="modal-overlay fade-in"><div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"><h2 class="text-xl font-bold mb-4">${title}</h2><div class="text-gray-600 mb-6">${content || ''}${bodyHtml}</div><div class="flex justify-end gap-4"><button id="modal-cancel" class="kairos-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">${cancelText}</button>${onConfirm ? `<button id="modal-confirm" class="kairos-btn kairos-btn-primary px-4 py-2 rounded-lg">${confirmText}</button>` : ''}</div></div></div>`;
@@ -3916,7 +4281,7 @@ Write about anything: your feelings, what happened, what you're grateful for, wh
             // New navigation
             document.getElementById('go-to-synthesis-btn')?.addEventListener('click', () => { state.currentPage = 'synthesis'; render(); });
             document.getElementById('go-to-advisor-btn')?.addEventListener('click', () => { state.currentPage = 'advisor'; render(); });
-            document.getElementById('start-guided-entry-btn')?.addEventListener('click', () => { state.currentPage = 'somaticCheck1'; render(); });
+            document.getElementById('start-guided-entry-btn')?.addEventListener('click', () => { state.currentPage = 'gatewayChoice'; render(); });
             
             // Quick Journal Page handlers
             document.getElementById('quick-journal-form')?.addEventListener('submit', handleQuickJournalSubmit);
@@ -3943,21 +4308,121 @@ Write about anything: your feelings, what happened, what you're grateful for, wh
                 const entry = entries.find(en => en.id === entryId || en.id === parseInt(entryId));
                 document.getElementById('constellation-display').innerHTML = renderConstellation(entry);
             }));
-            document.querySelectorAll('.body-view-btn').forEach(btn => btn.addEventListener('click', (e) => {
-                state.bodyMapView = e.target.id === 'body-view-front' ? 'front' : 'back';
-                document.getElementById('section-content').innerHTML = renderSectionContent('physical');
-                updateSensationDots();
-                attachEventListeners();
-            }));
             document.getElementById('weave-insights-btn')?.addEventListener('click', handleWeaveInsights);
 
             // All previous event listeners...
             document.getElementById('go-to-register')?.addEventListener('click', (e) => { e.preventDefault(); state.currentPage = 'register'; render(); });
             document.getElementById('go-to-login')?.addEventListener('click', (e) => { e.preventDefault(); state.currentPage = 'login'; render(); });
-            document.getElementById('start-new-entry-btn')?.addEventListener('click', () => { state.entryBuilder = { date: new Date().toISOString() }; state.currentPage = 'somaticCheck1'; render(); });
-            document.getElementById('quick-reflect-btn')?.addEventListener('click', () => { state.currentPage = 'quickJournal'; render(); });
+            document.getElementById('start-new-entry-btn')?.addEventListener('click', () => { state.entryBuilder = { date: new Date().toISOString() }; state.currentPage = 'gatewayChoice'; render(); });
+            document.getElementById('quick-reflect-btn')?.addEventListener('click', () => { state.currentPage = 'gatewayChoice'; render(); });
             document.getElementById('back-to-dashboard')?.addEventListener('click', () => { state.currentPage = 'dashboard'; render(); });
+            document.getElementById('back-to-gateway')?.addEventListener('click', () => { state.currentPage = 'gatewayChoice'; render(); });
             document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
+
+            // Gateway Choice page handlers
+            const speakOption = document.getElementById('speak-option');
+            const writeOption = document.getElementById('write-option');
+            
+            // Hover effects for speak option
+            speakOption?.addEventListener('mouseenter', () => {
+                const option = speakOption;
+                const icon = option.querySelector('.gateway-icon');
+                const glow = option.querySelector('.gateway-glow');
+                const label = option.querySelector('.gateway-label');
+                
+                option.style.transform = 'scale(1.1)';
+                if (glow) glow.style.opacity = '0.4';
+                if (label) {
+                    label.style.opacity = '1';
+                    label.style.transform = 'translateY(0)';
+                }
+            });
+            
+            speakOption?.addEventListener('mouseleave', () => {
+                const option = speakOption;
+                const icon = option.querySelector('.gateway-icon');
+                const glow = option.querySelector('.gateway-glow');
+                const label = option.querySelector('.gateway-label');
+                
+                option.style.transform = 'scale(1)';
+                if (glow) glow.style.opacity = '0';
+                if (label) {
+                    label.style.opacity = '0';
+                    label.style.transform = 'translateY(10px)';
+                }
+            });
+            
+            // Hover effects for write option
+            writeOption?.addEventListener('mouseenter', () => {
+                const option = writeOption;
+                const icon = option.querySelector('.gateway-icon');
+                const glow = option.querySelector('.gateway-glow');
+                const label = option.querySelector('.gateway-label');
+                
+                option.style.transform = 'scale(1.1)';
+                if (glow) glow.style.opacity = '0.4';
+                if (label) {
+                    label.style.opacity = '1';
+                    label.style.transform = 'translateY(0)';
+                }
+            });
+            
+            writeOption?.addEventListener('mouseleave', () => {
+                const option = writeOption;
+                const icon = option.querySelector('.gateway-icon');
+                const glow = option.querySelector('.gateway-glow');
+                const label = option.querySelector('.gateway-label');
+                
+                option.style.transform = 'scale(1)';
+                if (glow) glow.style.opacity = '0';
+                if (label) {
+                    label.style.opacity = '0';
+                    label.style.transform = 'translateY(10px)';
+                }
+            });
+            
+            // Click handlers for Gateway Choice
+            speakOption?.addEventListener('click', () => {
+                // Add smooth transition (cross-fade animation, duration 500ms)
+                appContainer.classList.add('transitioning');
+                
+                setTimeout(() => {
+                    state.entryBuilder = { date: new Date().toISOString(), method: 'speak' };
+                    state.currentPage = 'voiceJournaling';
+                    render();
+                    
+                    // Remove transition class after rendering
+                    setTimeout(() => {
+                        appContainer.classList.remove('transitioning');
+                    }, 50);
+                }, 250); // Half of 500ms transition duration
+            });
+            
+            writeOption?.addEventListener('click', () => {
+                // Add smooth transition (cross-fade animation, duration 500ms)
+                appContainer.classList.add('transitioning');
+                
+                setTimeout(() => {
+                    // Reset body sensations for new entry
+                    selectedBodySensations = [];
+                    state.entryBuilder = { date: new Date().toISOString(), method: 'write' };
+                    state.currentPage = 'textJournaling';
+                    render();
+                    
+                    // Remove transition class after rendering
+                    setTimeout(() => {
+                        appContainer.classList.remove('transitioning');
+                    }, 50);
+                }, 250); // Half of 500ms transition duration
+            });
+
+            // Text Journaling form submission
+            document.getElementById('text-journal-form')?.addEventListener('submit', handleTextJournalSubmit);
+            
+            // Body map interaction
+            document.querySelectorAll('.body-part').forEach(part => {
+                part.addEventListener('click', handleBodyPartClick);
+            });
             
             // Onboarding access for existing users
             document.getElementById('retake-onboarding-btn')?.addEventListener('click', () => {
@@ -4006,8 +4471,16 @@ Write about anything: your feelings, what happened, what you're grateful for, wh
             // View entries toggle
             document.getElementById('view-entries-btn')?.addEventListener('click', () => {
                 const entriesSection = document.getElementById('recent-entries-section');
+                const button = document.getElementById('view-entries-btn');
                 if (entriesSection) {
-                    entriesSection.style.display = entriesSection.style.display === 'none' ? 'block' : 'none';
+                    const isHidden = entriesSection.style.display === 'none';
+                    entriesSection.style.display = isHidden ? 'block' : 'none';
+                    
+                    // Update button text
+                    if (button) {
+                        const icon = '<i class="fas fa-book-open mr-2"></i>';
+                        button.innerHTML = isHidden ? `${icon}Hide Entries` : `${icon}Recent Entries`;
+                    }
                 }
             });
             document.getElementById('continue-to-setup')?.addEventListener('click', () => { state.currentPage = 'entrySetup'; render(); });
@@ -4165,17 +4638,12 @@ Write about anything: your feelings, what happened, what you're grateful for, wh
             const startReflectionBtn = document.getElementById('start-reflection-btn');
             thematicOptions.forEach(el => { el.addEventListener('click', () => { el.classList.toggle('selected'); const selectedCount = document.querySelectorAll('.thematic-option.selected').length; startReflectionBtn.disabled = selectedCount === 0; startReflectionBtn.classList.toggle('opacity-50', selectedCount === 0); }); });
             startReflectionBtn?.addEventListener('click', () => { const selectedSections = Array.from(document.querySelectorAll('.thematic-option.selected')).map(el => el.dataset.section); state.entryBuilder.flow = { steps: selectedSections, currentStepIndex: 0 }; state.currentPage = 'entryFlow'; render(); });
-            document.getElementById('flow-back-btn')?.addEventListener('click', handleFlowBack);
-            document.getElementById('flow-next-btn')?.addEventListener('click', handleFlowNext);
             document.getElementById('login-form')?.addEventListener('submit', handleLogin);
             document.getElementById('register-form')?.addEventListener('submit', handleRegister);
             document.querySelectorAll('.view-entry-btn').forEach(btn => btn.addEventListener('click', handleViewEntry));
             document.getElementById('delete-entry-btn')?.addEventListener('click', handleDeleteEntry);
             document.getElementById('modal-cancel')?.addEventListener('click', hideModal);
             document.getElementById('modal-confirm')?.addEventListener('click', () => { if (state.modal.onConfirm) state.modal.onConfirm(); hideModal(); });
-            document.querySelectorAll('.emotion-chip').forEach(chip => chip.addEventListener('click', (e) => { e.currentTarget.classList.toggle('selected'); updateEmotionSliders(); }));
-            document.getElementById('body-map-svg')?.addEventListener('click', handleBodyMapClick);
-            document.querySelectorAll('.perspective-lens').forEach(lens => lens.addEventListener('click', handlePerspectiveLensClick));
         }
         
         // --- HANDLER & UTILITY FUNCTIONS ---
@@ -4245,18 +4713,7 @@ Write about anything: your feelings, what happened, what you're grateful for, wh
             `;
             
             try {
-                const apiUrl = '/.netlify/functions/call-gemini';
-                const payload = { prompt, structured: true };
-                
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) throw new Error(`Serverless function failed with status ${response.status}`);
-
-                const parsedContent = await response.json();
+                const parsedContent = await callGeminiAPI(prompt, true);
                 state.synthesis = { isLoading: false, content: parsedContent, error: null };
 
             } catch (error) {
@@ -4303,20 +4760,7 @@ Write about anything: your feelings, what happened, what you're grateful for, wh
             `;
 
             try {
-                const apiUrl = '/.netlify/functions/call-gemini';
-                const payload = { prompt, structured: true };
-                
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Serverless function failed with status ${response.status}`);
-                }
-
-                const parsedContent = await response.json();
+                const parsedContent = await callGeminiAPI(prompt, true);
                 state.advisor = { isLoading: false, content: parsedContent, error: null };
 
             } catch (error) {
@@ -4429,20 +4873,7 @@ Write about anything: your feelings, what happened, what you're grateful for, wh
             `;
             
             try {
-                const apiUrl = '/.netlify/functions/call-gemini';
-                const payload = { prompt };
-                
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Serverless function failed with status ${response.status}`);
-                }
-
-                const result = await response.json();
+                const result = await callGeminiAPI(prompt, false);
                 const text = result.text.replace(/\n/g, '<br>');
                 
                 container.innerHTML = `
@@ -4462,7 +4893,6 @@ Write about anything: your feelings, what happened, what you're grateful for, wh
 
         // --- Other handler functions ---
         function calculateEquanimity() { if (entries.length === 0) return { score: 100, ripples: 0 }; const totalIntensity = entries.reduce((sum, entry) => { const entryIntensity = entry.emotional?.emotions?.reduce((eSum, emo) => eSum + emo.intensity, 0) || 0; return sum + entryIntensity; }, 0); const avgIntensity = totalIntensity / entries.length / 5; const score = Math.max(0, Math.round(100 - avgIntensity * 10)); const ripples = Math.min(10, avgIntensity); return { score, ripples }; }
-        function analyzeThemes() { const aversionKeywords = ['criticized', 'defensive', 'fear', 'angry', 'bill', 'avoid']; const cravingKeywords = ['peaceful', 'happy', 'calm', 'want', 'need']; let aversionThemes = new Set(); let cravingThemes = new Set(); entries.forEach(entry => { const text = `${entry.title || ''} ${entry.situation?.description || ''}`.toLowerCase(); aversionKeywords.forEach(kw => { if (text.includes(kw)) aversionThemes.add(kw); }); cravingKeywords.forEach(kw => { if (text.includes(kw)) cravingThemes.add(kw); }); }); return { aversionThemes: Array.from(aversionThemes), cravingThemes: Array.from(cravingKeywords) }; }
         function renderConstellation(entry) { if (!entry) return ''; const coreReaction = (entry.emotional?.emotions?.some(e => ['Angry', 'Fearful'].includes(e.name))) ? { type: 'Aversion', color: 'red-500' } : { type: 'Neutral/Craving', color: 'green-500' }; return `<div class="border-t pt-6 fade-in"><div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center items-center"><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Trigger</h4><i class="fas fa-bolt text-3xl text-yellow-500 mb-2"></i><p>${entry.situation?.description || 'N/A'}</p></div><i class="fas fa-arrow-right text-2xl text-gray-400 hidden md:block"></i><i class="fas fa-arrow-down text-2xl text-gray-400 md:hidden mx-auto"></i><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Core Reaction</h4><i class="fas ${coreReaction.type === 'Aversion' ? 'fa-hand-paper' : 'fa-hand-holding-heart'} text-3xl text-${coreReaction.color} mb-2"></i><p class="font-semibold text-${coreReaction.color}">${coreReaction.type}</p></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mt-4"><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Internal Narrative</h4><i class="fas fa-comment-dots text-3xl text-blue-500 mb-2"></i><p class="text-sm italic">"${entry.inquiry?.story || 'No narrative logged'}"</p></div><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Emotions</h4><i class="fas fa-heart-pulse text-3xl text-pink-500 mb-2"></i><p>${entry.emotional?.emotions?.map(e => `${e.name} (${e.intensity})`).join(', ') || 'N/A'}</p></div><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Somatic Signature</h4><i class="fas fa-child text-3xl text-orange-500 mb-2"></i><p>${entry.physical?.sensations?.map(s => `${s.part}: ${s.quality}`).join(', ') || 'N/A'}</p></div></div></div>`; }
         async function handleLogin(e) { 
             e.preventDefault(); 
@@ -4542,6 +4972,100 @@ Write about anything: your feelings, what happened, what you're grateful for, wh
                     return 'An error occurred. Please try again.';
             }
         }
+        // Store selected body sensations
+        let selectedBodySensations = [];
+
+        function handleBodyPartClick(e) {
+            const part = e.target;
+            const partName = part.dataset.part;
+            const sensationsDisplay = document.getElementById('selected-sensations');
+            
+            // Toggle selection
+            if (part.style.fill === 'rgba(212, 175, 55, 0.3)') {
+                // Deselect
+                part.style.fill = 'rgba(255,255,255,0.1)';
+                selectedBodySensations = selectedBodySensations.filter(s => s.part !== partName);
+            } else {
+                // Select
+                part.style.fill = 'rgba(212, 175, 55, 0.3)';
+                selectedBodySensations.push({
+                    part: partName,
+                    sensation: 'tension' // Default sensation, could be expanded later
+                });
+            }
+            
+            // Update display
+            if (selectedBodySensations.length > 0) {
+                const sensationsText = selectedBodySensations.map(s => 
+                    `${s.part.replace('-', ' ')}: ${s.sensation}`
+                ).join(', ');
+                sensationsDisplay.innerHTML = `
+                    <p style="
+                        font-family: 'Inter', sans-serif;
+                        font-size: 0.9rem;
+                        color: var(--warm-off-white);
+                        margin: 0;
+                    ">Selected: ${sensationsText}</p>
+                `;
+            } else {
+                sensationsDisplay.innerHTML = `
+                    <p style="
+                        font-family: 'Inter', sans-serif;
+                        font-size: 0.9rem;
+                        color: var(--warm-off-white);
+                        opacity: 0.7;
+                        text-align: center;
+                        margin: 0;
+                    ">Selected body sensations will appear here</p>
+                `;
+            }
+        }
+
+        async function handleTextJournalSubmit(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const title = formData.get('title');
+            const content = formData.get('content');
+            
+            if (!title || !content) {
+                showToast('Please fill in both title and content', 'error');
+                return;
+            }
+
+            try {
+                const entry = {
+                    title: title,
+                    content: content,
+                    method: 'write',
+                    bodySensations: selectedBodySensations,
+                    situation: { description: content }, // For compatibility with existing structure
+                    type: 'Text Entry',
+                    date: new Date().toISOString()
+                };
+
+                const savedEntry = await callFirebaseBackend('createEntry', entry);
+                
+                const completeEntry = {
+                    ...savedEntry,
+                    date: new Date().toISOString()
+                };
+                
+                // Trigger The Weaver's thread system
+                onJournalEntryCompleted(completeEntry);
+                
+                showToast('Entry saved successfully!', 'success');
+                
+                // Navigate back to dashboard
+                state.currentPage = 'dashboard';
+                render();
+                
+            } catch (error) {
+                console.error('Error saving entry:', error);
+                showToast('Failed to save entry. Please try again.', 'error');
+            }
+        }
+
         function handleViewEntry(e) { 
             const entryId = e.currentTarget.dataset.id; 
             state.currentEntry = entries.find(entry => entry.id === entryId || entry.id === parseInt(entryId)); 
@@ -4561,6 +5085,10 @@ Write about anything: your feelings, what happened, what you're grateful for, wh
                         
                         // Remove from local entries array
                         entries = entries.filter(entry => entry.id !== entryId); 
+                        
+                        // Save to localStorage for local development persistence
+                        saveLocalEntries();
+                        
                         showToast('Entry deleted successfully.', 'success'); 
                         state.currentPage = 'dashboard'; 
                         render();
@@ -4573,126 +5101,8 @@ Write about anything: your feelings, what happened, what you're grateful for, wh
         }
         function showModal(config) { state.modal = { ...config, visible: true }; render(); }
         function hideModal() { state.modal = { visible: false }; render(); }
-        function saveCurrentStepData() { const { steps, currentStepIndex } = state.entryBuilder.flow; const sectionKey = steps[currentStepIndex]; const container = document.getElementById('section-content'); if (!container) return; state.entryBuilder[sectionKey] = state.entryBuilder[sectionKey] || {}; const inputs = container.querySelectorAll('textarea, input[type="radio"]:checked, input[type="text"]'); inputs.forEach(input => { const key = input.name.split('.')[1] || 'value'; state.entryBuilder[sectionKey][key] = input.value; }); if (sectionKey === 'emotional') { state.entryBuilder.emotional.emotions = Array.from(container.querySelectorAll('.emotion-chip.selected')).map(chip => { const name = chip.dataset.emotion; const slider = container.querySelector(`input[data-emotion-name="${name}"]`); return { name, intensity: slider ? parseInt(slider.value) : 5 }; }); } if (sectionKey === 'perspective') { const textarea = container.querySelector('textarea'); if (textarea) { state.entryBuilder.perspective[textarea.name] = textarea.value; } } }
-        function handleFlowBack() { saveCurrentStepData(); state.entryBuilder.flow.currentStepIndex--; render(); }
-        async function handleFlowNext() { 
-            saveCurrentStepData(); 
-            const { steps, currentStepIndex } = state.entryBuilder.flow; 
-            if (currentStepIndex < steps.length - 1) { 
-                state.entryBuilder.flow.currentStepIndex++; 
-                render(); 
-            } else { 
-                // Save to Firebase via secure backend
-                if (!state.currentUser) {
-                    showToast('You must be logged in to save entries', 'error');
-                    return;
-                }
-                
-                try {
-                    const finalEntry = { ...state.entryBuilder };
-                    delete finalEntry.flow;
-                    
-                    // Call secure backend to create entry
-                    const savedEntry = await callFirebaseBackend('createEntry', finalEntry);
-                    
-                    const completeEntry = {
-                        ...savedEntry,
-                        date: new Date().toISOString()
-                    };
-                    
-                    // Trigger The Weaver's thread system
-                    onJournalEntryCompleted(completeEntry);
-                    
-                    showToast('Entry saved successfully!', 'success'); 
-                    state.currentPage = 'dashboard'; 
-                    render();
-                } catch (error) {
-                    console.error('Error saving entry:', error);
-                    showToast('Failed to save entry. Please try again.', 'error');
-                }
-            } 
-        }
-        function updateEmotionSliders() { const slidersContainer = document.getElementById('emotion-sliders'); if(!slidersContainer) return; slidersContainer.innerHTML = ''; const selectedChips = document.querySelectorAll('.emotion-chip.selected'); selectedChips.forEach(chip => { const emotionName = chip.dataset.emotion; const intensity = state.entryBuilder.emotional?.emotions?.find(e => e.name === emotionName)?.intensity || 5; const sliderHtml = `<div class="flex items-center gap-4 fade-in"><label class="w-24 text-gray-700">${emotionName}</label><input type="range" data-emotion-name="${emotionName}" min="1" max="10" value="${intensity}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"><span class="font-semibold w-8 text-center text-indigo-600">${intensity}</span></div>`; slidersContainer.insertAdjacentHTML('beforeend', sliderHtml); }); slidersContainer.querySelectorAll('input[type="range"]').forEach(slider => { slider.addEventListener('input', (e) => { e.target.nextElementSibling.textContent = e.target.value; }); }); }
-        function handleBodyMapClick(e) { const svg = document.getElementById('body-map-svg'); if (!svg) return; const rect = svg.getBoundingClientRect(); const x = ((e.clientX - rect.left) / rect.width) * 100; const y = ((e.clientY - rect.top) / rect.height) * 100; const partName = mapCoordsToPart(x, y); const sensationQualities = ["Tightness", "Vibration", "Heat", "Numbness", "Ache", "Tingling"]; const bodyHtml = `<div class="space-y-4"><div><label class="block font-semibold mb-2">Sensation Quality:</label><div id="sensation-quality-chips" class="flex flex-wrap gap-2">${sensationQualities.map(q => `<button class="sensation-chip bg-gray-200 px-3 py-1 rounded-full text-sm" data-quality="${q}">${q}</button>`).join('')}</div></div><div><label for="sensation-intensity" class="block font-semibold mb-2">Intensity:</label><input type="range" id="sensation-intensity" min="1" max="10" value="5" class="w-full"></div></div>`; showModal({ title: `Sensation in your ${partName}`, bodyHtml, confirmText: "Log Sensation", onConfirm: () => { const selectedQuality = document.querySelector('#sensation-quality-chips .selected')?.dataset.quality; const intensity = document.getElementById('sensation-intensity').value; if (!selectedQuality) { showToast("Please select a sensation quality.", "error"); return; } if (!state.entryBuilder.physical) state.entryBuilder.physical = {}; if (!state.entryBuilder.physical.sensations) state.entryBuilder.physical.sensations = []; state.entryBuilder.physical.sensations.push({ part: partName, quality: selectedQuality, intensity: parseInt(intensity), x, y, view: state.bodyMapView }); document.getElementById('section-content').innerHTML = renderSectionContent('physical'); updateSensationDots(); attachEventListeners(); } }); document.querySelectorAll('#sensation-quality-chips .sensation-chip').forEach(chip => { chip.addEventListener('click', (e) => { document.querySelectorAll('#sensation-quality-chips .sensation-chip').forEach(c => c.classList.remove('selected')); e.currentTarget.classList.add('selected'); }); }); }
-        function updateSensationDots() { const dotsContainer = document.getElementById('sensation-dots'); if (!dotsContainer) return; dotsContainer.innerHTML = ''; const sensations = state.entryBuilder.physical?.sensations || []; sensations.filter(s => s.view === state.bodyMapView).forEach(s => { const dot = document.createElement('div'); dot.className = 'sensation-dot'; dot.style.left = `${s.x}%`; dot.style.top = `${s.y}%`; dot.style.width = `${8 + parseInt(s.intensity)}px`; dot.style.height = `${8 + parseInt(s.intensity)}px`; dot.style.backgroundColor = `hsla(0, 100%, 50%, ${s.intensity / 10})`; dotsContainer.appendChild(dot); }); }
-        function mapCoordsToPart(x, y) { if (y < 25) return "Head"; if (y < 35) return "Neck/Throat"; if (y < 50 && x > 25 && x < 75) return "Chest"; if (y < 50) return "Shoulders/Arms"; if (y < 60) return "Stomach/Gut"; return "Legs"; }
-        function handlePerspectiveLensClick(e) { const lensType = e.currentTarget.dataset.lens; const promptArea = document.getElementById('perspective-prompt-area'); let promptText = ''; const firstEmotion = state.entryBuilder.emotional?.emotions?.[0]?.name.toLowerCase() || 'that feeling'; if (lensType === 'child') { promptText = `Taking a moment to connect with your younger self... What does the part of you that felt ${firstEmotion} really need to hear right now?`; } else if (lensType === 'future') { promptText = `Imagine your wise, future self looking back at this moment with compassion. What insight or guidance would they offer you?`; } promptArea.innerHTML = `<div class="mt-4 border-t pt-4 fade-in"><p class="text-gray-600 italic mb-2">${promptText}</p><textarea name="${lensType}Perspective" class="w-full border-gray-300 rounded-md" rows="4" placeholder="Write your reflection here..."></textarea></div>`; }
 
         // Deep emotional analysis for The Weaver's thread system
-        function analyzeEmotionalContent(entry) {
-            if (!entry) return [];
-            
-            const threads = [];
-            
-            // Analyze emotional content
-            if (entry.emotional?.emotions) {
-                entry.emotional.emotions.forEach(emotion => {
-                    switch(emotion.name.toLowerCase()) {
-                        case 'happy':
-                        case 'surprised':
-                            threads.push({ type: 'gold', intensity: emotion.intensity });
-                            break;
-                        case 'calm':
-                            threads.push({ type: 'gold', intensity: emotion.intensity });
-                            threads.push({ type: 'rose', intensity: emotion.intensity * 0.7 });
-                            break;
-                        case 'sad':
-                        case 'disgusted':
-                            threads.push({ type: 'silver', intensity: emotion.intensity });
-                            break;
-                        case 'angry':
-                        case 'fearful':
-                            threads.push({ type: 'indigo', intensity: emotion.intensity });
-                            break;
-                    }
-                });
-            }
-            
-            // Analyze text content for deeper insights
-            const textContent = [
-                entry.integration?.insights,
-                entry.reflection?.patterns,
-                entry.inquiry?.story,
-                entry.situation?.description
-            ].filter(Boolean).join(' ').toLowerCase();
-            
-            // Gems and insights
-            const insightWords = ['insight', 'understanding', 'clarity', 'breakthrough', 'realization', 'awareness'];
-            const gratitudeWords = ['grateful', 'thankful', 'blessed', 'appreciation', 'joy'];
-            
-            insightWords.forEach(word => {
-                if (textContent.includes(word)) {
-                    threads.push({ type: 'gold', intensity: 7 });
-                }
-            });
-            
-            gratitudeWords.forEach(word => {
-                if (textContent.includes(word)) {
-                    threads.push({ type: 'gold', intensity: 8 });
-                }
-            });
-            
-            // Compassion and connection
-            const compassionWords = ['compassion', 'love', 'connection', 'empathy', 'kindness', 'healing', 'forgiveness'];
-            
-            compassionWords.forEach(word => {
-                if (textContent.includes(word)) {
-                    threads.push({ type: 'rose', intensity: 7 });
-                }
-            });
-            
-            // Shadow work and growth
-            const shadowWords = ['fear', 'anxiety', 'worry', 'stress', 'overwhelm', 'triggered', 'shadow'];
-            
-            shadowWords.forEach(word => {
-                if (textContent.includes(word)) {
-                    threads.push({ type: 'indigo', intensity: 6 });
-                }
-            });
-            
-            return threads;
-        }
-
         // Simplified analysis for basic display
         function analyzeRecentEntries() {
             if (entries.length === 0) {
@@ -4816,6 +5226,9 @@ Write about anything: your feelings, what happened, what you're grateful for, wh
         function onJournalEntryCompleted(entry) {
             // Add to entries
             entries.unshift(entry);
+            
+            // Save to localStorage for local development persistence
+            saveLocalEntries();
             
             // Weave the emotional threads after returning to dashboard
             setTimeout(() => {
