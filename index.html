@@ -1772,6 +1772,18 @@
 
         // Function to write user profile data to Firestore
         async function writeUserData(userId, name, email, imageUrl) {
+            // Check if running locally and skip Firestore operations
+            const isLocalDevelopment = window.location.hostname === 'localhost' || 
+                                     window.location.hostname === '127.0.0.1' || 
+                                     window.location.hostname.includes('localhost') ||
+                                     window.location.protocol === 'file:' ||
+                                     (window.location.port && window.location.port !== '80' && window.location.port !== '443');
+            
+            if (isLocalDevelopment) {
+                console.log('Local development mode: Skipping Firestore user data write for:', name);
+                return; // Skip Firestore operations in local development
+            }
+            
             const userRef = doc(db, 'users', userId);
             
             try {
@@ -1890,6 +1902,19 @@
         async function waitForTokenReady(user, maxRetries = 3, delay = 1500) {
             console.log('Waiting for Firebase token to be ready...');
             
+            // Check if running locally and return mock token
+            const isLocalDevelopment = window.location.hostname === 'localhost' || 
+                                     window.location.hostname === '127.0.0.1' || 
+                                     window.location.hostname.includes('localhost') ||
+                                     window.location.protocol === 'file:' ||
+                                     (window.location.port && window.location.port !== '80' && window.location.port !== '443');
+            
+            if (isLocalDevelopment) {
+                console.log('Local development mode: Using mock token');
+                currentIdToken = 'mock-token-for-local-dev';
+                return currentIdToken;
+            }
+            
             // First, wait a moment for auth state to stabilize
             await new Promise(resolve => setTimeout(resolve, 1000));
             
@@ -1908,6 +1933,8 @@
                                 const now = Math.floor(Date.now() / 1000);
                                 if (payload.exp && payload.exp > now) {
                                     console.log('Token is valid and not expired');
+                                    currentIdToken = token; // Set the managed token
+                                    scheduleTokenRefresh(token); // Schedule refresh
                                     return token;
                                 } else {
                                     console.log('Token is expired, will force refresh');
@@ -1927,6 +1954,8 @@
                     const freshToken = await user.getIdToken(true);
                     if (freshToken && freshToken.length > 0) {
                         console.log('Firebase token obtained after force refresh');
+                        currentIdToken = freshToken; // Set the managed token
+                        scheduleTokenRefresh(freshToken); // Schedule refresh
                         return freshToken;
                     }
                 } catch (refreshError) {
@@ -1956,6 +1985,18 @@
             }
             
             if (!token) return;
+            
+            // Skip token refresh scheduling in local development
+            const isLocalDevelopment = window.location.hostname === 'localhost' || 
+                                     window.location.hostname === '127.0.0.1' || 
+                                     window.location.hostname.includes('localhost') ||
+                                     window.location.protocol === 'file:' ||
+                                     (window.location.port && window.location.port !== '80' && window.location.port !== '443');
+            
+            if (isLocalDevelopment) {
+                console.log('Local development mode: Skipping token refresh scheduling');
+                return;
+            }
             
             try {
                 // Parse the token to get expiration time
@@ -1991,6 +2032,23 @@
         
         // Token change listener - this handles automatic token refresh
         onIdTokenChanged(auth, async (user) => {
+            // Skip token operations in local development
+            const isLocalDevelopment = window.location.hostname === 'localhost' || 
+                                     window.location.hostname === '127.0.0.1' || 
+                                     window.location.hostname.includes('localhost') ||
+                                     window.location.protocol === 'file:' ||
+                                     (window.location.port && window.location.port !== '80' && window.location.port !== '443');
+            
+            if (isLocalDevelopment) {
+                console.log('Local development mode: Skipping onIdTokenChanged operations');
+                if (user) {
+                    currentIdToken = 'mock-token-for-local-dev';
+                } else {
+                    currentIdToken = null;
+                }
+                return;
+            }
+            
             if (user) {
                 try {
                     // Get the fresh token
@@ -2128,6 +2186,48 @@
             }
         });
 
+        // Helper function to ensure we have a valid token
+        async function ensureValidToken(maxWaitTime = 5000) {
+            const startTime = Date.now();
+            
+            while (Date.now() - startTime < maxWaitTime) {
+                if (currentIdToken) {
+                    // Validate the token is not expired
+                    try {
+                        const tokenParts = currentIdToken.split('.');
+                        if (tokenParts.length === 3) {
+                            const payload = JSON.parse(atob(tokenParts[1]));
+                            const now = Math.floor(Date.now() / 1000);
+                            if (payload.exp && payload.exp > now + 60) { // Token should be valid for at least 1 more minute
+                                return currentIdToken;
+                            }
+                        }
+                    } catch (error) {
+                        console.log('Error validating managed token:', error);
+                    }
+                }
+                
+                // Wait a bit and try again
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // If we still don't have a valid token, try to get one manually
+            if (state.currentUser) {
+                try {
+                    console.log('Managed token not available, getting token manually...');
+                    const token = await state.currentUser.getIdToken(true);
+                    currentIdToken = token;
+                    scheduleTokenRefresh(token);
+                    return token;
+                } catch (error) {
+                    console.error('Failed to get token manually:', error);
+                    throw new Error('Unable to obtain valid authentication token');
+                }
+            } else {
+                throw new Error('User not authenticated');
+            }
+        }
+
         // Secure API call to Firebase backend
         async function callFirebaseBackend(action, data = {}) {
             if (!state.currentUser) {
@@ -2187,23 +2287,10 @@
             }
 
             try {
-                // Use the managed token from onIdTokenChanged, fallback to manual retrieval
-                let idToken = currentIdToken;
+                // Ensure we have a valid, non-expired token
+                const idToken = await ensureValidToken();
                 
-                if (!idToken) {
-                    console.log('No managed token available, retrieving manually...');
-                    try {
-                        idToken = await state.currentUser.getIdToken(false);
-                    } catch (error) {
-                        console.log('Current token not valid, forcing refresh...');
-                        idToken = await state.currentUser.getIdToken(true);
-                        currentIdToken = idToken; // Update managed token
-                    }
-                }
-                
-                if (!idToken) {
-                    throw new Error('Unable to get authentication token');
-                }
+                console.log('Using token for backend call:', idToken ? 'Present' : 'Missing');
                 
                 const response = await fetch(`/.netlify/functions/firebase-backend`, {
                     method: 'POST',
@@ -2229,9 +2316,12 @@
                         console.warn('401 error received, attempting token refresh...');
                         
                         try {
-                            // Force refresh the token
+                            // Force refresh the token and update managed token
                             const freshToken = await state.currentUser.getIdToken(true);
                             currentIdToken = freshToken;
+                            scheduleTokenRefresh(freshToken); // Schedule next refresh
+                            
+                            console.log('Token refreshed due to 401, retrying request...');
                             
                             // Retry the request with the fresh token
                             const retryResponse = await fetch(`/.netlify/functions/firebase-backend`, {
@@ -5512,6 +5602,127 @@
                     render();
                 }
             });
+        }
+
+        // Analyze emotional content and return threads
+        function analyzeEmotionalContent(entry) {
+            if (!entry) return [];
+            
+            const threads = [];
+            
+            // Process emotions from the entry
+            if (entry.emotional?.emotions) {
+                entry.emotional.emotions.forEach(emotion => {
+                    let threadType = 'indigo'; // Default thread type
+                    
+                    // Map emotions to thread types
+                    switch (emotion.name.toLowerCase()) {
+                        case 'angry':
+                        case 'rage':
+                        case 'fury':
+                            threadType = 'red';
+                            break;
+                        case 'fearful':
+                        case 'anxious':
+                        case 'worried':
+                            threadType = 'gray';
+                            break;
+                        case 'sad':
+                        case 'grief':
+                        case 'melancholy':
+                            threadType = 'blue';
+                            break;
+                        case 'happy':
+                        case 'joyful':
+                        case 'elated':
+                            threadType = 'gold';
+                            break;
+                        case 'calm':
+                        case 'peaceful':
+                        case 'serene':
+                            threadType = 'green';
+                            break;
+                        case 'love':
+                        case 'compassion':
+                        case 'empathy':
+                            threadType = 'rose';
+                            break;
+                        case 'curious':
+                        case 'wonder':
+                        case 'interested':
+                            threadType = 'purple';
+                            break;
+                    }
+                    
+                    threads.push({
+                        type: threadType,
+                        intensity: emotion.intensity || 5,
+                        emotion: emotion.name,
+                        source: 'emotional'
+                    });
+                });
+            }
+            
+            // Process physical sensations as threads
+            if (entry.physical?.sensations) {
+                entry.physical.sensations.forEach(sensation => {
+                    let threadType = 'orange'; // Default for physical sensations
+                    let intensity = sensation.intensity || 5;
+                    
+                    // Map sensation qualities to thread types
+                    switch (sensation.quality?.toLowerCase()) {
+                        case 'tightness':
+                        case 'tension':
+                            threadType = 'red';
+                            break;
+                        case 'warmth':
+                        case 'tingling':
+                            threadType = 'gold';
+                            break;
+                        case 'ache':
+                        case 'pain':
+                            threadType = 'gray';
+                            break;
+                        case 'lightness':
+                        case 'floating':
+                            threadType = 'green';
+                            break;
+                        case 'expansion':
+                        case 'opening':
+                            threadType = 'rose';
+                            break;
+                    }
+                    
+                    threads.push({
+                        type: threadType,
+                        intensity: intensity,
+                        emotion: `${sensation.part}: ${sensation.quality}`,
+                        source: 'physical'
+                    });
+                });
+            }
+            
+            // Add wisdom threads if AI insights are present
+            if (entry.aiInsights?.wisdom || entry.aiInsights?.insights) {
+                threads.push({
+                    type: 'gold',
+                    intensity: 8,
+                    emotion: 'Wisdom gained',
+                    source: 'insight'
+                });
+            }
+            
+            // Add compassion thread if shadow work or deep reflection is present
+            if (entry.shadowWorkPrompts?.length > 0 || entry.inquiry?.belief) {
+                threads.push({
+                    type: 'rose',
+                    intensity: 7,
+                    emotion: 'Self-compassion',
+                    source: 'reflection'
+                });
+            }
+            
+            return threads;
         }
 
         // The Weaver's Thread Integration System
