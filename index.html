@@ -1743,6 +1743,18 @@
         // Import organized services (only auth needed - db operations via backend)
         import { auth, analytics, db } from './js/firebase-config.js';
         
+        // Debug Firebase configuration
+        console.log('=== FIREBASE CONFIG DEBUG ===');
+        console.log('Auth app config:', {
+            apiKey: auth.app.options.apiKey?.substring(0, 10) + '...',
+            authDomain: auth.app.options.authDomain,
+            projectId: auth.app.options.projectId,
+            appId: auth.app.options.appId?.substring(0, 20) + '...'
+        });
+        console.log('Current domain:', window.location.hostname);
+        console.log('Auth domain match:', window.location.hostname.includes('journalingtrack') && auth.app.options.authDomain.includes('journaling-8af15'));
+        console.log('=== END FIREBASE CONFIG DEBUG ===');
+        
         // Import Firebase Database functions for user-specific data
         import { 
             createUserWithEmailAndPassword, 
@@ -1911,6 +1923,36 @@
             return;
         }
         
+        // Debug function to test backend accessibility
+        async function testBackendConnection() {
+            console.log('=== TESTING BACKEND CONNECTION ===');
+            try {
+                const testResponse = await fetch(`/.netlify/functions/firebase-backend`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ action: 'test' })
+                });
+                
+                console.log('Backend test response status:', testResponse.status);
+                console.log('Backend test response headers:', Object.fromEntries(testResponse.headers.entries()));
+                
+                try {
+                    const testText = await testResponse.text();
+                    console.log('Backend test response body:', testText);
+                } catch (bodyError) {
+                    console.log('Could not read test response body:', bodyError.message);
+                }
+            } catch (fetchError) {
+                console.error('Backend test fetch failed:', fetchError);
+            }
+            console.log('=== END BACKEND CONNECTION TEST ===');
+        }
+        
+        // Test backend connection on load
+        testBackendConnection();
+        
         // Token change listener - DISABLED to prevent Firestore connections
         // onIdTokenChanged causes direct Firestore connections which get blocked
         console.log('Token management system disabled to prevent Firestore connection issues');
@@ -2062,10 +2104,60 @@
             }
             
             try {
-                console.log('Getting fresh token for backend call...');
+                console.log('=== TOKEN DEBUG START ===');
+                console.log('Current user info:', {
+                    uid: state.currentUser.uid,
+                    email: state.currentUser.email,
+                    emailVerified: state.currentUser.emailVerified,
+                    providerId: state.currentUser.providerId
+                });
+                
                 // Always get a fresh token to avoid expiration issues
                 const token = await state.currentUser.getIdToken(true);
-                console.log('Fresh token obtained successfully');
+                
+                console.log('Token obtained, length:', token.length);
+                console.log('Token preview (first 50 chars):', token.substring(0, 50) + '...');
+                
+                // Parse and validate the token
+                try {
+                    const tokenParts = token.split('.');
+                    console.log('Token parts count:', tokenParts.length);
+                    
+                    if (tokenParts.length === 3) {
+                        const header = JSON.parse(atob(tokenParts[0]));
+                        const payload = JSON.parse(atob(tokenParts[1]));
+                        
+                        console.log('Token header:', header);
+                        console.log('Token payload (key fields):', {
+                            iss: payload.iss,
+                            aud: payload.aud,
+                            auth_time: payload.auth_time,
+                            user_id: payload.user_id,
+                            sub: payload.sub,
+                            iat: payload.iat,
+                            exp: payload.exp,
+                            email: payload.email,
+                            email_verified: payload.email_verified,
+                            firebase: payload.firebase
+                        });
+                        
+                        const now = Math.floor(Date.now() / 1000);
+                        const timeUntilExpiry = payload.exp - now;
+                        console.log(`Token expires in ${timeUntilExpiry} seconds (${Math.round(timeUntilExpiry/60)} minutes)`);
+                        
+                        if (timeUntilExpiry <= 0) {
+                            console.error('❌ TOKEN IS ALREADY EXPIRED!');
+                        } else if (timeUntilExpiry < 300) {
+                            console.warn('⚠️ Token expires in less than 5 minutes');
+                        } else {
+                            console.log('✅ Token has good expiration time');
+                        }
+                    }
+                } catch (parseError) {
+                    console.error('Failed to parse token for debugging:', parseError);
+                }
+                
+                console.log('=== TOKEN DEBUG END ===');
                 return token;
             } catch (error) {
                 console.error('Failed to get fresh token:', error);
@@ -2149,7 +2241,17 @@
                         console.log('Could not parse token for debugging:', tokenParseError.message);
                     }
                 }
-                console.log(`Making ${action} request with token:`, idToken ? 'Present' : 'Missing');
+                // Enhanced request debugging
+                console.log('=== REQUEST DEBUG START ===');
+                console.log(`Making ${action} request`);
+                console.log('Request URL:', `${window.location.origin}/.netlify/functions/firebase-backend`);
+                console.log('Request headers:', {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken.substring(0, 50)}...` // Only show first 50 chars for security
+                });
+                console.log('Request body:', JSON.stringify({ action, data }, null, 2));
+                console.log('Current timestamp:', new Date().toISOString());
+                console.log('=== REQUEST DEBUG END ===');
                 
                 const response = await fetch(`/.netlify/functions/firebase-backend`, {
                     method: 'POST',
@@ -2159,16 +2261,39 @@
                     },
                     body: JSON.stringify({ action, data })
                 });
+                
+                console.log('=== RESPONSE DEBUG START ===');
+                console.log('Response status:', response.status);
+                console.log('Response statusText:', response.statusText);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+                console.log('=== RESPONSE DEBUG END ===');
 
                 if (!response.ok) {
+                    console.log('=== ERROR RESPONSE DEBUG START ===');
                     let errorMessage = 'Backend operation failed';
+                    let errorData = null;
+                    
                     try {
-                        const errorData = await response.json();
-                        errorMessage = errorData.error || errorMessage;
+                        const responseText = await response.text();
+                        console.log('Raw error response text:', responseText);
+                        
+                        if (responseText) {
+                            try {
+                                errorData = JSON.parse(responseText);
+                                console.log('Parsed error data:', errorData);
+                                errorMessage = errorData.error || errorMessage;
+                            } catch (jsonError) {
+                                console.log('Failed to parse error as JSON:', jsonError.message);
+                                errorMessage = responseText;
+                            }
+                        }
                     } catch (parseError) {
-                        // If we can't parse the error response, use the status text
+                        console.log('Failed to read error response:', parseError.message);
                         errorMessage = `HTTP ${response.status}: ${response.statusText}`;
                     }
+                    
+                    console.log('Final error message:', errorMessage);
+                    console.log('=== ERROR RESPONSE DEBUG END ===');
                     
                     // If we get a 401, try refreshing the token once before giving up
                     if (response.status === 401) {
