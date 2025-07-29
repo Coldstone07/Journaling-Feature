@@ -1741,10 +1741,9 @@
     <!-- Main Application Script -->
     <script type="module">
         // Import organized services (only auth needed - db operations via backend)
-        import { auth } from './js/firebase-config.js';
-        // Note: firebaseAuth and firebaseJournal services not needed with backend approach
+        import { auth, analytics, db } from './js/firebase-config.js';
         
-        // Import only Firebase Auth functions (Firestore operations will be server-side)
+        // Import Firebase Database functions for user-specific data
         import { 
             createUserWithEmailAndPassword, 
             signInWithEmailAndPassword, 
@@ -1752,8 +1751,59 @@
             onAuthStateChanged 
         } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-        // --- MOCK DATA & CONFIG ---
-        let entries = [
+        // Import Firebase Firestore functions
+        import { 
+            collection, 
+            doc, 
+            setDoc, 
+            getDoc, 
+            getDocs, 
+            addDoc,
+            deleteDoc,
+            query,
+            where,
+            orderBy,
+            limit
+        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+        // --- USER DATA MANAGEMENT ---
+        let entries = [];
+
+        // Function to write user profile data to Firestore
+        async function writeUserData(userId, name, email, imageUrl) {
+            const userRef = doc(db, 'users', userId);
+            
+            try {
+                await setDoc(userRef, {
+                    username: name,
+                    email: email,
+                    profile_picture: imageUrl,
+                    created_at: new Date().toISOString(),
+                    last_login: new Date().toISOString()
+                });
+                console.log("User data saved successfully!");
+            } catch (error) {
+                console.error("Error writing user data: ", error);
+            }
+        }
+
+        // Function to save a journal entry for the current user
+        async function saveJournalEntry(userId, entryData) {
+            return await callFirebaseBackend('createEntry', entryData);
+        }
+
+        // Function to load all journal entries for the current user
+        async function loadUserJournalEntries(userId) {
+            return await callFirebaseBackend('getUserEntries', { limit: 50 });
+        }
+
+        // Function to delete a journal entry
+        async function deleteJournalEntry(userId, entryId) {
+            return await callFirebaseBackend('deleteEntry', { entryId });
+        }
+
+        // Mock data for initial development (will be replaced by real user data)
+        let mockEntries = [
             { id: 1, title: "Team Meeting", date: "2025-07-22T14:30:00.000Z", situation: { description: "My project was criticized and I felt defensive." }, inquiry: { story: "They are trying to undermine me.", emotion: "Anger and Fear", belief: "I'm not good enough." }, emotional: { emotions: [{name: 'Angry', intensity: 8}, {name: 'Fearful', intensity: 7}]}, physical: { sensations: [{part: "Chest", quality: "Tightness", intensity: 8, x: 50, y: 45, view: 'front'}, {part: "Stomach/Gut", quality: "Ache", intensity: 6, x: 50, y: 55, view: 'front'}]} },
             { id: 2, title: "Morning Walk", date: "2025-07-21T08:00:00.000Z", situation: { description: "A peaceful walk in the park." }, emotional: { emotions: [{name: 'Calm', intensity: 2}, {name: 'Happy', intensity: 3}]} },
             { id: 3, title: "Unexpected Bill", date: "2025-07-20T18:00:00.000Z", situation: { description: "Received a large, unexpected bill in the mail." }, emotional: { emotions: [{name: 'Fearful', intensity: 9}]}, physical: { sensations: [{part: "Stomach/Gut", quality: "Tightness", intensity: 9, x: 50, y: 55, view: 'front'}]} }
@@ -1845,13 +1895,32 @@
                     // Create descent transition
                     createDescentTransition();
                     
-                    // Wait a moment for the user token to be ready, then load entries
+                    // Wait a moment for the user token to be ready, then setup user data
                     setTimeout(async () => {
                         try {
-                            await loadUserEntries();
+                            // Write/update user profile data in Realtime Database
+                            await writeUserData(
+                                user.uid,
+                                user.displayName || 'Anonymous User',
+                                user.email,
+                                user.photoURL || ''
+                            );
+                            
+                            // Load user's journal entries from Realtime Database
+                            entries = await loadUserJournalEntries(user.uid);
                         } catch (error) {
-                            console.warn('Could not load entries during initial auth:', error);
-                            // Initialize with empty entries array for local development
+                            console.warn('Authentication issue during initial load:', error);
+                            
+                            // If there's an auth error, redirect back to login
+                            if (error.message.includes('token') || error.message.includes('auth')) {
+                                console.warn('Invalid authentication, redirecting to login');
+                                state.currentUser = null;
+                                state.currentPage = 'login';
+                                render();
+                                return;
+                            }
+                            
+                            // Initialize with empty entries array for other errors
                             entries = [];
                         }
 
@@ -1869,7 +1938,8 @@
                 } else if (state.currentPage === 'onboarding' && state.onboardingStep >= 4) {
                     state.currentPage = 'dashboard';
                     try {
-                        await loadUserEntries();
+                        // Load user's journal entries from Realtime Database
+                        entries = await loadUserJournalEntries(user.uid);
                     } catch (error) {
                         console.warn('Could not load entries after onboarding:', error);
                         entries = [];
@@ -1897,7 +1967,7 @@
                                      window.location.hostname === '127.0.0.1' || 
                                      window.location.hostname.includes('localhost') ||
                                      window.location.protocol === 'file:' ||
-                                     window.location.port !== '';
+                                     (window.location.port && window.location.port !== '80' && window.location.port !== '443');
             
             if (isLocalDevelopment) {
                 console.warn('Running in local development mode. Using mock data for backend calls.');
@@ -1945,7 +2015,12 @@
             }
 
             try {
-                const idToken = await state.currentUser.getIdToken();
+                // Force token refresh to ensure we have a valid token
+                const idToken = await state.currentUser.getIdToken(true);
+                
+                if (!idToken) {
+                    throw new Error('Unable to get authentication token');
+                }
                 
                 const response = await fetch(`/.netlify/functions/firebase-backend`, {
                     method: 'POST',
@@ -1957,13 +2032,42 @@
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Backend operation failed');
+                    let errorMessage = 'Backend operation failed';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (parseError) {
+                        // If we can't parse the error response, use the status text
+                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    
+                    // If we get a 401, the user needs to re-authenticate
+                    if (response.status === 401) {
+                        console.warn('Authentication expired, redirecting to login');
+                        state.currentUser = null;
+                        state.currentPage = 'login';
+                        render();
+                        throw new Error('Authentication expired. Please log in again.');
+                    }
+                    
+                    throw new Error(errorMessage);
                 }
 
                 return await response.json();
             } catch (error) {
                 console.error('Firebase backend error:', error);
+                
+                // Handle specific Firebase auth errors
+                if (error.code === 'auth/invalid-user-token' || 
+                    error.code === 'auth/user-token-expired' ||
+                    error.message.includes('Invalid or expired token')) {
+                    console.warn('Token expired, redirecting to login');
+                    state.currentUser = null;
+                    state.currentPage = 'login';
+                    render();
+                    throw new Error('Session expired. Please log in again.');
+                }
+                
                 throw error;
             }
         }
@@ -5060,6 +5164,11 @@
             }
 
             try {
+                if (!state.currentUser) {
+                    showToast('You must be logged in to save entries', 'error');
+                    return;
+                }
+
                 const entry = {
                     title: title,
                     content: content,
@@ -5070,11 +5179,15 @@
                     date: new Date().toISOString()
                 };
 
-                const savedEntry = await callFirebaseBackend('createEntry', entry);
+                // Save to Firestore using user's UID
+                const savedEntry = await saveJournalEntry(state.currentUser.uid, entry);
+                
+                // Add to local entries array for immediate UI update
+                entries.unshift(savedEntry);
                 
                 const completeEntry = {
                     ...savedEntry,
-                    date: new Date().toISOString()
+                    date: savedEntry.created_at || new Date().toISOString()
                 };
                 
                 // Trigger The Weaver's thread system
@@ -5088,7 +5201,16 @@
                 
             } catch (error) {
                 console.error('Error saving entry:', error);
-                showToast('Failed to save entry. Please try again.', 'error');
+                
+                // Handle authentication errors specifically
+                if (error.message.includes('Authentication expired') || 
+                    error.message.includes('Session expired') ||
+                    error.message.includes('Invalid or expired token')) {
+                    showToast('Your session has expired. Please log in again.', 'error');
+                    // The callFirebaseBackend function already handles redirecting to login
+                } else {
+                    showToast('Failed to save entry. Please try again.', 'error');
+                }
             }
         }
 

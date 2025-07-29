@@ -3,7 +3,8 @@
     "allow": [
       "Bash(mv:*)",
       "Bash(npm start)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }

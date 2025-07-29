@@ -5,6 +5,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js';
 
 // Firebase configuration
 // Note: These values are safe to be public in client-side code
@@ -24,8 +25,12 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+// Initialize Firebase services
+const analytics = getAnalytics(app);
+const firestore = getFirestore(app);
+
 // Initialize and export Firebase services
 export const auth = getAuth(app);
-// Note: db operations handled server-side via netlify/functions/firebase-backend.js
-// export const db = getFirestore(app); // Not needed with backend approach
+export const db = firestore; // Firestore for user-specific data
+export { analytics };
 export default app;
