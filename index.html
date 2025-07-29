@@ -1845,11 +1845,17 @@
                     // Create descent transition
                     createDescentTransition();
                     
-                    // Load user entries first to check if onboarding is needed
-                    await loadUserEntries();
-                    
-                    // Check if user should see onboarding
-                    setTimeout(() => {
+                    // Wait a moment for the user token to be ready, then load entries
+                    setTimeout(async () => {
+                        try {
+                            await loadUserEntries();
+                        } catch (error) {
+                            console.warn('Could not load entries during initial auth:', error);
+                            // Initialize with empty entries array for local development
+                            entries = [];
+                        }
+
+                        // Check if user should see onboarding
                         if (shouldShowOnboarding(user)) {
                             state.currentPage = 'onboarding';
                             state.onboardingStep = 0;
@@ -1862,7 +1868,12 @@
                     }, 1500); // Delay to let descent animation play
                 } else if (state.currentPage === 'onboarding' && state.onboardingStep >= 4) {
                     state.currentPage = 'dashboard';
-                    await loadUserEntries();
+                    try {
+                        await loadUserEntries();
+                    } catch (error) {
+                        console.warn('Could not load entries after onboarding:', error);
+                        entries = [];
+                    }
                     render();
                 }
             } else {
@@ -1882,7 +1893,13 @@
             }
 
             // Check if running locally and return mock data immediately
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            const isLocalDevelopment = window.location.hostname === 'localhost' || 
+                                     window.location.hostname === '127.0.0.1' || 
+                                     window.location.hostname.includes('localhost') ||
+                                     window.location.protocol === 'file:' ||
+                                     window.location.port !== '';
+            
+            if (isLocalDevelopment) {
                 console.warn('Running in local development mode. Using mock data for backend calls.');
                 
                 // Return appropriate mock data based on action
@@ -2011,7 +2028,10 @@
 
         // Load user's journal entries from Firebase (via backend)
         async function loadUserEntries() {
-            if (!state.currentUser) return;
+            if (!state.currentUser) {
+                console.warn('No authenticated user found, cannot load entries');
+                return;
+            }
             
             try {
                 const result = await callFirebaseBackend('getUserEntries', { limit: 50 });
@@ -2026,8 +2046,14 @@
                 console.log(`Loaded ${entries.length} entries:`, entries.map(e => ({ id: e.id, title: e.title, date: e.date })));
             } catch (error) {
                 console.error('Error loading entries:', error);
-                // Don't show error toast for local development
-                if (!error.message.includes('mock data')) {
+                
+                // Initialize with empty array to prevent further errors
+                entries = [];
+                
+                // Only show error toast for legitimate backend errors, not local development issues
+                if (!error.message.includes('mock data') && 
+                    !error.message.includes('Invalid or expired token') &&
+                    !window.location.hostname.includes('localhost')) {
                     showToast('Failed to load your journal entries', 'error');
                 }
             }
