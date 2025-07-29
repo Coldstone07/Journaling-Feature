@@ -1885,8 +1885,80 @@
             }, 3500);
         }
 
+        // Helper function to wait for Firebase token to be ready
+        async function waitForTokenReady(user, maxRetries = 3, delay = 1500) {
+            console.log('Waiting for Firebase token to be ready...');
+            
+            // First, wait a moment for auth state to stabilize
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    // Try getting the token without forcing refresh first
+                    const token = await user.getIdToken(false);
+                    if (token && token.length > 0) {
+                        console.log('Firebase token is ready');
+                        
+                        // Validate the token by checking if it's not expired
+                        const tokenParts = token.split('.');
+                        if (tokenParts.length === 3) {
+                            try {
+                                const payload = JSON.parse(atob(tokenParts[1]));
+                                const now = Math.floor(Date.now() / 1000);
+                                if (payload.exp && payload.exp > now) {
+                                    console.log('Token is valid and not expired');
+                                    return token;
+                                } else {
+                                    console.log('Token is expired, will force refresh');
+                                }
+                            } catch (parseError) {
+                                console.log('Could not parse token, will force refresh');
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.log(`Token not ready yet, attempt ${i + 1}/${maxRetries}:`, error.message);
+                }
+                
+                // If we don't have a valid token, try force refresh
+                try {
+                    console.log('Attempting force token refresh...');
+                    const freshToken = await user.getIdToken(true);
+                    if (freshToken && freshToken.length > 0) {
+                        console.log('Firebase token obtained after force refresh');
+                        return freshToken;
+                    }
+                } catch (refreshError) {
+                    console.log(`Force refresh failed on attempt ${i + 1}:`, refreshError.message);
+                }
+                
+                if (i < maxRetries - 1) {
+                    console.log(`Waiting ${delay}ms before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+            
+            console.error('Failed to get valid token after all attempts');
+            throw new Error('Unable to obtain authentication token after multiple attempts');
+        }
+
+        // Authentication state management
+        let authInitializationTimeout = null;
+        let isAuthProcessing = false;
+        
         // Firebase Authentication State Listener
         onAuthStateChanged(auth, async (user) => {
+            // Clear any pending initialization
+            if (authInitializationTimeout) {
+                clearTimeout(authInitializationTimeout);
+                authInitializationTimeout = null;
+            }
+            
+            // Prevent multiple simultaneous auth processing
+            if (isAuthProcessing) {
+                console.log('Authentication already processing, skipping...');
+                return;
+            }
             if (user) {
                 // Store the actual Firebase user object to access getIdToken()
                 state.currentUser = user;
@@ -1895,10 +1967,17 @@
                     // Create descent transition
                     createDescentTransition();
                     
-                    // Wait a moment for the user token to be ready, then setup user data
-                    setTimeout(async () => {
+                    // Set up a delayed initialization to allow auth to stabilize
+                    authInitializationTimeout = setTimeout(async () => {
+                        isAuthProcessing = true;
+                        
                         try {
-                            // Write/update user profile data in Realtime Database
+                            console.log('Starting authentication setup...');
+                            
+                            // Wait for Firebase token to be properly ready
+                            await waitForTokenReady(user);
+                            
+                            // Write/update user profile data in Firestore
                             await writeUserData(
                                 user.uid,
                                 user.displayName || 'Anonymous User',
@@ -1906,8 +1985,9 @@
                                 user.photoURL || ''
                             );
                             
-                            // Load user's journal entries from Realtime Database
+                            // Load user's journal entries from Firestore
                             entries = await loadUserJournalEntries(user.uid);
+                            console.log('Authentication setup completed successfully');
                         } catch (error) {
                             console.warn('Authentication issue during initial load:', error);
                             
@@ -1924,6 +2004,9 @@
                             entries = [];
                         }
 
+                        // Small delay to let descent animation play
+                        await new Promise(resolve => setTimeout(resolve, 1500));
+                        
                         // Check if user should see onboarding
                         if (shouldShowOnboarding(user)) {
                             state.currentPage = 'onboarding';
@@ -1934,20 +2017,36 @@
                             state.isFirstVisit = false;
                         }
                         render();
-                    }, 1500); // Delay to let descent animation play
+                        
+                        // Reset the processing flag
+                        isAuthProcessing = false;
+                    }, 2000); // Wait 2 seconds for auth to stabilize
                 } else if (state.currentPage === 'onboarding' && state.onboardingStep >= 4) {
-                    state.currentPage = 'dashboard';
-                    try {
-                        // Load user's journal entries from Realtime Database
-                        entries = await loadUserJournalEntries(user.uid);
-                    } catch (error) {
-                        console.warn('Could not load entries after onboarding:', error);
-                        entries = [];
+                    // Only process if not already processing auth
+                    if (!isAuthProcessing) {
+                        isAuthProcessing = true;
+                        
+                        state.currentPage = 'dashboard';
+                        try {
+                            // Wait for Firebase token to be properly ready
+                            await waitForTokenReady(user);
+                            
+                            // Load user's journal entries from Firestore
+                            entries = await loadUserJournalEntries(user.uid);
+                        } catch (error) {
+                            console.warn('Could not load entries after onboarding:', error);
+                            entries = [];
+                        }
+                        render();
+                        
+                        // Reset the processing flag
+                        isAuthProcessing = false;
                     }
-                    render();
                 }
             } else {
+                // User signed out
                 state.currentUser = null;
+                isAuthProcessing = false; // Reset processing flag on logout
                 if (state.currentPage !== 'login' && state.currentPage !== 'register') {
                     state.currentPage = 'login';
                 }
@@ -2015,8 +2114,14 @@
             }
 
             try {
-                // Force token refresh to ensure we have a valid token
-                const idToken = await state.currentUser.getIdToken(true);
+                // Try to get current token first, then force refresh if needed
+                let idToken;
+                try {
+                    idToken = await state.currentUser.getIdToken(false);
+                } catch (error) {
+                    console.log('Current token not valid, forcing refresh...');
+                    idToken = await state.currentUser.getIdToken(true);
+                }
                 
                 if (!idToken) {
                     throw new Error('Unable to get authentication token');
