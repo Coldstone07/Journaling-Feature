@@ -20,46 +20,37 @@
 
 Go to your Netlify dashboard → Site settings → Environment variables and add:
 
-**Option A: Using Individual Variables (Recommended for Netlify)**
+**Option A: Using Full JSON (Recommended)**
 
-From your downloaded service account JSON file, extract these values and add them as separate environment variables:
+This is the simplest and most reliable method:
+
+1. **Open your service account JSON file** in a text editor
+2. **Select ALL content** (Ctrl+A) and copy (Ctrl+C)
+3. **In Netlify environment variables**, add:
 
 ```
 FIREBASE_PROJECT_ID = journaling-8af15
-FIREBASE_CLIENT_EMAIL = [copy "client_email" value from JSON]
-FIREBASE_PRIVATE_KEY = [copy "private_key" value from JSON]  
-FIREBASE_PRIVATE_KEY_ID = [copy "private_key_id" value from JSON]
-FIREBASE_CLIENT_ID = [copy "client_id" value from JSON - optional]
+GOOGLE_APPLICATION_CREDENTIALS_JSON = [paste ENTIRE JSON content here]
 ```
 
-**Example:**
+The JSON should look exactly like this format:
+```json
+{
+  "type": "service_account",
+  "project_id": "journaling-8af15",
+  "private_key_id": "...",
+  "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-...@journaling-8af15.iam.gserviceaccount.com",
+  "client_id": "...",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "...",
+  "universe_domain": "googleapis.com"
+}
 ```
-FIREBASE_PROJECT_ID = journaling-8af15
-FIREBASE_CLIENT_EMAIL = firebase-adminsdk-abc123@journaling-8af15.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY = -----BEGIN PRIVATE KEY-----\nMIIEvQIBADANB...lots of text...\n-----END PRIVATE KEY-----\n
-FIREBASE_PRIVATE_KEY_ID = a1b2c3d4e5f6g7h8i9j0
-```
 
-⚠️ **IMPORTANT Private Key Setup**: 
-
-The private key is the most common source of errors. Follow these steps exactly:
-
-1. **Open your service account JSON file**
-2. **Find the "private_key" field** - it looks like this:
-   ```json
-   "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBg...\n-----END PRIVATE KEY-----\n"
-   ```
-3. **Copy ONLY the value** (everything between the quotes, including `\n`)
-4. **In Netlify environment variables**, paste it exactly as copied
-
-**Common Issues:**
-- ❌ Don't remove the `\n` characters - they are needed
-- ❌ Don't add extra quotes around the value in Netlify
-- ❌ Don't add spaces before or after the value
-- ✅ The value should start with `-----BEGIN PRIVATE KEY-----\n`
-- ✅ The value should end with `\n-----END PRIVATE KEY-----\n`
-
-**Option B: Using Full JSON (Alternative)**
+**Option B: Using Individual Variables (Alternative)**
 ```
 FIREBASE_PROJECT_ID = journaling-8af15
 GOOGLE_APPLICATION_CREDENTIALS_JSON = [paste entire JSON content]
@@ -109,9 +100,10 @@ service cloud.firestore {
 ### Common Issues:
 
 **1. "Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format" Error**
-- ❌ JSON approach doesn't work well with Netlify environment variables
-- ✅ Use individual environment variables instead (Option A above)
-- ✅ Extract values from JSON and set them as separate Netlify env vars
+- ❌ JSON was not copied correctly from the service account file
+- ✅ Re-copy the ENTIRE JSON content exactly as it appears in the file
+- ✅ Make sure it starts with { and ends with }
+- ✅ Don't add extra quotes around the JSON in Netlify
 
 **2. "500 Internal Server Error" with "DECODER routines::unsupported"**
 - ❌ Private key format is corrupted during copy/paste
