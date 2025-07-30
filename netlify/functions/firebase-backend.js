@@ -16,65 +16,9 @@ if (!global._firebaseApp) {
     const projectId = process.env.FIREBASE_PROJECT_ID || 'journaling-8af15';
     console.log('Using project ID:', projectId);
     
-    // Method 1: Try using individual environment variables (Recommended for Netlify)
-    if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_PRIVATE_KEY_ID) {
-      console.log('🔑 Using service account credentials from individual env vars');
-      console.log('Client email:', process.env.FIREBASE_CLIENT_EMAIL);
-      console.log('Private key ID:', process.env.FIREBASE_PRIVATE_KEY_ID);
-      console.log('Private key length:', process.env.FIREBASE_PRIVATE_KEY.length);
-      
-      try {
-        // Clean the private key format
-        let privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
-        
-        // Create service account object exactly like the JSON file
-        const serviceAccount = {
-          type: "service_account",
-          project_id: projectId,
-          private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-          private_key: privateKey,
-          client_email: process.env.FIREBASE_CLIENT_EMAIL,
-          client_id: process.env.FIREBASE_CLIENT_ID || "",
-          auth_uri: "https://accounts.google.com/o/oauth2/auth",
-          token_uri: "https://oauth2.googleapis.com/token",
-          auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-          client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.FIREBASE_CLIENT_EMAIL)}`,
-          universe_domain: "googleapis.com"
-        };
-        
-        console.log('Service account object created');
-        console.log('Private key starts correctly:', privateKey.startsWith('-----BEGIN PRIVATE KEY-----'));
-        console.log('Private key includes newlines:', privateKey.includes('\n'));
-        
-        // Use the standard Firebase Admin SDK pattern
-        app = admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
-          databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`
-        });
-        
-        console.log('✅ Firebase Admin initialized with individual vars');
-        
-      } catch (certError) {
-        console.error('❌ Firebase Admin initialization failed:', {
-          error: certError.message,
-          stack: certError.stack,
-          privateKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length,
-          privateKeyStart: process.env.FIREBASE_PRIVATE_KEY?.substring(0, 50),
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL
-        });
-        
-        // Try fallback to JSON if available
-        if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-          console.log('🔄 Attempting fallback to JSON credentials...');
-          throw new Error('Individual vars failed, will try JSON fallback');
-        } else {
-          throw new Error(`Firebase initialization error: ${certError.message}`);
-        }
-      }
-    }
-    // Method 2: Try using service account JSON from environment (fallback)
-    else if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-      console.log('🔑 Using service account credentials from JSON env var (fallback)');
+    // Method 1: Try using service account JSON (Recommended)
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+      console.log('🔑 Using service account credentials from JSON env var');
       console.log('JSON length:', process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.length);
       console.log('JSON preview:', process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.substring(0, 100) + '...');
       
@@ -110,6 +54,36 @@ if (!global._firebaseApp) {
           jsonEnd: process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.substring(-50)
         });
         throw new Error(`Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format: ${jsonError.message}`);
+      }
+    }
+    // Method 2: Try using individual environment variables (fallback)
+    else if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_PRIVATE_KEY_ID) {
+      console.log('🔑 Using service account credentials from individual env vars (fallback)');
+      
+      try {
+        const serviceAccount = {
+          type: "service_account",
+          project_id: projectId,
+          private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+          private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+          client_email: process.env.FIREBASE_CLIENT_EMAIL,
+          client_id: process.env.FIREBASE_CLIENT_ID || "",
+          auth_uri: "https://accounts.google.com/o/oauth2/auth",
+          token_uri: "https://oauth2.googleapis.com/token",
+          auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+          client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.FIREBASE_CLIENT_EMAIL)}`,
+          universe_domain: "googleapis.com"
+        };
+        
+        app = admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+          databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`
+        });
+        
+        console.log('✅ Firebase Admin initialized with individual vars');
+      } catch (certError) {
+        console.error('❌ Individual vars failed:', certError.message);
+        throw new Error(`Firebase initialization error: ${certError.message}`);
       }
     }
     // Method 3: Try application default credentials (works in Google Cloud environments)
