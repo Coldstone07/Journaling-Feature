@@ -1,7 +1,7 @@
 // Firebase Backend for Journaling Feature (Netlify Function)
 // Uses Firebase Admin SDK for secure server-side access
 
-const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
+const admin = require('firebase-admin');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getAuth } = require('firebase-admin/auth');
 
@@ -16,8 +16,6 @@ if (!global._firebaseApp) {
     const projectId = process.env.FIREBASE_PROJECT_ID || 'journaling-8af15';
     console.log('Using project ID:', projectId);
     
-    let credential;
-    
     // Method 1: Try using individual environment variables (Recommended for Netlify)
     if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_PRIVATE_KEY_ID) {
       console.log('🔑 Using service account credentials from individual env vars');
@@ -26,65 +24,43 @@ if (!global._firebaseApp) {
       console.log('Private key length:', process.env.FIREBASE_PRIVATE_KEY.length);
       
       try {
-        // Try multiple approaches to fix the private key format
-        let privateKey = process.env.FIREBASE_PRIVATE_KEY;
-        console.log('Original key length:', privateKey.length);
-        console.log('Original key start:', privateKey.substring(0, 50));
+        // Clean the private key format
+        let privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
         
-        // Method 1: Standard replacement
-        let formattedKey = privateKey.replace(/\\n/g, '\n');
-        
-        // Method 2: If that didn't work, try removing quotes and fixing format
-        if (!formattedKey.includes('\n')) {
-          // Remove any surrounding quotes
-          formattedKey = formattedKey.replace(/^["']|["']$/g, '');
-          // Replace literal \n with actual newlines
-          formattedKey = formattedKey.replace(/\\n/g, '\n');
-        }
-        
-        // Method 3: Ensure proper structure
-        if (!formattedKey.startsWith('-----BEGIN PRIVATE KEY-----')) {
-          throw new Error('Private key missing BEGIN header');
-        }
-        if (!formattedKey.includes('-----END PRIVATE KEY-----')) {
-          throw new Error('Private key missing END footer');
-        }
-        
-        // Ensure proper line endings
-        if (!formattedKey.endsWith('\n')) {
-          formattedKey += '\n';
-        }
-        
-        console.log('Formatted key validation:');
-        console.log('- Has BEGIN header:', formattedKey.startsWith('-----BEGIN PRIVATE KEY-----'));
-        console.log('- Has END footer:', formattedKey.includes('-----END PRIVATE KEY-----'));
-        console.log('- Has newlines:', formattedKey.includes('\n'));
-        console.log('- Length after formatting:', formattedKey.length);
-        console.log('- First line:', formattedKey.split('\n')[0]);
-        console.log('- Last line:', formattedKey.split('\n').slice(-3).join('\\n'));
-        
-        credential = cert({
+        // Create service account object exactly like the JSON file
+        const serviceAccount = {
           type: "service_account",
           project_id: projectId,
           private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-          private_key: formattedKey,
+          private_key: privateKey,
           client_email: process.env.FIREBASE_CLIENT_EMAIL,
           client_id: process.env.FIREBASE_CLIENT_ID || "",
           auth_uri: "https://accounts.google.com/o/oauth2/auth",
           token_uri: "https://oauth2.googleapis.com/token",
           auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-          client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.FIREBASE_CLIENT_EMAIL)}`
+          client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.FIREBASE_CLIENT_EMAIL)}`,
+          universe_domain: "googleapis.com"
+        };
+        
+        console.log('Service account object created');
+        console.log('Private key starts correctly:', privateKey.startsWith('-----BEGIN PRIVATE KEY-----'));
+        console.log('Private key includes newlines:', privateKey.includes('\n'));
+        
+        // Use the standard Firebase Admin SDK pattern
+        app = admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+          databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`
         });
-        console.log('✅ Certificate created successfully from individual vars');
+        
+        console.log('✅ Firebase Admin initialized with individual vars');
+        
       } catch (certError) {
-        console.error('❌ Certificate creation failed:', {
+        console.error('❌ Firebase Admin initialization failed:', {
           error: certError.message,
           stack: certError.stack,
-          originalKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length,
-          keyPreview: process.env.FIREBASE_PRIVATE_KEY?.substring(0, 100) + '...',
-          hasNewlines: process.env.FIREBASE_PRIVATE_KEY?.includes('\\n'),
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKeyId: process.env.FIREBASE_PRIVATE_KEY_ID
+          privateKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length,
+          privateKeyStart: process.env.FIREBASE_PRIVATE_KEY?.substring(0, 50),
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL
         });
         
         // Try fallback to JSON if available
@@ -92,7 +68,7 @@ if (!global._firebaseApp) {
           console.log('🔄 Attempting fallback to JSON credentials...');
           throw new Error('Individual vars failed, will try JSON fallback');
         } else {
-          throw new Error(`Private key format error: ${certError.message}`);
+          throw new Error(`Firebase initialization error: ${certError.message}`);
         }
       }
     }
@@ -120,8 +96,13 @@ if (!global._firebaseApp) {
         console.log('Service account project:', serviceAccount.project_id);
         console.log('Service account email:', serviceAccount.client_email);
         
-        credential = cert(serviceAccount);
-        console.log('✅ Certificate created successfully from JSON');
+        // Use the standard Firebase Admin SDK pattern
+        app = admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+          databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`
+        });
+        
+        console.log('✅ Firebase Admin initialized with JSON');
       } catch (jsonError) {
         console.error('❌ Failed to parse service account JSON:', {
           error: jsonError.message,
@@ -134,29 +115,19 @@ if (!global._firebaseApp) {
     // Method 3: Try application default credentials (works in Google Cloud environments)
     else {
       console.log('🔑 Attempting to use application default credentials');
-      console.log('⚠️ No Firebase credentials found in environment variables');
+      console.log('⚠️ No Firebase credentials found in environment variables');  
       console.log('Available vars:', Object.keys(process.env).filter(key => key.includes('FIREBASE') || key.includes('GOOGLE')));
-      credential = applicationDefault();
+      
+      app = admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`
+      });
+      
+      console.log('✅ Firebase Admin initialized with application default credentials');
     }
-    
-    // Initialize with additional configuration
-    app = initializeApp({
-      credential: credential,
-      projectId: projectId,
-      databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`,
-      storageBucket: `${projectId}.appspot.com`
-    });
     
     global._firebaseApp = app;
     console.log('✅ Firebase Admin SDK initialized successfully with project:', projectId);
-    
-    // Test the credential by trying to get a token
-    try {
-      const testToken = await credential.getAccessToken();
-      console.log('✅ Service account credentials are valid');
-    } catch (tokenError) {
-      console.error('⚠️ Warning - credential test failed:', tokenError.message);
-    }
     
   } catch (initError) {
     console.error('❌ Failed to initialize Firebase Admin SDK:', {
