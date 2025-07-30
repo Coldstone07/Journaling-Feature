@@ -21,12 +21,26 @@ if (!global._firebaseApp) {
     // Method 1: Try using service account JSON from environment
     if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
       console.log('🔑 Using service account credentials from JSON env var');
+      console.log('JSON length:', process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.length);
+      console.log('JSON preview:', process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.substring(0, 100) + '...');
+      
       try {
         const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+        console.log('✅ JSON parsed successfully');
+        console.log('Service account type:', serviceAccount.type);
+        console.log('Project ID from JSON:', serviceAccount.project_id);
+        console.log('Client email:', serviceAccount.client_email);
+        
         credential = cert(serviceAccount);
+        console.log('✅ Certificate created successfully');
       } catch (jsonError) {
-        console.error('❌ Failed to parse service account JSON:', jsonError.message);
-        throw new Error('Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format');
+        console.error('❌ Failed to parse service account JSON:', {
+          error: jsonError.message,
+          jsonLength: process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.length,
+          jsonStart: process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.substring(0, 50),
+          jsonEnd: process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.substring(-50)
+        });
+        throw new Error(`Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format: ${jsonError.message}`);
       }
     }
     // Method 2: Try using individual environment variables
