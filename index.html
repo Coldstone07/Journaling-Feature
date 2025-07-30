@@ -1797,10 +1797,6 @@
             return await callFirebaseBackend('createEntry', entryData);
         }
 
-        // Function to load all journal entries for the current user
-        async function loadUserJournalEntries(userId) {
-            return await callFirebaseBackend('getUserEntries', { limit: 50 });
-        }
 
         // Function to delete a journal entry
         async function deleteJournalEntry(userId, entryId) {
@@ -1989,46 +1985,21 @@
                         try {
                             console.log('Starting authentication setup...');
                             
-                            // Wait for Firebase token to be properly ready
-                            await waitForTokenReady(user);
+                            // Small delay to ensure Firebase auth is ready
+                            await new Promise(resolve => setTimeout(resolve, 500));
                             
-                            // Additional wait to ensure token is fully propagated
-                            console.log('Waiting additional time for token propagation...');
-                            await new Promise(resolve => setTimeout(resolve, 2000));
+                            // Brief wait to ensure Firebase auth is stable
+                            console.log('Waiting for authentication to stabilize...');
+                            await new Promise(resolve => setTimeout(resolve, 500));
                             
-                            // Write/update user profile data in Firestore
-                            await writeUserData(
-                                user.uid,
-                                user.displayName || 'Anonymous User',
-                                user.email,
-                                user.photoURL || ''
-                            );
-                            
-                            // Another small delay before loading entries
-                            await new Promise(resolve => setTimeout(resolve, 1000));
-                            
-                            // Load user's journal entries from Firestore with retry logic
+                            // Load user's journal entries
                             console.log('Loading user journal entries...');
-                            let retryCount = 0;
-                            const maxRetries = 3;
-                            
-                            while (retryCount < maxRetries) {
-                                try {
-                                    entries = await loadUserJournalEntries(user.uid);
-                                    console.log('Authentication setup completed successfully');
-                                    break; // Success, exit retry loop
-                                } catch (entryError) {
-                                    retryCount++;
-                                    console.warn(`Failed to load entries (attempt ${retryCount}/${maxRetries}):`, entryError.message);
-                                    
-                                    if (retryCount < maxRetries) {
-                                        console.log(`Waiting ${retryCount * 2} seconds before retry...`);
-                                        await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
-                                    } else {
-                                        console.warn('Failed to load entries after all retries, continuing with empty entries');
-                                        entries = [];
-                                    }
-                                }
+                            try {
+                                await loadUserEntries();
+                                console.log('Authentication setup completed successfully');
+                            } catch (entryError) {
+                                console.warn('Failed to load entries:', entryError.message);
+                                entries = [];
                             }
                         } catch (error) {
                             console.warn('Authentication issue during initial load:', error);
@@ -2070,11 +2041,11 @@
                         
                         state.currentPage = 'dashboard';
                         try {
-                            // Wait for Firebase token to be properly ready
-                            await waitForTokenReady(user);
+                            // Small delay to ensure Firebase auth is ready
+                            await new Promise(resolve => setTimeout(resolve, 500));
                             
                             // Load user's journal entries from Firestore
-                            entries = await loadUserJournalEntries(user.uid);
+                            await loadUserEntries();
                         } catch (error) {
                             console.warn('Could not load entries after onboarding:', error);
                             entries = [];

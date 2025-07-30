@@ -5,7 +5,8 @@
       "Bash(npm start)",
       "Bash(sed:*)",
       "Bash(node:*)",
-      "Bash(timeout 5 npx http-server -p 8080 --silent)"
+      "Bash(timeout 5 npx http-server -p 8080 --silent)",
+      "Bash(timeout 3 npx http-server -p 8080 --silent)"
     ],
     "deny": []
   }
