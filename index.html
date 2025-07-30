@@ -291,6 +291,13 @@
                    window.location.port === '8080';
         }
 
+        // Temporary fallback: Use localStorage for all environments until backend is fixed
+        function useBackendStorage() {
+            // Disable backend storage temporarily due to authentication issues
+            return false;
+            // return !isLocalDevelopment();
+        }
+
         // ===== AUTHENTICATION SYSTEM =====
         class AuthManager {
             constructor() {
@@ -374,19 +381,23 @@
             async loadEntries() {
                 if (!this.currentUser) throw new Error('User not authenticated');
                 
-                if (isLocalDevelopment()) {
+                if (!useBackendStorage()) {
                     // Load from localStorage for local development persistence
                     const storedEntries = localStorage.getItem('kairos-local-entries');
                     if (storedEntries) {
                         return JSON.parse(storedEntries);
                     }
                     
-                    // Return mock data for first-time local users
+                    // Return mock data for first-time users
+                    const welcomeMessage = isLocalDevelopment() 
+                        ? 'This is a sample journal entry for local development. Try creating your own entries!'
+                        : 'Welcome to Kairos! Currently running in offline mode. Your entries are saved locally on this device. Try creating your own entries!';
+                        
                     return [
                         {
                             id: 'mock-1',
                             title: 'Welcome to Kairos',
-                            content: 'This is a sample journal entry for local development. Try creating your own entries!',
+                            content: welcomeMessage,
                             date: new Date().toISOString(),
                             userId: this.currentUser.uid
                         }
@@ -395,6 +406,13 @@
                 
                 // Production: Call backend
                 const token = await this.currentUser.getIdToken();
+                console.log('🔑 Token details:', {
+                    length: token.length,
+                    preview: token.substring(0, 50) + '...',
+                    userId: this.currentUser.uid,
+                    email: this.currentUser.email
+                });
+                
                 const response = await fetch('/.netlify/functions/firebase-backend', {
                     method: 'POST',
                     headers: {
@@ -404,7 +422,15 @@
                     body: JSON.stringify({ action: 'getUserEntries', data: { limit: 50 } })
                 });
                 
+                console.log('📡 Backend response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries())
+                });
+                
                 if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Backend error details:', errorText);
                     throw new Error(`Backend error: ${response.status}`);
                 }
                 
@@ -418,7 +444,7 @@
                 
                 console.log('💾 Saving entry for user:', this.currentUser.uid);
                 
-                if (isLocalDevelopment()) {
+                if (!useBackendStorage()) {
                     // Local development: save to localStorage
                     const newEntry = {
                         id: 'local-' + Date.now(),
@@ -430,6 +456,12 @@
                     appState.entries.unshift(newEntry);
                     localStorage.setItem('kairos-local-entries', JSON.stringify(appState.entries));
                     console.log('✅ Entry saved locally');
+                    
+                    // Show user that we're in offline mode
+                    if (!isLocalDevelopment()) {
+                        showToast('Entry saved locally (offline mode)', 'success');
+                    }
+                    
                     return newEntry;
                 }
                 
