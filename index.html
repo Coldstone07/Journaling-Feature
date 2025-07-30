@@ -291,8 +291,18 @@
                                     render();
                                 }
                             } catch (error) {
-                                console.error('❌ Authentication error:', error);
-                                await this.logout();
+                                console.error('❌ Firebase token error:', error);
+                                // Only logout if there's a genuine Firebase auth error, not backend errors
+                                if (error.code && error.code.includes('auth/')) {
+                                    await this.logout();
+                                } else {
+                                    console.warn('Token verification failed but keeping user logged in');
+                                    // Still redirect to dashboard even if backend fails
+                                    if (appState.currentPage === 'login' || appState.currentPage === 'register') {
+                                        appState.currentPage = 'dashboard';
+                                        render();
+                                    }
+                                }
                             }
                         } else {
                             // User not authenticated
@@ -321,6 +331,14 @@
                 } catch (error) {
                     console.warn('⚠️ Failed to load user data:', error);
                     appState.entries = [];
+                    
+                    // Show user-friendly message for backend errors
+                    if (error.message.includes('Backend error: 401')) {
+                        console.warn('Backend authentication issue - user remains logged in');
+                        showToast('Unable to sync with server. Working in offline mode.', 'error');
+                    } else {
+                        showToast('Failed to load entries. Please refresh.', 'error');
+                    }
                 }
             }
 
@@ -386,31 +404,42 @@
                     return newEntry;
                 }
                 
-                // Production: Save via backend
-                const token = await this.currentUser.getIdToken();
-                const response = await fetch('/.netlify/functions/firebase-backend', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ 
-                        action: 'createEntry', 
-                        data: {
-                            ...entryData,
-                            userId: this.currentUser.uid
+                // Production: Save via backend with improved error handling
+                try {
+                    const token = await this.currentUser.getIdToken();
+                    const response = await fetch('/.netlify/functions/firebase-backend', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ 
+                            action: 'createEntry', 
+                            data: {
+                                ...entryData,
+                                userId: this.currentUser.uid
+                            }
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            console.warn('⚠️ Backend authentication failed, but user remains logged in');
+                            // Don't logout - this is a backend issue, not a Firebase auth issue
+                            throw new Error('Unable to sync with server. Your entry may not be saved to the cloud.');
                         }
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Failed to save entry: ${response.status}`);
+                        throw new Error(`Failed to save entry: ${response.status}`);
+                    }
+                    
+                    const savedEntry = await response.json();
+                    appState.entries.unshift(savedEntry);
+                    console.log('✅ Entry saved to backend');
+                    return savedEntry;
+                } catch (error) {
+                    console.error('❌ Save entry error:', error);
+                    // Re-throw the error for the UI to handle, but don't logout
+                    throw error;
                 }
-                
-                const savedEntry = await response.json();
-                appState.entries.unshift(savedEntry);
-                console.log('✅ Entry saved to backend');
-                return savedEntry;
             }
 
             async login(email, password) {

@@ -43,7 +43,7 @@ function safeJsonParse(str) {
 }
 
 // --- Journal Entry Class ---
-class JournalEntry {api
+class JournalEntry {
   constructor(data) {
     this.id = data.id || null;
     this.userId = data.userId;
