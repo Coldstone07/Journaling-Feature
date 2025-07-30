@@ -18,43 +18,46 @@ if (!global._firebaseApp) {
     
     let credential;
     
-    // Method 1: Try using service account JSON from environment
-    if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-      console.log('🔑 Using service account credentials from JSON env var');
+    // Method 1: Try using individual environment variables (Recommended for Netlify)
+    if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_PRIVATE_KEY_ID) {
+      console.log('🔑 Using service account credentials from individual env vars');
+      console.log('Client email:', process.env.FIREBASE_CLIENT_EMAIL);
+      console.log('Private key ID:', process.env.FIREBASE_PRIVATE_KEY_ID);
+      console.log('Private key length:', process.env.FIREBASE_PRIVATE_KEY.length);
+      
+      try {
+        credential = cert({
+          projectId: projectId,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+          privateKeyId: process.env.FIREBASE_PRIVATE_KEY_ID,
+        });
+        console.log('✅ Certificate created successfully from individual vars');
+      } catch (certError) {
+        console.error('❌ Failed to create certificate from individual vars:', certError.message);
+        throw new Error(`Failed to create Firebase certificate: ${certError.message}`);
+      }
+    }
+    // Method 2: Try using service account JSON from environment (fallback)
+    else if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+      console.log('🔑 Using service account credentials from JSON env var (fallback)');
       console.log('JSON length:', process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.length);
-      console.log('JSON preview:', process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.substring(0, 100) + '...');
       
       try {
         const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
         console.log('✅ JSON parsed successfully');
-        console.log('Service account type:', serviceAccount.type);
-        console.log('Project ID from JSON:', serviceAccount.project_id);
-        console.log('Client email:', serviceAccount.client_email);
-        
         credential = cert(serviceAccount);
-        console.log('✅ Certificate created successfully');
+        console.log('✅ Certificate created successfully from JSON');
       } catch (jsonError) {
-        console.error('❌ Failed to parse service account JSON:', {
-          error: jsonError.message,
-          jsonLength: process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.length,
-          jsonStart: process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.substring(0, 50),
-          jsonEnd: process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.substring(-50)
-        });
+        console.error('❌ Failed to parse service account JSON:', jsonError.message);
         throw new Error(`Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format: ${jsonError.message}`);
       }
-    }
-    // Method 2: Try using individual environment variables
-    else if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
-      console.log('🔑 Using service account credentials from individual env vars');
-      credential = cert({
-        projectId: projectId,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      });
     }
     // Method 3: Try application default credentials (works in Google Cloud environments)
     else {
       console.log('🔑 Attempting to use application default credentials');
+      console.log('⚠️ No Firebase credentials found in environment variables');
+      console.log('Available vars:', Object.keys(process.env).filter(key => key.includes('FIREBASE') || key.includes('GOOGLE')));
       credential = applicationDefault();
     }
     

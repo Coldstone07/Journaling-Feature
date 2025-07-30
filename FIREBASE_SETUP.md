@@ -20,40 +20,34 @@
 
 Go to your Netlify dashboard → Site settings → Environment variables and add:
 
-**Option A: Using JSON (Recommended)**
+**Option A: Using Individual Variables (Recommended for Netlify)**
 
-⚠️ **IMPORTANT**: Copy the JSON content exactly as-is, including all quotes and brackets.
-
-1. Open the downloaded JSON file in a text editor
-2. Select ALL content (Ctrl+A) 
-3. Copy it (Ctrl+C)
-4. In Netlify environment variables, add:
+From your downloaded service account JSON file, extract these values and add them as separate environment variables:
 
 ```
 FIREBASE_PROJECT_ID = journaling-8af15
-GOOGLE_APPLICATION_CREDENTIALS_JSON = [paste ENTIRE JSON content here - should start with { and end with }]
+FIREBASE_CLIENT_EMAIL = [copy "client_email" value from JSON]
+FIREBASE_PRIVATE_KEY = [copy "private_key" value from JSON]  
+FIREBASE_PRIVATE_KEY_ID = [copy "private_key_id" value from JSON]
 ```
 
-**Example of correct JSON format:**
-```json
-{
-  "type": "service_account",
-  "project_id": "journaling-8af15",
-  "private_key_id": "abc123...",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBg...\n-----END PRIVATE KEY-----\n",
-  "client_email": "firebase-adminsdk-xxxxx@journaling-8af15.iam.gserviceaccount.com",
-  "client_id": "123456789...",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  ...
-}
-```
-
-**Option B: Using Individual Variables**
+**Example:**
 ```
 FIREBASE_PROJECT_ID = journaling-8af15
-FIREBASE_CLIENT_EMAIL = firebase-adminsdk-xxxxx@journaling-8af15.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY = -----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----
+FIREBASE_CLIENT_EMAIL = firebase-adminsdk-abc123@journaling-8af15.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY = -----BEGIN PRIVATE KEY-----\nMIIEvQIBADANB...lots of text...\n-----END PRIVATE KEY-----\n
+FIREBASE_PRIVATE_KEY_ID = a1b2c3d4e5f6g7h8i9j0
+```
+
+⚠️ **IMPORTANT**: 
+- Copy the private key exactly as it appears in the JSON (including `\n` characters)
+- Don't add extra quotes around the values in Netlify
+- Make sure there are no leading/trailing spaces
+
+**Option B: Using Full JSON (Alternative)**
+```
+FIREBASE_PROJECT_ID = journaling-8af15
+GOOGLE_APPLICATION_CREDENTIALS_JSON = [paste entire JSON content]
 ```
 
 ### 3. Enable Backend Storage
@@ -100,10 +94,9 @@ service cloud.firestore {
 ### Common Issues:
 
 **1. "Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format" Error**
-- ❌ JSON was not copied correctly 
-- ✅ Re-copy the ENTIRE JSON file content (including { and })
-- ✅ Make sure no extra spaces or characters were added
-- ✅ Verify the JSON is valid by pasting it into a JSON validator
+- ❌ JSON approach doesn't work well with Netlify environment variables
+- ✅ Use individual environment variables instead (Option A above)
+- ✅ Extract values from JSON and set them as separate Netlify env vars
 
 **2. "502 Bad Gateway" Error**
 - Usually means the Netlify function crashed during initialization
