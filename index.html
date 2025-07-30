@@ -291,10 +291,13 @@
                    window.location.port === '8080';
         }
 
-        // Temporary fallback: Use localStorage for all environments until backend is fixed
+        // Storage method selection
         function useBackendStorage() {
-            // Disable backend storage temporarily due to authentication issues
+            // TODO: Enable backend storage once Firebase Admin SDK credentials are configured
+            // For now, using localStorage until backend authentication is fixed
             return false;
+            
+            // Uncomment this line once backend credentials are set up:
             // return !isLocalDevelopment();
         }
 

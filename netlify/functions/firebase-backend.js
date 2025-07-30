@@ -11,25 +11,55 @@ if (!global._firebaseApp) {
   try {
     console.log('Initializing Firebase Admin SDK...');
     console.log('Project ID from env:', process.env.FIREBASE_PROJECT_ID);
-    console.log('Available env vars:', Object.keys(process.env).filter(key => key.includes('FIREBASE')));
+    console.log('Available env vars:', Object.keys(process.env).filter(key => key.includes('FIREBASE') || key.includes('GOOGLE')));
     
-    // Use the project ID from the frontend configuration if not set in environment
     const projectId = process.env.FIREBASE_PROJECT_ID || 'journaling-8af15';
-    
     console.log('Using project ID:', projectId);
     
+    let credential;
+    
+    // Method 1: Try using service account JSON from environment
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+      console.log('🔑 Using service account credentials from JSON env var');
+      try {
+        const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+        credential = cert(serviceAccount);
+      } catch (jsonError) {
+        console.error('❌ Failed to parse service account JSON:', jsonError.message);
+        throw new Error('Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format');
+      }
+    }
+    // Method 2: Try using individual environment variables
+    else if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+      console.log('🔑 Using service account credentials from individual env vars');
+      credential = cert({
+        projectId: projectId,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      });
+    }
+    // Method 3: Try application default credentials (works in Google Cloud environments)
+    else {
+      console.log('🔑 Attempting to use application default credentials');
+      credential = applicationDefault();
+    }
+    
     app = initializeApp({
-      credential: applicationDefault(),
+      credential: credential,
       projectId: projectId,
     });
+    
     global._firebaseApp = app;
     console.log('✅ Firebase Admin SDK initialized successfully with project:', projectId);
+    
   } catch (initError) {
     console.error('❌ Failed to initialize Firebase Admin SDK:', {
       message: initError.message,
       code: initError.code,
       stack: initError.stack,
-      availableEnvVars: Object.keys(process.env).filter(key => key.includes('FIREBASE'))
+      availableEnvVars: Object.keys(process.env).filter(key => key.includes('FIREBASE') || key.includes('GOOGLE')),
+      hasCredentialsJson: !!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON,
+      hasIndividualCreds: !!(process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY)
     });
     throw initError;
   }
