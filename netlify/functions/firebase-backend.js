@@ -8,13 +8,23 @@ const { getAuth } = require('firebase-admin/auth');
 // Only initialize once (for hot reloads in dev)
 let app;
 if (!global._firebaseApp) {
-  app = initializeApp({
-    credential: applicationDefault(),
-    projectId: process.env.FIREBASE_PROJECT_ID,
-  });
-  global._firebaseApp = app;
+  try {
+    console.log('Initializing Firebase Admin SDK...');
+    console.log('Project ID:', process.env.FIREBASE_PROJECT_ID);
+    
+    app = initializeApp({
+      credential: applicationDefault(),
+      projectId: process.env.FIREBASE_PROJECT_ID,
+    });
+    global._firebaseApp = app;
+    console.log('✅ Firebase Admin SDK initialized successfully');
+  } catch (initError) {
+    console.error('❌ Failed to initialize Firebase Admin SDK:', initError);
+    throw initError;
+  }
 } else {
   app = global._firebaseApp;
+  console.log('♻️ Using existing Firebase Admin SDK instance');
 }
 
 // Set CORS headers
@@ -85,25 +95,42 @@ exports.handler = async function(event, context) {
   // Auth: Expect Firebase ID token in Authorization header
   const authHeader = event.headers['authorization'] || event.headers['Authorization'];
   let userId = null;
+  
+  console.log('=== NETLIFY FUNCTION AUTH DEBUG ===');
+  console.log('Auth header present:', !!authHeader);
+  console.log('Project ID:', process.env.FIREBASE_PROJECT_ID);
+  
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const idToken = authHeader.substring(7);
+    console.log('Token length:', idToken.length);
+    console.log('Token preview:', idToken.substring(0, 20) + '...');
+    
     try {
       const decoded = await auth.verifyIdToken(idToken);
       userId = decoded.uid;
+      console.log('✅ Token verified successfully for user:', userId);
     } catch (err) {
+      console.error('❌ Token verification failed:', err.code, err.message);
       return { 
         statusCode: 401, 
         headers: corsHeaders,
-        body: JSON.stringify({ error: 'Invalid or expired token.' }) 
+        body: JSON.stringify({ 
+          error: 'Invalid or expired token.',
+          details: err.message,
+          code: err.code 
+        }) 
       };
     }
   } else {
+    console.error('❌ Missing or malformed authorization header');
     return { 
       statusCode: 401, 
       headers: corsHeaders,
       body: JSON.stringify({ error: 'Missing Authorization Bearer token.' }) 
     };
   }
+  
+  console.log('===================================');
 
   // --- Actions ---
   try {

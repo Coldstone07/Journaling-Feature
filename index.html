@@ -1825,17 +1825,36 @@
         // --- DEBUG FUNCTIONS ---
         // Helper function to determine if user should see onboarding
         function shouldShowOnboarding(user) {
+            console.log('=== ONBOARDING DECISION ===');
+            console.log('User UID:', user.uid);
+            console.log('Entries length:', entries.length);
+            
             // Check if user has completed onboarding
             const userOnboardingKey = `hasCompletedOnboarding_${user.uid}`;
             const hasCompletedOnboarding = localStorage.getItem(userOnboardingKey) === 'true';
             
+            console.log('Onboarding key:', userOnboardingKey);
+            console.log('Has completed onboarding:', hasCompletedOnboarding);
+            
             // If they've completed onboarding, don't show it
             if (hasCompletedOnboarding) {
+                console.log('✅ User has completed onboarding - showing dashboard');
                 return false;
             }
             
-            // For new users or users with no entries, show onboarding
-            return entries.length === 0;
+            // Check user creation time to determine if truly new user
+            const userCreationTime = user.metadata?.creationTime;
+            const isNewUser = userCreationTime && (Date.now() - new Date(userCreationTime).getTime()) < 24 * 60 * 60 * 1000; // Less than 24 hours old
+            
+            console.log('User creation time:', userCreationTime);
+            console.log('Is new user (< 24h):', isNewUser);
+            
+            // For genuinely new users or users with no entries, show onboarding
+            const shouldShow = isNewUser || entries.length === 0;
+            console.log('Should show onboarding:', shouldShow);
+            console.log('============================');
+            
+            return shouldShow;
         }
 
         // --- STATE MANAGEMENT ---
@@ -1959,6 +1978,11 @@
         
         // Firebase Authentication State Listener
         onAuthStateChanged(auth, async (user) => {
+            console.log('=== AUTH STATE CHANGE ===');
+            console.log('User:', user ? `${user.email} (${user.uid})` : 'null');
+            console.log('Current page:', state.currentPage);
+            console.log('==========================');
+            
             // Clear any pending initialization
             if (authInitializationTimeout) {
                 clearTimeout(authInitializationTimeout);
@@ -1970,7 +1994,24 @@
                 console.log('Authentication already processing, skipping...');
                 return;
             }
+            
             if (user) {
+                // Validate that this is a properly authenticated user
+                try {
+                    // Verify the user has a valid token
+                    const token = await user.getIdToken();
+                    if (!token) {
+                        console.error('User exists but no valid token - forcing logout');
+                        await signOut(auth);
+                        return;
+                    }
+                    console.log('✅ User has valid authentication token');
+                } catch (tokenError) {
+                    console.error('Failed to get user token - forcing logout:', tokenError);
+                    await signOut(auth);
+                    return;
+                }
+                
                 // Store the actual Firebase user object to access getIdToken()
                 state.currentUser = user;
                 
@@ -2149,8 +2190,15 @@
                                      window.location.protocol === 'file:' ||
                                      (window.location.port && window.location.port !== '80' && window.location.port !== '443');
             
+            console.log('=== LOCAL DEVELOPMENT DETECTION ===');
+            console.log('Current hostname:', window.location.hostname);
+            console.log('Current port:', window.location.port);
+            console.log('Current protocol:', window.location.protocol);
+            console.log('Is local development:', isLocalDevelopment);
+            console.log('===================================');
+            
             if (isLocalDevelopment) {
-                console.warn('Running in local development mode. Using mock data for backend calls.');
+                console.warn('✅ Running in local development mode. Using mock data for backend calls.');
                 
                 // Return appropriate mock data based on action
                 switch (action) {
@@ -2192,6 +2240,13 @@
                     default:
                         return { mockData: true, success: true };
                 }
+            }
+
+            // Double-check: if we somehow got here in local development, throw an error
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.error('❌ ERROR: Local development detected but production API call attempted!');
+                console.error('This indicates a bug in the local development detection logic.');
+                throw new Error('Local development should use mock data only');
             }
 
             try {
@@ -5306,15 +5361,34 @@
         function renderConstellation(entry) { if (!entry) return ''; const coreReaction = (entry.emotional?.emotions?.some(e => ['Angry', 'Fearful'].includes(e.name))) ? { type: 'Aversion', color: 'red-500' } : { type: 'Neutral/Craving', color: 'green-500' }; return `<div class="border-t pt-6 fade-in"><div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center items-center"><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Trigger</h4><i class="fas fa-bolt text-3xl text-yellow-500 mb-2"></i><p>${entry.situation?.description || 'N/A'}</p></div><i class="fas fa-arrow-right text-2xl text-gray-400 hidden md:block"></i><i class="fas fa-arrow-down text-2xl text-gray-400 md:hidden mx-auto"></i><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Core Reaction</h4><i class="fas ${coreReaction.type === 'Aversion' ? 'fa-hand-paper' : 'fa-hand-holding-heart'} text-3xl text-${coreReaction.color} mb-2"></i><p class="font-semibold text-${coreReaction.color}">${coreReaction.type}</p></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mt-4"><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Internal Narrative</h4><i class="fas fa-comment-dots text-3xl text-blue-500 mb-2"></i><p class="text-sm italic">"${entry.inquiry?.story || 'No narrative logged'}"</p></div><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Emotions</h4><i class="fas fa-heart-pulse text-3xl text-pink-500 mb-2"></i><p>${entry.emotional?.emotions?.map(e => `${e.name} (${e.intensity})`).join(', ') || 'N/A'}</p></div><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-lg mb-2">Somatic Signature</h4><i class="fas fa-child text-3xl text-orange-500 mb-2"></i><p>${entry.physical?.sensations?.map(s => `${s.part}: ${s.quality}`).join(', ') || 'N/A'}</p></div></div></div>`; }
         async function handleLogin(e) { 
             e.preventDefault(); 
+            
+            const email = e.target.elements.email.value?.trim();
+            const password = e.target.elements.password.value;
+            
+            // Input validation
+            if (!email || !password) {
+                showToast("Please enter both email and password.", "error");
+                return;
+            }
+            
+            if (!email.includes('@') || email.length < 5) {
+                showToast("Please enter a valid email address.", "error");
+                return;
+            }
+            
+            if (password.length < 6) {
+                showToast("Password must be at least 6 characters long.", "error");
+                return;
+            }
+            
             state.isLoading = true;
             state.authError = null;
             render();
             
-            const email = e.target.elements.email.value;
-            const password = e.target.elements.password.value;
-            
             try {
-                await signInWithEmailAndPassword(auth, email, password);
+                console.log('Attempting login for:', email);
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                console.log('Login successful:', userCredential.user.uid);
                 showToast("Welcome back to your sanctuary!", "success");
             } catch (error) {
                 console.error('Login error:', error);
@@ -5327,23 +5401,40 @@
         
         async function handleRegister(e) { 
             e.preventDefault(); 
+            
+            const email = e.target.elements.email.value?.trim();
+            const password = e.target.elements.password.value;
+            const confirmPassword = e.target.elements['confirm-password'].value;
+            
+            // Input validation
+            if (!email || !password || !confirmPassword) {
+                showToast("Please fill in all fields.", "error");
+                return;
+            }
+            
+            if (!email.includes('@') || email.length < 5) {
+                showToast("Please enter a valid email address.", "error");
+                return;
+            }
+            
+            if (password.length < 6) {
+                showToast("Password must be at least 6 characters long.", "error");
+                return;
+            }
+            
+            if (password !== confirmPassword) { 
+                showToast("Passwords do not match.", "error"); 
+                return; 
+            }
+            
             state.isLoading = true;
             state.authError = null;
             render();
             
-            const email = e.target.elements.email.value;
-            const password = e.target.elements.password.value;
-            const confirmPassword = e.target.elements['confirm-password'].value;
-            
-            if (password !== confirmPassword) { 
-                showToast("Passwords do not match.", "error"); 
-                state.isLoading = false;
-                render();
-                return; 
-            }
-            
             try {
-                await createUserWithEmailAndPassword(auth, email, password);
+                console.log('Attempting registration for:', email);
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                console.log('Registration successful:', userCredential.user.uid);
                 showToast("Welcome to Kairos! Your journey begins now.", "success");
             } catch (error) {
                 console.error('Registration error:', error);
