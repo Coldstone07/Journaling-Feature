@@ -4,8 +4,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kairos - A Journey Within</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind CSS - Using built version instead of CDN -->
+    <style>
+        /* Tailwind CSS Base Styles */
+        *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}
+        html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"}
+        body{margin:0;line-height:inherit}
+        h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}
+        a{color:inherit;text-decoration:inherit}
+        button,input,optgroup,select,textarea{font-family:inherit;font-size:100%;line-height:inherit;color:inherit;margin:0;padding:0}
+        button,select{text-transform:none}
+        button,[type='button'],[type='reset'],[type='submit']{-webkit-appearance:button}
+        :-moz-focusring{outline:auto}
+        :-moz-ui-invalid{box-shadow:none}
+        
+        /* Tailwind Utility Classes */
+        .hidden{display:none}
+        .block{display:block}
+        .flex{display:flex}
+        .grid{display:grid}
+        .min-h-screen{min-height:100vh}
+        .w-full{width:100%}
+        .max-w-md{max-width:28rem}
+        .max-w-2xl{max-width:42rem}
+        .max-w-4xl{max-width:56rem}
+        .mx-auto{margin-left:auto;margin-right:auto}
+        .mb-2{margin-bottom:0.5rem}
+        .mb-4{margin-bottom:1rem}
+        .mb-6{margin-bottom:1.5rem}
+        .mb-8{margin-bottom:2rem}
+        .mt-4{margin-top:1rem}
+        .mt-6{margin-top:1.5rem}
+        .mr-2{margin-right:0.5rem}
+        .p-4{padding:1rem}
+        .p-6{padding:1.5rem}
+        .p-8{padding:2rem}
+        .px-4{padding-left:1rem;padding-right:1rem}
+        .py-2{padding-top:0.5rem;padding-bottom:0.5rem}
+        .px-2{padding-left:0.5rem;padding-right:0.5rem}
+        .text-center{text-align:center}
+        .text-sm{font-size:0.875rem;line-height:1.25rem}
+        .text-lg{font-size:1.125rem;line-height:1.75rem}
+        .text-xl{font-size:1.25rem;line-height:1.75rem}
+        .text-2xl{font-size:1.5rem;line-height:2rem}
+        .text-3xl{font-size:1.875rem;line-height:2.25rem}
+        .text-4xl{font-size:2.25rem;line-height:2.5rem}
+        .font-medium{font-weight:500}
+        .font-semibold{font-weight:600}
+        .font-bold{font-weight:700}
+        .items-center{align-items:center}
+        .justify-center{justify-content:center}
+        .justify-between{justify-content:space-between}
+        .space-y-4>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}
+        .space-y-6>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem * var(--tw-space-y-reverse))}
+        .rounded{border-radius:0.25rem}
+        .border{border-width:1px}
+        .border-b{border-bottom-width:1px}
+        .border-gray-200{border-color:#e5e7eb}
+        .border-red-300{border-color:#fca5a5}
+        .bg-red-100{background-color:#fee2e2}
+        .bg-gray-200{background-color:#e5e7eb}
+        .bg-gray-300{background-color:#d1d5db}
+        .text-gray-600{color:#4b5563}
+        .text-gray-700{color:#374151}
+        .text-red-700{color:#b91c1c}
+        .text-blue-500{color:#3b82f6}
+        .text-blue-600{color:#2563eb}
+        .hover\:underline:hover{text-decoration:underline}
+        .hover\:bg-gray-300:hover{background-color:#d1d5db}
+        .pb-4{padding-bottom:1rem}
+        .grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}
+        .gap-6{gap:1.5rem}
+        
+        @media (min-width: 768px) {
+            .md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+        }
+    </style>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
@@ -43,7 +121,7 @@
             border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 12px;
             padding: 1rem;
-            color: var(--warm-off-white);
+            color: var(--soft-charcoal);
             width: 100%;
             font-family: 'Inter', sans-serif;
             transition: all 0.3s ease;
@@ -61,18 +139,24 @@
             border-radius: 12px;
             transition: all 0.3s ease;
             cursor: pointer;
+            border: none;
         }
 
         .kairos-btn-primary {
             background: linear-gradient(135deg, var(--shimmering-gold) 0%, var(--soft-rose-quartz) 50%, var(--deep-indigo) 100%);
             color: var(--warm-off-white);
-            border: none;
             padding: 1rem 2rem;
         }
 
         .kairos-btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+        }
+
+        .kairos-btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .fade-in {
@@ -94,10 +178,25 @@
             background: linear-gradient(135deg, var(--gentle-cream) 0%, var(--warm-ivory) 50%, var(--gentle-cream) 100%);
         }
 
-        .hidden { display: none; }
-        .toast { position: fixed; top: 20px; right: 20px; z-index: 1000; padding: 1rem; border-radius: 8px; color: white; }
+        .toast { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            z-index: 1000; 
+            padding: 1rem; 
+            border-radius: 8px; 
+            color: white; 
+            font-weight: 600;
+            min-width: 200px;
+            text-align: center;
+        }
         .toast.success { background: #10b981; }
         .toast.error { background: #ef4444; }
+
+        textarea.kairos-input {
+            resize: vertical;
+            min-height: 120px;
+        }
     </style>
 </head>
 <body>
@@ -107,7 +206,7 @@
     <!-- Toast notifications -->
     <div id="toast-container"></div>
 
-    <!-- Firebase Configuration -->
+    <!-- Firebase Application Script -->
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -229,12 +328,18 @@
                 if (!this.currentUser) throw new Error('User not authenticated');
                 
                 if (isLocalDevelopment()) {
-                    // Return mock data for local development
+                    // Load from localStorage for local development persistence
+                    const storedEntries = localStorage.getItem('kairos-local-entries');
+                    if (storedEntries) {
+                        return JSON.parse(storedEntries);
+                    }
+                    
+                    // Return mock data for first-time local users
                     return [
                         {
                             id: 'mock-1',
-                            title: 'Welcome Entry',
-                            content: 'This is a sample journal entry for local development.',
+                            title: 'Welcome to Kairos',
+                            content: 'This is a sample journal entry for local development. Try creating your own entries!',
                             date: new Date().toISOString(),
                             userId: this.currentUser.uid
                         }
@@ -267,14 +372,16 @@
                 console.log('💾 Saving entry for user:', this.currentUser.uid);
                 
                 if (isLocalDevelopment()) {
-                    // Local development: add to mock data
+                    // Local development: save to localStorage
                     const newEntry = {
                         id: 'local-' + Date.now(),
                         ...entryData,
                         userId: this.currentUser.uid,
                         date: new Date().toISOString()
                     };
+                    
                     appState.entries.unshift(newEntry);
+                    localStorage.setItem('kairos-local-entries', JSON.stringify(appState.entries));
                     console.log('✅ Entry saved locally');
                     return newEntry;
                 }
@@ -309,6 +416,7 @@
             async login(email, password) {
                 appState.isLoading = true;
                 appState.authError = null;
+                render();
                 
                 try {
                     console.log('🔑 Logging in user:', email);
@@ -327,6 +435,7 @@
             async register(email, password) {
                 appState.isLoading = true;
                 appState.authError = null;
+                render();
                 
                 try {
                     console.log('👤 Registering user:', email);
@@ -400,7 +509,7 @@
                         </form>
                         
                         ${appState.authError ? `
-                            <div class="mt-4 p-3 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
+                            <div class="mt-4 p-4 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
                                 ${appState.authError}
                             </div>
                         ` : ''}
@@ -408,7 +517,7 @@
                         <div class="mt-6 text-center">
                             <p class="text-gray-600">
                                 Don't have an account? 
-                                <button id="go-to-register" class="text-blue-500 hover:underline">Create one</button>
+                                <button type="button" id="go-to-register" class="text-blue-500 hover:underline">Create one</button>
                             </p>
                         </div>
                     </div>
@@ -446,7 +555,7 @@
                         </form>
                         
                         ${appState.authError ? `
-                            <div class="mt-4 p-3 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
+                            <div class="mt-4 p-4 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
                                 ${appState.authError}
                             </div>
                         ` : ''}
@@ -454,7 +563,7 @@
                         <div class="mt-6 text-center">
                             <p class="text-gray-600">
                                 Already have an account? 
-                                <button id="go-to-login" class="text-blue-500 hover:underline">Sign in</button>
+                                <button type="button" id="go-to-login" class="text-blue-500 hover:underline">Sign in</button>
                             </p>
                         </div>
                     </div>
@@ -683,7 +792,7 @@
         }
 
         // ===== APPLICATION INITIALIZATION =====
-        async function initializeApp() {
+        async function initKairosApp() {
             console.log('🚀 Initializing Kairos Application...');
             
             try {
@@ -697,7 +806,7 @@
         }
 
         // Start the application
-        initializeApp();
+        initKairosApp();
     </script>
 </body>
 </html>
