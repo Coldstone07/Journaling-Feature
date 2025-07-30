@@ -64,10 +64,16 @@ if (!global._firebaseApp) {
         console.log('- Last line:', formattedKey.split('\n').slice(-3).join('\\n'));
         
         credential = cert({
-          projectId: projectId,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: formattedKey,
-          privateKeyId: process.env.FIREBASE_PRIVATE_KEY_ID,
+          type: "service_account",
+          project_id: projectId,
+          private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+          private_key: formattedKey,
+          client_email: process.env.FIREBASE_CLIENT_EMAIL,
+          client_id: process.env.FIREBASE_CLIENT_ID || "",
+          auth_uri: "https://accounts.google.com/o/oauth2/auth",
+          token_uri: "https://oauth2.googleapis.com/token",
+          auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+          client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.FIREBASE_CLIENT_EMAIL)}`
         });
         console.log('✅ Certificate created successfully from individual vars');
       } catch (certError) {
@@ -133,13 +139,24 @@ if (!global._firebaseApp) {
       credential = applicationDefault();
     }
     
+    // Initialize with additional configuration
     app = initializeApp({
       credential: credential,
       projectId: projectId,
+      databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`,
+      storageBucket: `${projectId}.appspot.com`
     });
     
     global._firebaseApp = app;
     console.log('✅ Firebase Admin SDK initialized successfully with project:', projectId);
+    
+    // Test the credential by trying to get a token
+    try {
+      const testToken = await credential.getAccessToken();
+      console.log('✅ Service account credentials are valid');
+    } catch (tokenError) {
+      console.error('⚠️ Warning - credential test failed:', tokenError.message);
+    }
     
   } catch (initError) {
     console.error('❌ Failed to initialize Firebase Admin SDK:', {

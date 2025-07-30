@@ -29,6 +29,7 @@ FIREBASE_PROJECT_ID = journaling-8af15
 FIREBASE_CLIENT_EMAIL = [copy "client_email" value from JSON]
 FIREBASE_PRIVATE_KEY = [copy "private_key" value from JSON]  
 FIREBASE_PRIVATE_KEY_ID = [copy "private_key_id" value from JSON]
+FIREBASE_CLIENT_ID = [copy "client_id" value from JSON - optional]
 ```
 
 **Example:**
@@ -123,7 +124,14 @@ service cloud.firestore {
 - Check Netlify function logs for specific error details
 - Redeploy after fixing environment variables
 
-**3. "401 Unauthorized" Errors**
+**4. "UNAUTHENTICATED: Request had invalid authentication credentials"**
+- ✅ Private key is now working (progress!)
+- ❌ Service account might need additional permissions
+- ✅ In Firebase Console → Project Settings → Service Accounts
+- ✅ Make sure the service account has "Firebase Admin SDK Admin Service Agent" role
+- ✅ Check that Firestore API is enabled for your project
+
+**5. "401 Unauthorized" Errors**
 - Environment variables not set correctly
 - Service account doesn't have proper permissions
 - Check Firestore security rules
