@@ -10,16 +10,27 @@ let app;
 if (!global._firebaseApp) {
   try {
     console.log('Initializing Firebase Admin SDK...');
-    console.log('Project ID:', process.env.FIREBASE_PROJECT_ID);
+    console.log('Project ID from env:', process.env.FIREBASE_PROJECT_ID);
+    console.log('Available env vars:', Object.keys(process.env).filter(key => key.includes('FIREBASE')));
+    
+    // Use the project ID from the frontend configuration if not set in environment
+    const projectId = process.env.FIREBASE_PROJECT_ID || 'journaling-8af15';
+    
+    console.log('Using project ID:', projectId);
     
     app = initializeApp({
       credential: applicationDefault(),
-      projectId: process.env.FIREBASE_PROJECT_ID,
+      projectId: projectId,
     });
     global._firebaseApp = app;
-    console.log('✅ Firebase Admin SDK initialized successfully');
+    console.log('✅ Firebase Admin SDK initialized successfully with project:', projectId);
   } catch (initError) {
-    console.error('❌ Failed to initialize Firebase Admin SDK:', initError);
+    console.error('❌ Failed to initialize Firebase Admin SDK:', {
+      message: initError.message,
+      code: initError.code,
+      stack: initError.stack,
+      availableEnvVars: Object.keys(process.env).filter(key => key.includes('FIREBASE'))
+    });
     throw initError;
   }
 } else {
@@ -99,6 +110,9 @@ exports.handler = async function(event, context) {
   console.log('=== NETLIFY FUNCTION AUTH DEBUG ===');
   console.log('Auth header present:', !!authHeader);
   console.log('Project ID:', process.env.FIREBASE_PROJECT_ID);
+  console.log('Request method:', event.httpMethod);
+  console.log('Request path:', event.path);
+  console.log('All env vars:', Object.keys(process.env).filter(key => key.includes('FIREBASE')));
   
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const idToken = authHeader.substring(7);
@@ -106,27 +120,47 @@ exports.handler = async function(event, context) {
     console.log('Token preview:', idToken.substring(0, 20) + '...');
     
     try {
+      console.log('🔍 Attempting token verification...');
       const decoded = await auth.verifyIdToken(idToken);
       userId = decoded.uid;
       console.log('✅ Token verified successfully for user:', userId);
+      console.log('Token issued at:', new Date(decoded.iat * 1000));
+      console.log('Token expires at:', new Date(decoded.exp * 1000));
     } catch (err) {
-      console.error('❌ Token verification failed:', err.code, err.message);
+      console.error('❌ Token verification failed:', {
+        code: err.code,
+        message: err.message,
+        stack: err.stack,
+        tokenLength: idToken.length,
+        projectId: process.env.FIREBASE_PROJECT_ID
+      });
       return { 
         statusCode: 401, 
         headers: corsHeaders,
         body: JSON.stringify({ 
           error: 'Invalid or expired token.',
           details: err.message,
-          code: err.code 
+          code: err.code,
+          debug: {
+            hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+            tokenLength: idToken.length
+          }
         }) 
       };
     }
   } else {
     console.error('❌ Missing or malformed authorization header');
+    console.log('Headers received:', Object.keys(event.headers));
     return { 
       statusCode: 401, 
       headers: corsHeaders,
-      body: JSON.stringify({ error: 'Missing Authorization Bearer token.' }) 
+      body: JSON.stringify({ 
+        error: 'Missing Authorization Bearer token.',
+        debug: {
+          hasAuthHeader: !!authHeader,
+          authHeaderValue: authHeader ? authHeader.substring(0, 20) + '...' : null
+        }
+      }) 
     };
   }
   

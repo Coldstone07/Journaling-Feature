@@ -88,18 +88,22 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
         
-        /* Kairos Design System */
+        /* Kairos Design System - Deep Purple Theme */
         :root {
             --warm-off-white: #FAF9F6;
-            --soft-charcoal: #3A3A3A;
-            --muted-stone-gray: #8B8680;
+            --soft-charcoal: #2D1B4E;
+            --muted-stone-gray: #6B4E7D;
             --gentle-cream: #F7F5F2;
             --warm-ivory: #FDF8F0;
             --deep-indigo: #483D8B;
+            --royal-purple: #6A4C93;
+            --rich-violet: #8B5E99;
             --shimmering-gold: #D4AF37;
             --soft-rose-quartz: #B695C0;
             --ethereal-lavender: #C8B2DB;
             --sage-mist: #A8B5A0;
+            --mystic-purple: #5D2E5D;
+            --deep-plum: #4A2F4A;
         }
 
         body {
@@ -110,27 +114,34 @@
         }
 
         .kairos-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 
+                        0 0 40px rgba(106, 76, 147, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
 
         .kairos-input {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 12px;
             padding: 1rem;
-            color: var(--soft-charcoal);
+            color: var(--warm-off-white);
             width: 100%;
             font-family: 'Inter', sans-serif;
             transition: all 0.3s ease;
         }
 
+        .kairos-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
         .kairos-input:focus {
             outline: none;
             border-color: var(--shimmering-gold);
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4), 0 0 40px rgba(106, 76, 147, 0.2);
         }
 
         .kairos-btn {
@@ -143,14 +154,15 @@
         }
 
         .kairos-btn-primary {
-            background: linear-gradient(135deg, var(--shimmering-gold) 0%, var(--soft-rose-quartz) 50%, var(--deep-indigo) 100%);
+            background: linear-gradient(135deg, var(--royal-purple) 0%, var(--deep-indigo) 50%, var(--mystic-purple) 100%);
             color: var(--warm-off-white);
             padding: 1rem 2rem;
+            box-shadow: 0 4px 15px rgba(106, 76, 147, 0.3);
         }
 
         .kairos-btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+            box-shadow: 0 8px 25px rgba(106, 76, 147, 0.5), 0 0 30px rgba(72, 61, 139, 0.3);
         }
 
         .kairos-btn-primary:disabled {
@@ -175,7 +187,24 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            background: linear-gradient(135deg, var(--gentle-cream) 0%, var(--warm-ivory) 50%, var(--gentle-cream) 100%);
+            background: linear-gradient(135deg, 
+                var(--deep-plum) 0%, 
+                var(--mystic-purple) 25%, 
+                var(--royal-purple) 50%, 
+                var(--deep-indigo) 75%, 
+                var(--rich-violet) 100%);
+        }
+
+        .cosmic-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 70%, rgba(182, 149, 192, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 80%, rgba(200, 178, 219, 0.1) 0%, transparent 50%);
         }
 
         .toast { 
@@ -522,7 +551,7 @@
                                 -webkit-background-clip: text;
                                 -webkit-text-fill-color: transparent;
                             ">Kairos</h1>
-                            <p class="text-gray-600">Welcome back to your sanctuary</p>
+                            <p style="color: rgba(255, 255, 255, 0.8);">Welcome back to your sanctuary</p>
                         </div>
                         
                         <form id="login-form" class="space-y-4">
@@ -544,9 +573,9 @@
                         ` : ''}
                         
                         <div class="mt-6 text-center">
-                            <p class="text-gray-600">
+                            <p style="color: rgba(255, 255, 255, 0.7);">
                                 Don't have an account? 
-                                <button type="button" id="go-to-register" class="text-blue-500 hover:underline">Create one</button>
+                                <button type="button" id="go-to-register" style="color: var(--shimmering-gold); text-decoration: underline;">Create one</button>
                             </p>
                         </div>
                     </div>
@@ -565,7 +594,7 @@
                                 -webkit-background-clip: text;
                                 -webkit-text-fill-color: transparent;
                             ">Kairos</h1>
-                            <p class="text-gray-600">Begin your journey</p>
+                            <p style="color: rgba(255, 255, 255, 0.8);">Begin your journey</p>
                         </div>
                         
                         <form id="register-form" class="space-y-4">
@@ -590,9 +619,9 @@
                         ` : ''}
                         
                         <div class="mt-6 text-center">
-                            <p class="text-gray-600">
+                            <p style="color: rgba(255, 255, 255, 0.7);">
                                 Already have an account? 
-                                <button type="button" id="go-to-login" class="text-blue-500 hover:underline">Sign in</button>
+                                <button type="button" id="go-to-login" style="color: var(--shimmering-gold); text-decoration: underline;">Sign in</button>
                             </p>
                         </div>
                     </div>
