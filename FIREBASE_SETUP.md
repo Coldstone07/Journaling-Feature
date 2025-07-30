@@ -39,10 +39,24 @@ FIREBASE_PRIVATE_KEY = -----BEGIN PRIVATE KEY-----\nMIIEvQIBADANB...lots of text
 FIREBASE_PRIVATE_KEY_ID = a1b2c3d4e5f6g7h8i9j0
 ```
 
-⚠️ **IMPORTANT**: 
-- Copy the private key exactly as it appears in the JSON (including `\n` characters)
-- Don't add extra quotes around the values in Netlify
-- Make sure there are no leading/trailing spaces
+⚠️ **IMPORTANT Private Key Setup**: 
+
+The private key is the most common source of errors. Follow these steps exactly:
+
+1. **Open your service account JSON file**
+2. **Find the "private_key" field** - it looks like this:
+   ```json
+   "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBg...\n-----END PRIVATE KEY-----\n"
+   ```
+3. **Copy ONLY the value** (everything between the quotes, including `\n`)
+4. **In Netlify environment variables**, paste it exactly as copied
+
+**Common Issues:**
+- ❌ Don't remove the `\n` characters - they are needed
+- ❌ Don't add extra quotes around the value in Netlify
+- ❌ Don't add spaces before or after the value
+- ✅ The value should start with `-----BEGIN PRIVATE KEY-----\n`
+- ✅ The value should end with `\n-----END PRIVATE KEY-----\n`
 
 **Option B: Using Full JSON (Alternative)**
 ```
@@ -98,7 +112,13 @@ service cloud.firestore {
 - ✅ Use individual environment variables instead (Option A above)
 - ✅ Extract values from JSON and set them as separate Netlify env vars
 
-**2. "502 Bad Gateway" Error**
+**2. "500 Internal Server Error" with "DECODER routines::unsupported"**
+- ❌ Private key format is corrupted during copy/paste
+- ✅ Re-copy the private key exactly from the JSON (including `\n` characters)
+- ✅ Make sure it starts with `-----BEGIN PRIVATE KEY-----\n`  
+- ✅ Make sure it ends with `\n-----END PRIVATE KEY-----\n`
+
+**3. "502 Bad Gateway" Error**
 - Usually means the Netlify function crashed during initialization
 - Check Netlify function logs for specific error details
 - Redeploy after fixing environment variables

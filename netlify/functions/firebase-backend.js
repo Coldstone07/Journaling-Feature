@@ -26,15 +26,39 @@ if (!global._firebaseApp) {
       console.log('Private key length:', process.env.FIREBASE_PRIVATE_KEY.length);
       
       try {
+        // Clean and format the private key properly
+        let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+        
+        // Replace literal \n with actual newlines
+        privateKey = privateKey.replace(/\\n/g, '\n');
+        
+        // Ensure proper formatting
+        if (!privateKey.startsWith('-----BEGIN PRIVATE KEY-----')) {
+          throw new Error('Private key does not start with proper header');
+        }
+        if (!privateKey.endsWith('-----END PRIVATE KEY-----\n') && !privateKey.endsWith('-----END PRIVATE KEY-----')) {
+          privateKey = privateKey.trim() + '\n';
+        }
+        
+        console.log('Private key format check:');
+        console.log('- Starts correctly:', privateKey.startsWith('-----BEGIN PRIVATE KEY-----'));
+        console.log('- Ends correctly:', privateKey.includes('-----END PRIVATE KEY-----'));
+        console.log('- Length:', privateKey.length);
+        
         credential = cert({
           projectId: projectId,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+          privateKey: privateKey,
           privateKeyId: process.env.FIREBASE_PRIVATE_KEY_ID,
         });
         console.log('✅ Certificate created successfully from individual vars');
       } catch (certError) {
-        console.error('❌ Failed to create certificate from individual vars:', certError.message);
+        console.error('❌ Failed to create certificate from individual vars:', {
+          error: certError.message,
+          privateKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length,
+          privateKeyStart: process.env.FIREBASE_PRIVATE_KEY?.substring(0, 50),
+          privateKeyEnd: process.env.FIREBASE_PRIVATE_KEY?.substring(-50)
+        });
         throw new Error(`Failed to create Firebase certificate: ${certError.message}`);
       }
     }
