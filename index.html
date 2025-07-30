@@ -293,12 +293,8 @@
 
         // Storage method selection
         function useBackendStorage() {
-            // TODO: Enable backend storage once Firebase Admin SDK credentials are configured
-            // For now, using localStorage until backend authentication is fixed
-            return !isLocalDevelopment();;
-            
-            // Uncomment this line once backend credentials are set up:
-            // return !isLocalDevelopment();
+            // Use cloud storage (Firestore) in production, localStorage for local development
+            return !isLocalDevelopment();
         }
 
         // ===== AUTHENTICATION SYSTEM =====
@@ -394,7 +390,7 @@
                     // Return mock data for first-time users
                     const welcomeMessage = isLocalDevelopment() 
                         ? 'This is a sample journal entry for local development. Try creating your own entries!'
-                        : 'Welcome to Kairos! Currently running in offline mode. Your entries are saved locally on this device. Try creating your own entries!';
+                        : 'Welcome to Kairos! Your entries are synced to the cloud and available across all your devices. Try creating your own entries!';
                         
                     return [
                         {
@@ -460,9 +456,9 @@
                     localStorage.setItem('kairos-local-entries', JSON.stringify(appState.entries));
                     console.log('✅ Entry saved locally');
                     
-                    // Show user that we're in offline mode
+                    // Show appropriate message based on environment
                     if (!isLocalDevelopment()) {
-                        showToast('Entry saved locally (offline mode)', 'success');
+                        showToast('Entry saved locally', 'success');
                     }
                     
                     return newEntry;
