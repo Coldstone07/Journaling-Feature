@@ -26,54 +26,102 @@ if (!global._firebaseApp) {
       console.log('Private key length:', process.env.FIREBASE_PRIVATE_KEY.length);
       
       try {
-        // Clean and format the private key properly
+        // Try multiple approaches to fix the private key format
         let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+        console.log('Original key length:', privateKey.length);
+        console.log('Original key start:', privateKey.substring(0, 50));
         
-        // Replace literal \n with actual newlines
-        privateKey = privateKey.replace(/\\n/g, '\n');
+        // Method 1: Standard replacement
+        let formattedKey = privateKey.replace(/\\n/g, '\n');
         
-        // Ensure proper formatting
-        if (!privateKey.startsWith('-----BEGIN PRIVATE KEY-----')) {
-          throw new Error('Private key does not start with proper header');
+        // Method 2: If that didn't work, try removing quotes and fixing format
+        if (!formattedKey.includes('\n')) {
+          // Remove any surrounding quotes
+          formattedKey = formattedKey.replace(/^["']|["']$/g, '');
+          // Replace literal \n with actual newlines
+          formattedKey = formattedKey.replace(/\\n/g, '\n');
         }
-        if (!privateKey.endsWith('-----END PRIVATE KEY-----\n') && !privateKey.endsWith('-----END PRIVATE KEY-----')) {
-          privateKey = privateKey.trim() + '\n';
+        
+        // Method 3: Ensure proper structure
+        if (!formattedKey.startsWith('-----BEGIN PRIVATE KEY-----')) {
+          throw new Error('Private key missing BEGIN header');
+        }
+        if (!formattedKey.includes('-----END PRIVATE KEY-----')) {
+          throw new Error('Private key missing END footer');
         }
         
-        console.log('Private key format check:');
-        console.log('- Starts correctly:', privateKey.startsWith('-----BEGIN PRIVATE KEY-----'));
-        console.log('- Ends correctly:', privateKey.includes('-----END PRIVATE KEY-----'));
-        console.log('- Length:', privateKey.length);
+        // Ensure proper line endings
+        if (!formattedKey.endsWith('\n')) {
+          formattedKey += '\n';
+        }
+        
+        console.log('Formatted key validation:');
+        console.log('- Has BEGIN header:', formattedKey.startsWith('-----BEGIN PRIVATE KEY-----'));
+        console.log('- Has END footer:', formattedKey.includes('-----END PRIVATE KEY-----'));
+        console.log('- Has newlines:', formattedKey.includes('\n'));
+        console.log('- Length after formatting:', formattedKey.length);
+        console.log('- First line:', formattedKey.split('\n')[0]);
+        console.log('- Last line:', formattedKey.split('\n').slice(-3).join('\\n'));
         
         credential = cert({
           projectId: projectId,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: privateKey,
+          privateKey: formattedKey,
           privateKeyId: process.env.FIREBASE_PRIVATE_KEY_ID,
         });
         console.log('✅ Certificate created successfully from individual vars');
       } catch (certError) {
-        console.error('❌ Failed to create certificate from individual vars:', {
+        console.error('❌ Certificate creation failed:', {
           error: certError.message,
-          privateKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length,
-          privateKeyStart: process.env.FIREBASE_PRIVATE_KEY?.substring(0, 50),
-          privateKeyEnd: process.env.FIREBASE_PRIVATE_KEY?.substring(-50)
+          stack: certError.stack,
+          originalKeyLength: process.env.FIREBASE_PRIVATE_KEY?.length,
+          keyPreview: process.env.FIREBASE_PRIVATE_KEY?.substring(0, 100) + '...',
+          hasNewlines: process.env.FIREBASE_PRIVATE_KEY?.includes('\\n'),
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKeyId: process.env.FIREBASE_PRIVATE_KEY_ID
         });
-        throw new Error(`Failed to create Firebase certificate: ${certError.message}`);
+        
+        // Try fallback to JSON if available
+        if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+          console.log('🔄 Attempting fallback to JSON credentials...');
+          throw new Error('Individual vars failed, will try JSON fallback');
+        } else {
+          throw new Error(`Private key format error: ${certError.message}`);
+        }
       }
     }
     // Method 2: Try using service account JSON from environment (fallback)
     else if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
       console.log('🔑 Using service account credentials from JSON env var (fallback)');
       console.log('JSON length:', process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.length);
+      console.log('JSON preview:', process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.substring(0, 100) + '...');
       
       try {
-        const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+        let jsonString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.trim();
+        
+        // Remove any surrounding quotes that might have been added
+        if ((jsonString.startsWith('"') && jsonString.endsWith('"')) || 
+            (jsonString.startsWith("'") && jsonString.endsWith("'"))) {
+          jsonString = jsonString.slice(1, -1);
+        }
+        
+        console.log('Cleaned JSON length:', jsonString.length);
+        console.log('Starts with {:', jsonString.startsWith('{'));
+        console.log('Ends with }:', jsonString.endsWith('}'));
+        
+        const serviceAccount = JSON.parse(jsonString);
         console.log('✅ JSON parsed successfully');
+        console.log('Service account project:', serviceAccount.project_id);
+        console.log('Service account email:', serviceAccount.client_email);
+        
         credential = cert(serviceAccount);
         console.log('✅ Certificate created successfully from JSON');
       } catch (jsonError) {
-        console.error('❌ Failed to parse service account JSON:', jsonError.message);
+        console.error('❌ Failed to parse service account JSON:', {
+          error: jsonError.message,
+          jsonStart: process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.substring(0, 50),
+          jsonEnd: process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.substring(-50)
+        });
         throw new Error(`Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format: ${jsonError.message}`);
       }
     }
