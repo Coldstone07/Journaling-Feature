@@ -295,7 +295,7 @@
         function useBackendStorage() {
             // TODO: Enable backend storage once Firebase Admin SDK credentials are configured
             // For now, using localStorage until backend authentication is fixed
-            return false;
+            return !isLocalDevelopment();;
             
             // Uncomment this line once backend credentials are set up:
             // return !isLocalDevelopment();
