@@ -9,7 +9,9 @@
       "Bash(timeout 3 npx http-server -p 8080 --silent)",
       "Bash(timeout 2 npx http-server -p 8080 --silent)",
       "Bash(grep:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }
