@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kairos Mirror - Sacred Testing Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; }
+        .sacred-text { font-family: 'Crimson Text', serif; }
+        
+        /* Sacred breathing animation */
+        .breath-guide {
+            animation: breathe 8s infinite ease-in-out;
+        }
+        
+        @keyframes breathe {
+            0%, 50% { transform: scale(1); opacity: 0.6; }
+            25% { transform: scale(1.05); opacity: 1; }
+        }
+        
+        /* Sacred dividers */
+        .sacred-divider {
+            display: flex;
+            align-items: center;
+            margin: 2rem 0;
+        }
+        
+        .sacred-divider::before,
+        .sacred-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #d4af37, transparent);
+        }
+        
+        .sacred-divider span {
+            margin: 0 1rem;
+            color: #d4af37;
+            font-size: 1.2rem;
+        }
+
+        /* Sacred Container pulse for important buttons */
+        @keyframes sacredPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(34, 197, 94, 0.6); }
+        }
+        
+        .pulse {
+            animation: sacredPulse 2s infinite;
+        }
+        
+        /* Mirror response styling */
+        .mirror-response {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #d4af37;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .crisis-alert {
+            background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+            border-left: 4px solid #e53e3e;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .pattern-chip {
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+            border: 1px solid #38a169;
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            display: inline-block;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Sacred Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4 sacred-text">
+                🌟 Kairos Sacred Container
+            </h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                A space for conscious exploration and inner authority cultivation.
+                <br><span class="text-sm italic">"You already carry the wisdom you seek."</span>
+            </p>
+            <div class="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg max-w-xl mx-auto">
+                <p class="text-sm text-gray-700">
+                    <strong>Sacred Intention:</strong> This AI serves as a conduit, not a source. 
+                    It guides you to your own inner knowing through gentle inquiry and witness.
+                </p>
+            </div>
+        </div>
+
+        <!-- Sacred Container Entry -->
+        <div id="authSection" class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">🚪 Sacred Container Entry</h2>
+                <div id="authStatus" class="flex items-center">
+                    <div class="w-3 h-3 rounded-full bg-red-400 mr-2"></div>
+                    <span class="text-sm text-gray-600">Awaiting entry</span>
+                </div>
+            </div>
+            
+            <!-- Sign In Form (shown when not authenticated) -->
+            <div id="signInForm" class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-medium mb-3">Sign In for Testing</h3>
+                    <div class="space-y-3">
+                        <input type="email" id="testEmail" placeholder="Email" 
+                               class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <input type="password" id="testPassword" placeholder="Password" 
+                               class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <button id="signInBtn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
+                            Sign In
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-medium mb-3">Quick Test Account</h3>
+                    <p class="text-sm text-gray-600 mb-3">
+                        Use this test account for immediate sacred container access, or create your own account using the main app.
+                    </p>
+                    <button id="useTestAccount" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 pulse">
+                        🌟 Enter Sacred Container Now
+                    </button>
+                    <div class="mt-2 text-xs text-gray-500">
+                        Email: test@kairosmirror.com<br>
+                        Password: testpass123
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Info (shown when authenticated) -->
+            <div id="userInfo" class="hidden">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-lg font-medium" id="userEmail">user@example.com</p>
+                        <p class="text-sm text-gray-600">Authenticated and ready for testing</p>
+                    </div>
+                    <button id="signOutBtn" class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Crisis Response Container -->
+        <div id="globalCrisisResponse" class="hidden bg-red-50 border-2 border-red-200 rounded-lg p-6 mb-8">
+            <div class="crisis-alert">
+                <!-- Crisis responses will appear here -->
+            </div>
+        </div>
+
+        <!-- Helper Guide -->
+        <div id="helperGuide" class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+            <h2 class="text-lg font-semibold text-blue-800 mb-3">🌟 Sacred Container Guide</h2>
+            <div id="currentStep" class="space-y-2">
+                <p class="text-blue-700">
+                    <strong>Welcome.</strong> What is alive in you today?
+                </p>
+                <p class="text-blue-600 text-sm">
+                    Begin by signing in to enter your sacred container for inner exploration
+                </p>
+            </div>
+        </div>
+
+        <!-- Test Status -->
+        <div id="testStatus" class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-800">System Status</h2>
+                <div id="connectionStatus" class="flex items-center">
+                    <div class="w-3 h-3 rounded-full bg-yellow-400 mr-2"></div>
+                    <span class="text-sm text-gray-600">Initializing...</span>
+                </div>
+            </div>
+            <div id="systemInfo" class="mt-4 text-sm text-gray-600">
+                Loading system information...
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Left Column: Sacred Check-In & Journal Entry -->
+            <div class="space-y-6">
+                <!-- Somatic Gateway -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 sacred-text">
+                        🌅 Somatic Gateway
+                    </h2>
+                    <p class="text-sm text-gray-600 mb-6">
+                        All authentic inquiry begins in the body. How is your nervous system showing up right now?
+                    </p>
+
+                    <!-- State Selection -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Current State</label>
+                        <div class="space-y-3">
+                            <label class="flex items-center">
+                                <input type="radio" name="state" value="activated" class="mr-2">
+                                <div>
+                                    <span class="font-medium">Activated</span>
+                                    <p class="text-xs text-gray-500">heightened arousal, rumination, urgency, tightness</p>
+                                </div>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="state" value="centered" class="mr-2" checked>
+                                <div>
+                                    <span class="font-medium">Centered</span>
+                                    <p class="text-xs text-gray-500">steady, resourced, curious, available</p>
+                                </div>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="state" value="subtle" class="mr-2">
+                                <div>
+                                    <span class="font-medium">Subtle</span>
+                                    <p class="text-xs text-gray-500">low energy, diffuse, quiet, spaciousness or fatigue</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Capacity Selection -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Capacity Choice</label>
+                        <div class="space-y-3">
+                            <label class="flex items-center">
+                                <input type="radio" name="capacity" value="deep_dive" class="mr-2">
+                                <div>
+                                    <span class="font-medium">Deep Dive</span>
+                                    <p class="text-xs text-gray-500">6-8 questions, deeper inquiry</p>
+                                </div>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="capacity" value="gentle" class="mr-2" checked>
+                                <div>
+                                    <span class="font-medium">Gentle Reflection</span>
+                                    <p class="text-xs text-gray-500">3-4 questions, moderate depth</p>
+                                </div>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="capacity" value="witnessing" class="mr-2">
+                                <div>
+                                    <span class="font-medium">Just Witnessing</span>
+                                    <p class="text-xs text-gray-500">1-2 questions, spacious presence</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button id="performCheckIn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                        🌱 Ground in Embodied Awareness
+                    </button>
+                </div>
+
+                <!-- Witnessing Portal -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 sacred-text">
+                        📝 Witnessing Portal
+                    </h2>
+
+                    <!-- Narrative Layer -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Narrative Layer</label>
+                        <textarea id="narrative" rows="6" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Share what's alive for you right now... What wants to be witnessed?"
+                        ></textarea>
+                    </div>
+
+                    <!-- Emotional Landscape -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Emotional Landscape</label>
+                        <div class="flex flex-wrap gap-2 mb-2" id="emotionTags"></div>
+                        <div class="flex gap-2">
+                            <input type="text" id="emotionInput" placeholder="Add emotion..." 
+                                class="flex-1 px-3 py-1 border border-gray-300 rounded text-sm">
+                            <input type="range" id="intensitySlider" min="1" max="10" value="5" 
+                                class="w-20">
+                            <span id="intensityValue" class="text-sm text-gray-600 w-8">5</span>
+                            <button id="addEmotion" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                                Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Somatic Map -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Somatic Map</label>
+                        <div class="grid grid-cols-2 gap-2 mb-2" id="somaticRegions">
+                            <!-- Body regions will be populated by JavaScript -->
+                        </div>
+                        <div id="somaticDetails" class="mt-3 space-y-2">
+                            <!-- Somatic details will appear here -->
+                        </div>
+                    </div>
+
+                    <button id="createEntry" class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                        ✨ Create Sacred Entry
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Column: Mirror Interface & Results -->
+            <div class="space-y-6">
+                <!-- Mirror Interaction -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 sacred-text">
+                        🪞 The Mirror
+                    </h2>
+                    
+                    <div id="mirrorInterface" class="space-y-4">
+                        <p class="text-gray-600 italic text-center">
+                            Create a journal entry to begin the sacred dialogue...
+                        </p>
+                        
+                        <!-- Breath Guide -->
+                        <div class="flex justify-center my-8">
+                            <div class="breath-guide w-16 h-16 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm">
+                                Breathe
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pattern Constellations -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 sacred-text">
+                        ⭐ Pattern Constellations
+                    </h2>
+                    <div id="patternResults">
+                        <p class="text-gray-600 text-sm text-center italic">
+                            Patterns reveal themselves through gentle observation...
+                            <br><span class="text-xs">(Available after week 5)</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Crisis Safety -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 sacred-text">
+                        🛡️ Sacred Safety
+                    </h2>
+                    <div id="safetyStatus">
+                        <div class="flex items-center text-green-600">
+                            <span class="mr-2">✓</span>
+                            <span class="text-sm">Safety protocols active</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            Crisis detection and compassionate resources available 24/7
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Test Results -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Test Results</h2>
+                    <div id="testResults" class="space-y-2 text-sm">
+                        <div class="text-gray-600">Run tests to see results...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sacred-divider">
+            <span>❖ ❖ ❖</span>
+        </div>
+
+        <!-- Sacred Explorations -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">🌟 Sacred Explorations</h2>
+            <p class="text-sm text-gray-600 mb-4">These tools serve your inner authority by revealing patterns and facilitating deeper awareness.</p>
+            <div class="grid md:grid-cols-3 gap-4">
+                <button id="testCrisisDetection" class="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors">
+                    🛡️ Sacred Safety Response
+                </button>
+                <button id="testPatternAnalysis" class="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                    🌱 Growth Edge Recognition
+                </button>
+                <button id="testSacredPause" class="bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors">
+                    🕊️ Sacred Pause Portal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import kairosService from './js/kairos-mirror-service.js';
+        import authService from './js/supabase-auth-service.js';
+        import { supabase } from './js/supabase-config.js';
+
+        // Enable debug mode
+        kairosService.enableDebug();
+
+        // State management
+        let currentCheckIn = null;
+        let currentEntry = null;
+        let emotions = [];
+        let somaticMarks = [];
+
+        // Initialize page
+        async function init() {
+            updateConnectionStatus();
+            setupEventListeners();
+            setupAuthEventListeners();
+            populateSomaticRegions();
+            updateIntensityDisplay();
+            
+            // Check authentication
+            await updateAuthStatus();
+        }
+
+        function updateConnectionStatus() {
+            const status = document.getElementById('connectionStatus');
+            const info = document.getElementById('systemInfo');
+            
+            try {
+                const debugInfo = kairosService.getDebugInfo();
+                
+                if (debugInfo.hasSupabaseClient) {
+                    status.innerHTML = '<div class="w-3 h-3 rounded-full bg-green-400 mr-2"></div><span class="text-sm text-gray-600">Connected</span>';
+                    info.innerHTML = `
+                        <div>✓ Supabase Client: Active</div>
+                        <div>✓ Kairos Mirror Service: Ready</div>
+                        <div>✓ Sacred Protocols: Enabled</div>
+                        <div>✓ Crisis Detection: Active</div>
+                    `;
+                } else {
+                    status.innerHTML = '<div class="w-3 h-3 rounded-full bg-red-400 mr-2"></div><span class="text-sm text-gray-600">Disconnected</span>';
+                    info.innerHTML = '<div>❌ Supabase connection failed</div>';
+                }
+            } catch (error) {
+                status.innerHTML = '<div class="w-3 h-3 rounded-full bg-red-400 mr-2"></div><span class="text-sm text-gray-600">Error</span>';
+                info.innerHTML = `<div>❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function setupEventListeners() {
+            // Check-in
+            document.getElementById('performCheckIn').addEventListener('click', performCheckIn);
+            
+            // Entry creation
+            document.getElementById('createEntry').addEventListener('click', createEntry);
+            document.getElementById('addEmotion').addEventListener('click', addEmotion);
+            document.getElementById('intensitySlider').addEventListener('input', updateIntensityDisplay);
+            
+            // Quick tests
+            document.getElementById('testCrisisDetection').addEventListener('click', testCrisisDetection);
+            document.getElementById('testPatternAnalysis').addEventListener('click', testPatternAnalysis);
+            document.getElementById('testSacredPause').addEventListener('click', testSacredPause);
+            
+            // Enter key for emotion input
+            document.getElementById('emotionInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addEmotion();
+            });
+        }
+
+        // Authentication functions
+        function setupAuthEventListeners() {
+            document.getElementById('signInBtn').addEventListener('click', signIn);
+            document.getElementById('useTestAccount').addEventListener('click', useTestAccount);
+            document.getElementById('signOutBtn').addEventListener('click', signOut);
+            
+            // Enter key for password field
+            document.getElementById('testPassword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') signIn();
+            });
+        }
+
+        async function updateAuthStatus() {
+            try {
+                const user = await authService.getUser();
+                const authStatusDiv = document.getElementById('authStatus');
+                const signInForm = document.getElementById('signInForm');
+                const userInfo = document.getElementById('userInfo');
+                const userEmail = document.getElementById('userEmail');
+                
+                if (user) {
+                    // User is authenticated
+                    authStatusDiv.innerHTML = '<div class="w-3 h-3 rounded-full bg-green-400 mr-2"></div><span class="text-sm text-gray-600">Sacred space entered</span>';
+                    signInForm.classList.add('hidden');
+                    userInfo.classList.remove('hidden');
+                    userEmail.textContent = user.email;
+                    logResult('Sacred Container Entry', true, `Welcome to your sacred space: ${user.email}`);
+                } else {
+                    // User is not authenticated
+                    authStatusDiv.innerHTML = '<div class="w-3 h-3 rounded-full bg-red-400 mr-2"></div><span class="text-sm text-gray-600">Awaiting entry</span>';
+                    signInForm.classList.remove('hidden');
+                    userInfo.classList.add('hidden');
+                    logResult('Sacred Container Entry', false, 'Please enter your sacred container to begin inner exploration');
+                }
+                
+                updateHelperGuide(user);
+            } catch (error) {
+                console.error('Auth status error:', error);
+                logResult('Authentication', false, `Error checking auth status: ${error.message}`);
+            }
+        }
+
+        async function signIn() {
+            try {
+                const email = document.getElementById('testEmail').value;
+                const password = document.getElementById('testPassword').value;
+                
+                if (!email || !password) {
+                    alert('Please enter both email and password');
+                    return;
+                }
+                
+                const result = await authService.signIn(email, password);
+                if (result.success) {
+                    await updateAuthStatus();
+                    alert('Successfully signed in!');
+                } else {
+                    alert(`Sign in failed: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Sign in error:', error);
+                alert(`Sign in error: ${error.message}`);
+            }
+        }
+
+        async function useTestAccount() {
+            document.getElementById('testEmail').value = 'test@kairosmirror.com';
+            document.getElementById('testPassword').value = 'testpass123';
+            await signIn();
+        }
+
+        async function signOut() {
+            try {
+                await authService.signOut();
+                await updateAuthStatus();
+                alert('Successfully signed out!');
+            } catch (error) {
+                console.error('Sign out error:', error);
+                alert(`Sign out error: ${error.message}`);
+            }
+        }
+
+        function updateHelperGuide(user) {
+            const currentStep = document.getElementById('currentStep');
+            
+            if (!user) {
+                currentStep.innerHTML = `
+                    <p class="text-blue-700">
+                        <strong>Welcome.</strong> What is alive in you today?
+                    </p>
+                    <p class="text-blue-600 text-sm">
+                        Begin by signing in above to enter your sacred container for inner exploration
+                    </p>
+                `;
+            } else if (!currentCheckIn) {
+                currentStep.innerHTML = `
+                    <p class="text-green-700">
+                        <strong>🌟 Sacred Space Entered.</strong> Begin with embodied awareness
+                    </p>
+                    <p class="text-green-600 text-sm">
+                        <strong>Somatic Gateway:</strong> Notice your current state (activated/centered/subtle) and choose your capacity for exploration
+                    </p>
+                `;
+            } else if (!currentEntry) {
+                currentStep.innerHTML = `
+                    <p class="text-green-700">
+                        <strong>🌱 Grounded and Present.</strong> What wants to be explored?
+                    </p>
+                    <p class="text-green-600 text-sm">
+                        <strong>Witnessing Portal:</strong> Share what's alive in your inner landscape - thoughts, feelings, sensations
+                    </p>
+                `;
+            } else {
+                currentStep.innerHTML = `
+                    <p class="text-green-700">
+                        <strong>✨ Container Complete.</strong> Your inner authority is your guide
+                    </p>
+                    <p class="text-green-600 text-sm">
+                        <strong>Available explorations:</strong> Pattern recognition, Sacred Pause, or deeper inquiry with the facilitating presence
+                    </p>
+                `;
+            }
+        }
+
+        function populateSomaticRegions() {
+            const regions = [
+                'Head/Face', 'Throat', 'Chest/Heart', 'Solar Plexus', 
+                'Belly/Gut', 'Pelvis', 'Back', 'Arms', 'Hands', 'Legs', 'Feet'
+            ];
+            
+            const container = document.getElementById('somaticRegions');
+            regions.forEach(region => {
+                const button = document.createElement('button');
+                button.className = 'px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100 transition-colors';
+                button.textContent = region;
+                button.onclick = () => selectSomaticRegion(region);
+                container.appendChild(button);
+            });
+        }
+
+        function updateIntensityDisplay() {
+            const slider = document.getElementById('intensitySlider');
+            const display = document.getElementById('intensityValue');
+            display.textContent = slider.value;
+        }
+
+        async function performCheckIn() {
+            const state = document.querySelector('input[name="state"]:checked').value;
+            const capacity = document.querySelector('input[name="capacity"]:checked').value;
+            
+            try {
+                currentCheckIn = await kairosService.performCheckIn(state, capacity);
+                logResult('Somatic Gateway', true, `Embodied state: ${state}, Exploration capacity: ${capacity}, Inquiry depth: ${currentCheckIn.turnBudget}`);
+                
+                // Update helper guide
+                const user = await authService.getUser();
+                updateHelperGuide(user);
+            } catch (error) {
+                logResult('Somatic Gateway', false, `Grounding paused: ${error.message}`);
+            }
+        }
+
+        function addEmotion() {
+            const input = document.getElementById('emotionInput');
+            const intensity = parseInt(document.getElementById('intensitySlider').value);
+            const emotion = input.value.trim();
+            
+            if (!emotion) return;
+            
+            emotions.push({ label: emotion, intensity });
+            input.value = '';
+            updateEmotionTags();
+        }
+
+        function updateEmotionTags() {
+            const container = document.getElementById('emotionTags');
+            container.innerHTML = '';
+            
+            emotions.forEach((emotion, index) => {
+                const tag = document.createElement('span');
+                tag.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800';
+                tag.innerHTML = `
+                    ${emotion.label} (${emotion.intensity}/10)
+                    <button onclick="removeEmotion(${index})" class="ml-1 text-blue-600 hover:text-blue-800">&times;</button>
+                `;
+                container.appendChild(tag);
+            });
+        }
+
+        window.removeEmotion = function(index) {
+            emotions.splice(index, 1);
+            updateEmotionTags();
+        }
+
+        function selectSomaticRegion(region) {
+            const descriptors = prompt(`Describe sensations in ${region} (comma-separated):`);
+            if (descriptors) {
+                const intensity = parseInt(prompt('Intensity (1-10):') || '5');
+                somaticMarks.push({
+                    region,
+                    descriptors: descriptors.split(',').map(d => d.trim()),
+                    intensity,
+                    note: ''
+                });
+                updateSomaticDisplay();
+            }
+        }
+
+        function updateSomaticDisplay() {
+            const container = document.getElementById('somaticDetails');
+            container.innerHTML = '';
+            
+            somaticMarks.forEach((mark, index) => {
+                const div = document.createElement('div');
+                div.className = 'text-sm bg-gray-50 p-2 rounded';
+                div.innerHTML = `
+                    <strong>${mark.region}:</strong> ${mark.descriptors.join(', ')} 
+                    <span class="text-gray-500">(${mark.intensity}/10)</span>
+                    <button onclick="removeSomaticMark(${index})" class="ml-2 text-red-600">&times;</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.removeSomaticMark = function(index) {
+            somaticMarks.splice(index, 1);
+            updateSomaticDisplay();
+        }
+
+        async function createEntry() {
+            // Check authentication first
+            const user = await authService.getUser();
+            if (!user) {
+                logResult('Witnessing Portal', false, 'Please enter your sacred space first');
+                return;
+            }
+
+            if (!currentCheckIn) {
+                logResult('Witnessing Portal', false, 'Please ground in embodied awareness first');
+                return;
+            }
+            
+            const narrative = document.getElementById('narrative').value.trim();
+            if (!narrative) {
+                logResult('Witnessing Portal', false, 'Please share what\'s alive in your inner landscape');
+                return;
+            }
+            
+            try {
+                const entryData = {
+                    title: 'Sacred Witnessing Exploration',
+                    narrative,
+                    emotions,
+                    somaticMarks,
+                    checkIn: currentCheckIn
+                };
+                
+                currentEntry = await kairosService.createMultiLayeredEntry(entryData);
+                logResult('Witnessing Portal', true, `Inner landscape witnessed and held: ${currentEntry.id.substring(0, 8)}`);
+                
+                // Update helper guide
+                const user = await authService.getUser();
+                updateHelperGuide(user);
+                
+                // Enable Mirror interface
+                enableMirrorInterface();
+                
+            } catch (error) {
+                logResult('Witnessing Portal', false, `Witnessing paused: ${error.message}`);
+            }
+        }
+
+        function enableMirrorInterface() {
+            const container = document.getElementById('mirrorInterface');
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <button id="askMirror" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-colors">
+                        🪞 Ask the Mirror
+                    </button>
+                    <button id="invokePause" class="w-full bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors">
+                        🕊️ Sacred Pause
+                    </button>
+                    <div id="mirrorResponse" class="hidden">
+                        <!-- Mirror responses will appear here -->
+                    </div>
+                    <div id="userResponseSection" class="hidden">
+                        <textarea id="userResponse" placeholder="Your response..." rows="3" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                        <button id="submitResponse" class="mt-2 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 w-full">
+                            Submit Response
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('askMirror').addEventListener('click', askMirror);
+            document.getElementById('invokePause').addEventListener('click', invokeSacredPause);
+        }
+
+        async function askMirror() {
+            if (!currentEntry) {
+                logResult('Mirror Inquiry', false, 'No entry available');
+                return;
+            }
+            
+            try {
+                const response = await kairosService.askMirror(currentEntry.id);
+                
+                if (response.crisis) {
+                    showCrisisResponse(response);
+                    return;
+                }
+                
+                showMirrorResponse(response);
+                
+            } catch (error) {
+                logResult('Mirror Inquiry', false, error.message);
+            }
+        }
+
+        function showMirrorResponse(response) {
+            const container = document.getElementById('mirrorResponse');
+            container.className = 'mirror-response';
+            container.innerHTML = `
+                <div class="sacred-text text-lg font-medium text-gray-800 mb-2">
+                    ${getKeySymbol(response.key)} ${response.key} Key
+                </div>
+                <div class="text-gray-700 italic mb-4">
+                    "${response.question}"
+                </div>
+                <div class="text-xs text-gray-500">
+                    Turn ${response.turnNumber} • Sacred inquiry in progress...
+                </div>
+            `;
+            container.classList.remove('hidden');
+            
+            // Show user response section
+            document.getElementById('userResponseSection').classList.remove('hidden');
+            
+            logResult('Mirror Response', true, `${response.key} Key: ${response.question}`);
+        }
+
+        function showCrisisResponse(response) {
+            // Use global crisis response container instead of mirrorResponse
+            const globalContainer = document.getElementById('globalCrisisResponse');
+            const crisisAlert = globalContainer.querySelector('.crisis-alert');
+            
+            if (!globalContainer || !crisisAlert) {
+                console.error('Crisis response containers not found');
+                // Fallback to console log
+                console.log('CRISIS DETECTED:', response);
+                return;
+            }
+            
+            let severityMessage = '';
+            if (response.severityLevel === 3) {
+                severityMessage = 'Your wellbeing matters deeply. Please reach out to someone who can support you right now.';
+            } else if (response.severityLevel === 2) {
+                severityMessage = 'I sense you\'re carrying some heavy feelings. You don\'t have to navigate this alone.';
+            }
+            
+            crisisAlert.innerHTML = `
+                <div class="font-bold text-red-800 mb-3">🛡️ Sacred Safety Container Activated</div>
+                <div class="text-red-700 mb-4">${severityMessage}</div>
+                ${response.triggers && response.triggers.length > 0 ? `
+                    <div class="text-sm text-red-600 mb-4">
+                        <strong>What I noticed:</strong> ${response.triggers.join(', ')}
+                    </div>
+                ` : ''}
+                ${response.supportResources ? `
+                    <div class="text-sm text-red-600">
+                        <strong>Immediate Support Resources:</strong>
+                        <ul class="list-disc list-inside mt-2">
+                            ${response.supportResources.map(resource => `<li>${resource}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+                <div class="mt-4 p-3 bg-red-100 rounded">
+                    <p class="text-sm text-red-800">
+                        <strong>Remember:</strong> This AI is a tool, not a replacement for human support. 
+                        Your inner wisdom and the care of others are your true guides through difficulty.
+                    </p>
+                </div>
+            `;
+            globalContainer.classList.remove('hidden');
+            
+            logResult('Crisis Detection', true, 'Sacred Safety Container activated - support resources provided');
+        }
+
+        function hideCrisisResponse() {
+            const globalContainer = document.getElementById('globalCrisisResponse');
+            if (globalContainer) {
+                globalContainer.classList.add('hidden');
+            }
+        }
+
+        async function invokeSacredPause() {
+            if (!currentEntry) {
+                logResult('Sacred Pause', false, 'No entry available');
+                return;
+            }
+            
+            try {
+                const response = await kairosService.invokeSacredPause(currentEntry.id);
+                showMirrorResponse(response);
+                
+            } catch (error) {
+                logResult('Sacred Pause', false, error.message);
+            }
+        }
+
+        function getKeySymbol(key) {
+            const symbols = {
+                'Mirror': '🪞',
+                'Root': '🌱',
+                'Bridge': '🌉',
+                'Vista': '🏔️',
+                'Possibility': '✨',
+                'Pause': '🕊️'
+            };
+            return symbols[key] || '💫';
+        }
+
+        // Quick test functions
+        async function testCrisisDetection() {
+            const testContent = "I'm feeling hopeless and don't know if I can go on like this. Sometimes I think everyone would be better off without me.";
+            
+            try {
+                const result = await kairosService.checkForCrisis(testContent);
+                logResult('Sacred Safety Response', true, `Concern level: ${result.severityLevel}, Safety activation: ${result.isCrisis}`);
+                
+                if (result.isCrisis) {
+                    showCrisisResponse(result);
+                } else {
+                    logResult('Sacred Safety Response', true, 'No immediate safety concerns - the sacred container holds space for all feelings');
+                }
+                
+            } catch (error) {
+                logResult('Sacred Safety Response', false, `Response unavailable: ${error.message}`);
+            }
+        }
+
+        async function testPatternAnalysis() {
+            try {
+                // Check authentication first
+                const user = await authService.getUser();
+                if (!user) {
+                    logResult('Growth Edge Recognition', false, 'Please enter your sacred space first to explore growth edges');
+                    return;
+                }
+
+                if (!currentEntry) {
+                    logResult('Growth Edge Recognition', false, 'Create a journal reflection first, then explore growth edges within it');
+                    return;
+                }
+                
+                const result = await kairosService.analyzePatterns(currentEntry.id);
+                logResult('Growth Edge Recognition', true, `Growth edges recognized: ${result.totalDetected || 0}`);
+                
+                if (result.pattern) {
+                    showPatternResult(result.pattern);
+                } else {
+                    logResult('Growth Edge Recognition', true, 'No patterns surfacing yet - your inner wisdom is cultivating in its own timing');
+                }
+                
+            } catch (error) {
+                logResult('Growth Edge Recognition', false, `Exploration paused: ${error.message}`);
+            }
+        }
+
+        function showPatternResult(pattern) {
+            const container = document.getElementById('patternResults');
+            container.innerHTML = `
+                <div class="pattern-chip">
+                    <div class="font-medium">${pattern.pattern.replace('_', ' ')}</div>
+                    <div class="text-sm text-gray-600">${pattern.curiosityQuestion}</div>
+                    <div class="text-xs text-gray-500">Confidence: ${Math.round(pattern.confidence * 100)}%</div>
+                </div>
+            `;
+        }
+
+        async function testSacredPause() {
+            try {
+                // Check authentication first
+                const user = await authService.getUser();
+                if (!user) {
+                    logResult('Sacred Pause Portal', false, 'Please enter your sacred space first to experience the pause');
+                    return;
+                }
+
+                if (!currentEntry) {
+                    // Create a minimal entry for testing
+                    try {
+                        const entryData = {
+                            title: 'Sacred Pause Exploration',
+                            narrative: 'Creating space for the Sacred Pause practice',
+                            emotions: [],
+                            somaticMarks: [],
+                            checkIn: { state: 'centered', capacity: 'gentle' }
+                        };
+                        
+                        currentEntry = await kairosService.createMultiLayeredEntry(entryData);
+                        logResult('Sacred Pause Portal', true, 'Sacred container prepared for pause practice');
+                    } catch (error) {
+                        logResult('Sacred Pause Portal', false, `Container preparation paused: ${error.message}`);
+                        return;
+                    }
+                }
+                
+                await invokeSacredPause();
+            } catch (error) {
+                logResult('Sacred Pause Portal', false, `Pause practice unavailable: ${error.message}`);
+            }
+        }
+
+        function logResult(testName, passed, message) {
+            const container = document.getElementById('testResults');
+            const result = document.createElement('div');
+            result.className = `flex items-start ${passed ? 'text-green-600' : 'text-red-600'}`;
+            result.innerHTML = `
+                <span class="mr-2">${passed ? '✅' : '❌'}</span>
+                <div class="flex-1">
+                    <span class="font-medium">${testName}:</span> ${message}
+                    <div class="text-xs text-gray-500">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            
+            if (container.firstChild && container.firstChild.textContent.includes('Run tests')) {
+                container.removeChild(container.firstChild);
+            }
+            
+            container.appendChild(result);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

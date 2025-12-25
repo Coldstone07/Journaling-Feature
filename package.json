@@ -10,8 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "node-fetch": "^2.6.7",
-    "firebase": "^10.12.2",
-    "firebase-admin": "^11.10.1"
+    "@supabase/supabase-js": "^2.45.4",
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "supabase": "^2.39.2"
   }
 }

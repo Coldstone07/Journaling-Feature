@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Migration Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">
+            🧪 Live Supabase Migration Test
+        </h1>
+        
+        <div class="mb-6">
+            <button id="runTests" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors">
+                🚀 Run Migration Tests
+            </button>
+            <button id="testAuth" class="bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors ml-4">
+                🔐 Test Authentication
+            </button>
+        </div>
+
+        <div id="testResults" class="space-y-4"></div>
+
+        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+            <h2 class="font-bold mb-2">Manual Test Steps:</h2>
+            <ol class="list-decimal list-inside space-y-2 text-sm">
+                <li>Click "Run Migration Tests" to verify services are working</li>
+                <li>Click "Test Authentication" to test sign up/sign in</li>
+                <li>Check browser console for detailed logs</li>
+                <li>Visit main app at <a href="/" class="text-blue-500 underline">http://127.0.0.1:8080</a></li>
+            </ol>
+        </div>
+    </div>
+
+    <script type="module">
+        import authService from './js/supabase-auth-service.js';
+        import databaseService from './js/supabase-database-service.js';
+        import { supabase } from './js/supabase-config.js';
+
+        let testResults = [];
+
+        function logResult(testName, passed, message) {
+            const result = { testName, passed, message, timestamp: new Date().toLocaleTimeString() };
+            testResults.push(result);
+            
+            const resultsDiv = document.getElementById('testResults');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `p-3 rounded-lg ${passed ? 'bg-green-100 border-l-4 border-green-500' : 'bg-red-100 border-l-4 border-red-500'}`;
+            
+            resultDiv.innerHTML = `
+                <div class="flex items-center">
+                    <span class="text-lg mr-2">${passed ? '✅' : '❌'}</span>
+                    <span class="font-semibold">${testName}</span>
+                    <span class="text-xs text-gray-500 ml-2">${result.timestamp}</span>
+                </div>
+                <div class="text-sm text-gray-700 mt-1">${message}</div>
+            `;
+            
+            resultsDiv.appendChild(resultDiv);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        async function runMigrationTests() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = '<div class="text-center text-gray-600">Running tests...</div>';
+
+            console.log('🧪 Starting Live Migration Tests...');
+
+            // Test 1: Basic connectivity
+            try {
+                const response = await supabase.from('journal_entries').select('count', { count: 'exact', head: true });
+                logResult('Supabase Connection', !response.error, 
+                    response.error ? `Connection failed: ${response.error.message}` : 'Successfully connected to Supabase');
+            } catch (error) {
+                logResult('Supabase Connection', false, `Connection error: ${error.message}`);
+            }
+
+            // Test 2: Authentication service
+            try {
+                const session = await authService.getSession();
+                logResult('Auth Service', true, session ? `Current user: ${session.user.email}` : 'No user authenticated (ready for login)');
+            } catch (error) {
+                logResult('Auth Service', false, `Auth service error: ${error.message}`);
+            }
+
+            // Test 3: Database service
+            try {
+                const dbInfo = databaseService.getDebugInfo();
+                logResult('Database Service', dbInfo.hasSupabaseClient, 
+                    dbInfo.hasSupabaseClient ? 'Database service initialized' : 'Database service not available');
+            } catch (error) {
+                logResult('Database Service', false, `Database service error: ${error.message}`);
+            }
+
+            // Test 4: Database permissions (should require auth)
+            try {
+                const result = await databaseService.getUserEntries({ limit: 1 });
+                if (result.success) {
+                    logResult('Database Permissions', true, `Retrieved ${result.data.length} entries`);
+                } else {
+                    // Auth required error is expected and good
+                    if (result.error.includes('auth') || result.error.includes('unauthorized')) {
+                        logResult('Database Permissions', true, 'RLS policies working - authentication required');
+                    } else {
+                        logResult('Database Permissions', false, `Unexpected error: ${result.error}`);
+                    }
+                }
+            } catch (error) {
+                logResult('Database Permissions', false, `Permission test failed: ${error.message}`);
+            }
+
+            // Test 5: Configuration
+            try {
+                const configValid = supabase.supabaseUrl && supabase.supabaseUrl.includes('supabase.co');
+                logResult('Configuration', configValid, 
+                    configValid ? `Connected to: ${supabase.supabaseUrl.split('.')[0]}...supabase.co` : 'Invalid configuration');
+            } catch (error) {
+                logResult('Configuration', false, `Config check failed: ${error.message}`);
+            }
+
+            // Summary
+            const passed = testResults.filter(r => r.passed).length;
+            const total = testResults.length;
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'mt-6 p-4 bg-blue-100 rounded-lg';
+            summaryDiv.innerHTML = `
+                <h3 class="font-bold text-lg">Test Summary</h3>
+                <p>✅ Passed: ${passed} | ❌ Failed: ${total - passed} | Success Rate: ${Math.round((passed/total)*100)}%</p>
+                ${passed === total ? '<p class="text-green-600 font-semibold mt-2">🎉 All tests passed! Migration is working!</p>' : '<p class="text-orange-600 mt-2">⚠️ Some tests failed. Check details above.</p>'}
+            `;
+            resultsDiv.appendChild(summaryDiv);
+
+            console.log(`✅ Tests completed: ${passed}/${total} passed`);
+        }
+
+        async function testAuthentication() {
+            const resultsDiv = document.getElementById('testResults');
+            const testDiv = document.createElement('div');
+            testDiv.className = 'p-4 bg-yellow-100 rounded-lg border-l-4 border-yellow-500';
+            testDiv.innerHTML = '<div class="font-semibold">🔐 Authentication Test</div><div id="authTestContent">Starting authentication test...</div>';
+            resultsDiv.appendChild(testDiv);
+
+            const authContent = document.getElementById('authTestContent');
+
+            try {
+                // Check current auth state
+                const currentUser = await authService.getUser();
+                if (currentUser) {
+                    authContent.innerHTML = `
+                        <div>✅ Already authenticated as: ${currentUser.email}</div>
+                        <div class="mt-2">
+                            <button onclick="testSignOut()" class="bg-red-500 text-white px-4 py-2 rounded text-sm">Sign Out</button>
+                        </div>
+                    `;
+                } else {
+                    authContent.innerHTML = `
+                        <div>ℹ️ Not currently authenticated</div>
+                        <div class="mt-2 space-x-2">
+                            <input type="email" id="testEmail" placeholder="Enter test email" class="border rounded px-2 py-1 text-sm">
+                            <input type="password" id="testPassword" placeholder="Password (min 6 chars)" class="border rounded px-2 py-1 text-sm">
+                        </div>
+                        <div class="mt-2 space-x-2">
+                            <button onclick="testSignUp()" class="bg-green-500 text-white px-4 py-2 rounded text-sm">Test Sign Up</button>
+                            <button onclick="testSignIn()" class="bg-blue-500 text-white px-4 py-2 rounded text-sm">Test Sign In</button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                authContent.innerHTML = `<div class="text-red-600">❌ Auth test error: ${error.message}</div>`;
+            }
+        }
+
+        // Global functions for buttons
+        window.testSignUp = async () => {
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            const authContent = document.getElementById('authTestContent');
+
+            if (!email || !password) {
+                authContent.innerHTML += '<div class="text-red-600 mt-2">Please enter email and password</div>';
+                return;
+            }
+
+            try {
+                authContent.innerHTML += '<div class="mt-2">⏳ Attempting sign up...</div>';
+                const result = await authService.signUp(email, password);
+                
+                if (result.error) {
+                    authContent.innerHTML += `<div class="text-red-600 mt-2">❌ Sign up failed: ${result.error}</div>`;
+                } else if (result.needsEmailConfirmation) {
+                    authContent.innerHTML += '<div class="text-blue-600 mt-2">✅ Sign up successful! Check your email for confirmation.</div>';
+                } else {
+                    authContent.innerHTML += '<div class="text-green-600 mt-2">✅ Sign up and sign in successful!</div>';
+                }
+            } catch (error) {
+                authContent.innerHTML += `<div class="text-red-600 mt-2">❌ Error: ${error.message}</div>`;
+            }
+        };
+
+        window.testSignIn = async () => {
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            const authContent = document.getElementById('authTestContent');
+
+            if (!email || !password) {
+                authContent.innerHTML += '<div class="text-red-600 mt-2">Please enter email and password</div>';
+                return;
+            }
+
+            try {
+                authContent.innerHTML += '<div class="mt-2">⏳ Attempting sign in...</div>';
+                const result = await authService.signIn(email, password);
+                
+                if (result.error) {
+                    authContent.innerHTML += `<div class="text-red-600 mt-2">❌ Sign in failed: ${result.error}</div>`;
+                } else {
+                    authContent.innerHTML += `<div class="text-green-600 mt-2">✅ Sign in successful! Welcome ${result.user.email}</div>`;
+                    // Refresh the auth test to show sign out option
+                    setTimeout(testAuthentication, 1000);
+                }
+            } catch (error) {
+                authContent.innerHTML += `<div class="text-red-600 mt-2">❌ Error: ${error.message}</div>`;
+            }
+        };
+
+        window.testSignOut = async () => {
+            const authContent = document.getElementById('authTestContent');
+            try {
+                authContent.innerHTML += '<div class="mt-2">⏳ Signing out...</div>';
+                const result = await authService.signOut();
+                
+                if (result.error) {
+                    authContent.innerHTML += `<div class="text-red-600 mt-2">❌ Sign out failed: ${result.error}</div>`;
+                } else {
+                    authContent.innerHTML += '<div class="text-green-600 mt-2">✅ Sign out successful!</div>';
+                    // Refresh the auth test
+                    setTimeout(testAuthentication, 1000);
+                }
+            } catch (error) {
+                authContent.innerHTML += `<div class="text-red-600 mt-2">❌ Error: ${error.message}</div>`;
+            }
+        };
+
+        // Event listeners
+        document.getElementById('runTests').addEventListener('click', runMigrationTests);
+        document.getElementById('testAuth').addEventListener('click', testAuthentication);
+
+        // Auto-run tests on load
+        console.log('🔗 Supabase Migration Test Page Loaded');
+        console.log('🌐 Supabase URL:', supabase.supabaseUrl);
+        
+        // Show initial status
+        logResult('Page Load', true, 'Test page loaded successfully - ready to test migration');
+    </script>
+</body>
+</html>

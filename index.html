@@ -20,66 +20,7 @@
             --gentle-cream: #F7F5F2;
             --warm-ivory: #FDF8F0;
             
-            /* Living Accents */
-            --deep-indigo: #483D8B;
-            --shimmering-gold: #D4AF37;
-            --soft-rose-quartz: #B695C0;
-            --ethereal-lavender: #C8B2DB;
-            --sage-mist: #A8B5A0;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--warm-off-white);
-            color: var(--soft-charcoal);
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-        }
-
-        /* Enhanced organic texture overlay */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -2;
-            background-image: 
-                radial-gradient(circle at 1px 1px, rgba(138, 134, 128, 0.03) 1px, transparent 0),
-                radial-gradient(circle at 20px 20px, rgba(72, 61, 139, 0.01) 1px, transparent 0);
-            background-size: 25px 25px, 40px 40px;
-            opacity: 0.4;
-        }
-
-        /* Living background with organic tones */
-        .cosmic-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: 
-                radial-gradient(circle at 20% 30%, var(--deep-indigo)08 0%, transparent 60%),
-                radial-gradient(circle at 80% 20%, var(--shimmering-gold)05 0%, transparent 70%),
-                radial-gradient(circle at 40% 70%, var(--soft-rose-quartz)03 0%, transparent 80%),
-                radial-gradient(circle at 90% 80%, var(--ethereal-lavender)04 0%, transparent 65%),
-                linear-gradient(135deg, var(--gentle-cream) 0%, var(--warm-ivory) 50%, var(--gentle-cream) 100%);
-            animation: breathingBackground 30s ease-in-out infinite;
-        }
-
-        @keyframes breathingBackground {
-            0%, 100% { 
-                transform: scale(1) rotate(0deg);
-                opacity: 0.8;
-            }
-            33% { 
-                transform: scale(1.01) rotate(0.3deg);
-                opacity: 0.9;
-            }
-            66% { 
+        // Firebase code removed. See js/firebase-config.js for details.
                 transform: scale(0.99) rotate(-0.2deg);
                 opacity: 0.85;
             }
@@ -1740,79 +1681,42 @@
 
     <!-- Main Application Script -->
     <script type="module">
-        // Import organized services (only auth needed - db operations via backend)
-        import { auth, analytics, db } from './js/firebase-config.js';
-        
-        // Import Firebase Database functions for user-specific data
-        import { 
-            createUserWithEmailAndPassword, 
-            signInWithEmailAndPassword, 
-            signOut, 
-            onAuthStateChanged,
-            onIdTokenChanged
-        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-
-        // Import Firebase Firestore functions
-        import { 
-            collection, 
-            doc, 
-            setDoc, 
-            getDoc, 
-            getDocs, 
-            addDoc,
-            deleteDoc,
-            query,
-            where,
-            orderBy,
-            limit
-        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+        // Import Supabase services (complete replacement for Firebase)
+        import authService from './js/supabase-auth-service.js';
+        import databaseService from './js/supabase-database-service.js';
+        import { supabase } from './js/supabase-config.js';
 
         // --- USER DATA MANAGEMENT ---
         let entries = [];
 
-        // Function to write user profile data to Firestore
-        async function writeUserData(userId, name, email, imageUrl) {
-            // Check if running locally and skip Firestore operations
-            const isLocalDevelopment = window.location.hostname === 'localhost' || 
-                                     window.location.hostname === '127.0.0.1' || 
-                                     window.location.hostname.includes('localhost') ||
-                                     window.location.protocol === 'file:' ||
-                                     (window.location.port && window.location.port !== '80' && window.location.port !== '443');
-            
-            if (isLocalDevelopment) {
-                console.log('Local development mode: Skipping Firestore user data write for:', name);
-                return; // Skip Firestore operations in local development
-            }
-            
-            const userRef = doc(db, 'users', userId);
-            
-            try {
-                await setDoc(userRef, {
-                    username: name,
-                    email: email,
-                    profile_picture: imageUrl,
-                    created_at: new Date().toISOString(),
-                    last_login: new Date().toISOString()
-                });
-                console.log("User data saved successfully!");
-            } catch (error) {
-                console.error("Error writing user data: ", error);
-            }
-        }
+        // User profile data is automatically handled by Supabase Auth
+        // No need for manual user data writing - Supabase manages user profiles
 
         // Function to save a journal entry for the current user
         async function saveJournalEntry(userId, entryData) {
-            return await callFirebaseBackend('createEntry', entryData);
+            const result = await databaseService.createEntry(entryData);
+            if (!result.success) {
+                throw new Error(result.error);
+            }
+            return result.data;
         }
 
         // Function to load all journal entries for the current user
         async function loadUserJournalEntries(userId) {
-            return await callFirebaseBackend('getUserEntries', { limit: 50 });
+            const result = await databaseService.getUserEntries({ limit: 50 });
+            if (!result.success) {
+                throw new Error(result.error);
+            }
+            return result.data;
         }
 
         // Function to delete a journal entry
         async function deleteJournalEntry(userId, entryId) {
-            return await callFirebaseBackend('deleteEntry', { entryId });
+            const result = await databaseService.deleteEntry(entryId);
+            if (!result.success) {
+                throw new Error(result.error);
+            }
+            return result.data;
         }
 
         // Mock data for initial development (will be replaced by real user data)
@@ -1898,187 +1802,17 @@
             }, 3500);
         }
 
-        // Helper function to wait for Firebase token to be ready
-        async function waitForTokenReady(user, maxRetries = 3, delay = 1500) {
-            console.log('Waiting for Firebase token to be ready...');
-            
-            // Check if running locally and return mock token
-            const isLocalDevelopment = window.location.hostname === 'localhost' || 
-                                     window.location.hostname === '127.0.0.1' || 
-                                     window.location.hostname.includes('localhost') ||
-                                     window.location.protocol === 'file:' ||
-                                     (window.location.port && window.location.port !== '80' && window.location.port !== '443');
-            
-            if (isLocalDevelopment) {
-                console.log('Local development mode: Using mock token');
-                currentIdToken = 'mock-token-for-local-dev';
-                return currentIdToken;
-            }
-            
-            // First, wait a moment for auth state to stabilize
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    // Try getting the token without forcing refresh first
-                    const token = await user.getIdToken(false);
-                    if (token && token.length > 0) {
-                        console.log('Firebase token is ready');
-                        
-                        // Validate the token by checking if it's not expired
-                        const tokenParts = token.split('.');
-                        if (tokenParts.length === 3) {
-                            try {
-                                const payload = JSON.parse(atob(tokenParts[1]));
-                                const now = Math.floor(Date.now() / 1000);
-                                if (payload.exp && payload.exp > now) {
-                                    console.log('Token is valid and not expired');
-                                    currentIdToken = token; // Set the managed token
-                                    scheduleTokenRefresh(token); // Schedule refresh
-                                    return token;
-                                } else {
-                                    console.log('Token is expired, will force refresh');
-                                }
-                            } catch (parseError) {
-                                console.log('Could not parse token, will force refresh');
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.log(`Token not ready yet, attempt ${i + 1}/${maxRetries}:`, error.message);
-                }
-                
-                // If we don't have a valid token, try force refresh
-                try {
-                    console.log('Attempting force token refresh...');
-                    const freshToken = await user.getIdToken(true);
-                    if (freshToken && freshToken.length > 0) {
-                        console.log('Firebase token obtained after force refresh');
-                        currentIdToken = freshToken; // Set the managed token
-                        scheduleTokenRefresh(freshToken); // Schedule refresh
-                        return freshToken;
-                    }
-                } catch (refreshError) {
-                    console.log(`Force refresh failed on attempt ${i + 1}:`, refreshError.message);
-                }
-                
-                if (i < maxRetries - 1) {
-                    console.log(`Waiting ${delay}ms before retry...`);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            }
-            
-            console.error('Failed to get valid token after all attempts');
-            throw new Error('Unable to obtain authentication token after multiple attempts');
-        }
 
-        // Token management system
-        let currentIdToken = null;
-        let tokenRefreshTimer = null;
         
-        // Function to schedule token refresh before expiration
-        function scheduleTokenRefresh(token) {
-            // Clear any existing timer
-            if (tokenRefreshTimer) {
-                clearTimeout(tokenRefreshTimer);
-                tokenRefreshTimer = null;
-            }
-            
-            if (!token) return;
-            
-            // Skip token refresh scheduling in local development
-            const isLocalDevelopment = window.location.hostname === 'localhost' || 
-                                     window.location.hostname === '127.0.0.1' || 
-                                     window.location.hostname.includes('localhost') ||
-                                     window.location.protocol === 'file:' ||
-                                     (window.location.port && window.location.port !== '80' && window.location.port !== '443');
-            
-            if (isLocalDevelopment) {
-                console.log('Local development mode: Skipping token refresh scheduling');
-                return;
-            }
-            
-            try {
-                // Parse the token to get expiration time
-                const tokenParts = token.split('.');
-                if (tokenParts.length === 3) {
-                    const payload = JSON.parse(atob(tokenParts[1]));
-                    const now = Math.floor(Date.now() / 1000);
-                    const expiresIn = payload.exp - now;
-                    
-                    // Refresh token 5 minutes before it expires (300 seconds)
-                    const refreshIn = Math.max(0, (expiresIn - 300) * 1000);
-                    
-                    console.log(`Token expires in ${expiresIn} seconds, scheduling refresh in ${refreshIn / 1000} seconds`);
-                    
-                    tokenRefreshTimer = setTimeout(async () => {
-                        if (state.currentUser) {
-                            try {
-                                console.log('Proactively refreshing token...');
-                                const newToken = await state.currentUser.getIdToken(true);
-                                currentIdToken = newToken;
-                                scheduleTokenRefresh(newToken); // Schedule next refresh
-                                console.log('Token refreshed proactively');
-                            } catch (error) {
-                                console.error('Failed to refresh token proactively:', error);
-                            }
-                        }
-                    }, refreshIn);
-                }
-            } catch (error) {
-                console.error('Failed to parse token for refresh scheduling:', error);
-            }
-        }
-        
-        // Token change listener - this handles automatic token refresh
-        onIdTokenChanged(auth, async (user) => {
-            // Skip token operations in local development
-            const isLocalDevelopment = window.location.hostname === 'localhost' || 
-                                     window.location.hostname === '127.0.0.1' || 
-                                     window.location.hostname.includes('localhost') ||
-                                     window.location.protocol === 'file:' ||
-                                     (window.location.port && window.location.port !== '80' && window.location.port !== '443');
-            
-            if (isLocalDevelopment) {
-                console.log('Local development mode: Skipping onIdTokenChanged operations');
-                if (user) {
-                    currentIdToken = 'mock-token-for-local-dev';
-                } else {
-                    currentIdToken = null;
-                }
-                return;
-            }
-            
-            if (user) {
-                try {
-                    // Get the fresh token
-                    const token = await user.getIdToken();
-                    currentIdToken = token;
-                    
-                    // Schedule the next refresh
-                    scheduleTokenRefresh(token);
-                    
-                    console.log('ID token updated and refresh scheduled');
-                } catch (error) {
-                    console.error('Failed to get token in onIdTokenChanged:', error);
-                    currentIdToken = null;
-                }
-            } else {
-                // User signed out, clear token and timer
-                currentIdToken = null;
-                if (tokenRefreshTimer) {
-                    clearTimeout(tokenRefreshTimer);
-                    tokenRefreshTimer = null;
-                }
-            }
-        });
         
         // Authentication state management
         let authInitializationTimeout = null;
         let isAuthProcessing = false;
         
-        // Firebase Authentication State Listener
-        onAuthStateChanged(auth, async (user) => {
+        // Supabase Authentication State Listener
+        authService.onAuthStateChange(async (user, event) => {
+            console.log('Supabase auth state change:', event, user?.email);
+            
             // Clear any pending initialization
             if (authInitializationTimeout) {
                 clearTimeout(authInitializationTimeout);
@@ -2090,40 +1824,30 @@
                 console.log('Authentication already processing, skipping...');
                 return;
             }
-            if (user) {
-                // Store the actual Firebase user object to access getIdToken()
+            
+            if (user && event !== 'SIGNED_OUT') {
+                // Store the Supabase user object
                 state.currentUser = user;
                 
                 if (state.currentPage === 'login' || state.currentPage === 'register') {
                     // Create descent transition
                     createDescentTransition();
                     
-                    // Set up a delayed initialization to allow auth to stabilize
+                    // Set up initialization for Supabase
                     authInitializationTimeout = setTimeout(async () => {
                         isAuthProcessing = true;
                         
                         try {
-                            console.log('Starting authentication setup...');
+                            console.log('Starting Supabase authentication setup...');
                             
-                            // Wait for Firebase token to be properly ready
-                            await waitForTokenReady(user);
-                            
-                            // Write/update user profile data in Firestore
-                            await writeUserData(
-                                user.uid,
-                                user.displayName || 'Anonymous User',
-                                user.email,
-                                user.photoURL || ''
-                            );
-                            
-                            // Load user's journal entries from Firestore
-                            entries = await loadUserJournalEntries(user.uid);
+                            // Load user's journal entries from Supabase
+                            entries = await loadUserJournalEntries(user.id);
                             console.log('Authentication setup completed successfully');
                         } catch (error) {
                             console.warn('Authentication issue during initial load:', error);
                             
                             // If there's an auth error, redirect back to login
-                            if (error.message.includes('token') || error.message.includes('auth')) {
+                            if (error.message.includes('auth') || error.message.includes('unauthorized')) {
                                 console.warn('Invalid authentication, redirecting to login');
                                 state.currentUser = null;
                                 state.currentPage = 'login';
@@ -2151,7 +1875,7 @@
                         
                         // Reset the processing flag
                         isAuthProcessing = false;
-                    }, 2000); // Wait 2 seconds for auth to stabilize
+                    }, 1000); // Shorter delay for Supabase (more reliable)
                 } else if (state.currentPage === 'onboarding' && state.onboardingStep >= 4) {
                     // Only process if not already processing auth
                     if (!isAuthProcessing) {
@@ -2159,11 +1883,8 @@
                         
                         state.currentPage = 'dashboard';
                         try {
-                            // Wait for Firebase token to be properly ready
-                            await waitForTokenReady(user);
-                            
-                            // Load user's journal entries from Firestore
-                            entries = await loadUserJournalEntries(user.uid);
+                            // Load user's journal entries from Supabase
+                            entries = await loadUserJournalEntries(user.id);
                         } catch (error) {
                             console.warn('Could not load entries after onboarding:', error);
                             entries = [];
@@ -2186,207 +1907,11 @@
             }
         });
 
-        // Helper function to ensure we have a valid token
-        async function ensureValidToken(maxWaitTime = 5000) {
-            const startTime = Date.now();
-            
-            while (Date.now() - startTime < maxWaitTime) {
-                if (currentIdToken) {
-                    // Validate the token is not expired
-                    try {
-                        const tokenParts = currentIdToken.split('.');
-                        if (tokenParts.length === 3) {
-                            const payload = JSON.parse(atob(tokenParts[1]));
-                            const now = Math.floor(Date.now() / 1000);
-                            if (payload.exp && payload.exp > now + 60) { // Token should be valid for at least 1 more minute
-                                return currentIdToken;
-                            }
-                        }
-                    } catch (error) {
-                        console.log('Error validating managed token:', error);
-                    }
-                }
-                
-                // Wait a bit and try again
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-            
-            // If we still don't have a valid token, try to get one manually
-            if (state.currentUser) {
-                try {
-                    console.log('Managed token not available, getting token manually...');
-                    const token = await state.currentUser.getIdToken(true);
-                    currentIdToken = token;
-                    scheduleTokenRefresh(token);
-                    return token;
-                } catch (error) {
-                    console.error('Failed to get token manually:', error);
-                    throw new Error('Unable to obtain valid authentication token');
-                }
-            } else {
-                throw new Error('User not authenticated');
-            }
-        }
+        // Supabase handles token management automatically - no manual token handling needed
 
-        // Secure API call to Firebase backend
-        async function callFirebaseBackend(action, data = {}) {
-            if (!state.currentUser) {
-                throw new Error('User must be authenticated');
-            }
+        // Supabase handles database operations directly - no separate backend needed
 
-            // Check if running locally and return mock data immediately
-            const isLocalDevelopment = window.location.hostname === 'localhost' || 
-                                     window.location.hostname === '127.0.0.1' || 
-                                     window.location.hostname.includes('localhost') ||
-                                     window.location.protocol === 'file:' ||
-                                     (window.location.port && window.location.port !== '80' && window.location.port !== '443');
-            
-            if (isLocalDevelopment) {
-                console.warn('Running in local development mode. Using mock data for backend calls.');
-                
-                // Return appropriate mock data based on action
-                switch (action) {
-                    case 'getUserEntries':
-                        // Load from localStorage for persistence in local development
-                        const storedEntries = loadLocalEntries();
-                        return storedEntries.length > 0 ? storedEntries : [
-                            {
-                                id: 'mock-entry-1',
-                                title: 'Welcome to Kairos - Your First Entry',
-                                date: new Date().toISOString(),
-                                type: 'General',
-                                situation: { description: 'This is a sample entry to show how your recent entries will appear. Try creating your own entry using the Gateway Choice feature!' },
-                                createdAt: { _seconds: Math.floor(Date.now() / 1000) }
-                            },
-                            {
-                                id: 'mock-entry-2', 
-                                title: 'Local Development Guide',
-                                date: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-                                type: 'Reflection',
-                                situation: { description: 'In local development, your entries will persist in localStorage until you clear browser data. All features work with mock data.' },
-                                createdAt: { _seconds: Math.floor((Date.now() - 86400000) / 1000) }
-                            }
-                        ];
-                    case 'createEntry':
-                        const newEntry = { 
-                            id: 'local-' + Date.now(), 
-                            ...data,
-                            createdAt: { _seconds: Math.floor(Date.now() / 1000) }
-                        };
-                        // Don't add to entries array here - that's handled by onJournalEntryCompleted
-                        return newEntry;
-                    case 'deleteEntry':
-                        // Remove from localStorage
-                        const currentEntries = loadLocalEntries();
-                        const filteredEntries = currentEntries.filter(e => e.id !== data.entryId);
-                        localStorage.setItem('kairos-local-entries', JSON.stringify(filteredEntries));
-                        return { success: true };
-                    default:
-                        return { mockData: true, success: true };
-                }
-            }
-
-            try {
-                // Ensure we have a valid, non-expired token
-                const idToken = await ensureValidToken();
-                
-                console.log('Using token for backend call:', idToken ? 'Present' : 'Missing');
-                
-                const response = await fetch(`/.netlify/functions/firebase-backend`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${idToken}`
-                    },
-                    body: JSON.stringify({ action, data })
-                });
-
-                if (!response.ok) {
-                    let errorMessage = 'Backend operation failed';
-                    try {
-                        const errorData = await response.json();
-                        errorMessage = errorData.error || errorMessage;
-                    } catch (parseError) {
-                        // If we can't parse the error response, use the status text
-                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-                    }
-                    
-                    // If we get a 401, try refreshing the token once before giving up
-                    if (response.status === 401) {
-                        console.warn('401 error received, attempting token refresh...');
-                        
-                        try {
-                            // Force refresh the token and update managed token
-                            const freshToken = await state.currentUser.getIdToken(true);
-                            currentIdToken = freshToken;
-                            scheduleTokenRefresh(freshToken); // Schedule next refresh
-                            
-                            console.log('Token refreshed due to 401, retrying request...');
-                            
-                            // Retry the request with the fresh token
-                            const retryResponse = await fetch(`/.netlify/functions/firebase-backend`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${freshToken}`
-                                },
-                                body: JSON.stringify({ action, data })
-                            });
-                            
-                            if (retryResponse.ok) {
-                                console.log('Request succeeded after token refresh');
-                                return await retryResponse.json();
-                            } else {
-                                console.warn('Request still failed after token refresh, logging out');
-                                throw new Error('Authentication failed even after token refresh');
-                            }
-                        } catch (refreshError) {
-                            console.error('Token refresh failed:', refreshError);
-                            // Token refresh failed, user needs to log in again
-                            state.currentUser = null;
-                            currentIdToken = null;
-                            state.currentPage = 'login';
-                            render();
-                            throw new Error('Authentication expired. Please log in again.');
-                        }
-                    }
-                    
-                    throw new Error(errorMessage);
-                }
-
-                return await response.json();
-            } catch (error) {
-                console.error('Firebase backend error:', error);
-                
-                // Handle specific Firebase auth errors
-                if (error.code === 'auth/invalid-user-token' || 
-                    error.code === 'auth/user-token-expired' ||
-                    error.message.includes('Invalid or expired token')) {
-                    console.warn('Token expired, redirecting to login');
-                    state.currentUser = null;
-                    state.currentPage = 'login';
-                    render();
-                    throw new Error('Session expired. Please log in again.');
-                }
-                
-                throw error;
-            }
-        }
-
-        // Local development storage helpers
-        function saveLocalEntries() {
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                localStorage.setItem('kairos-local-entries', JSON.stringify(entries));
-            }
-        }
-
-        function loadLocalEntries() {
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                const stored = localStorage.getItem('kairos-local-entries');
-                return stored ? JSON.parse(stored) : [];
-            }
-            return [];
-        }
+        // Supabase works consistently across all environments - no need for local storage helpers
 
         // Helper function to handle Gemini API calls with local development support
         async function callGeminiAPI(prompt, structured = false) {
@@ -2439,9 +1964,13 @@
             }
             
             try {
-                const result = await callFirebaseBackend('getUserEntries', { limit: 50 });
+                const result = await databaseService.getUserEntries({ limit: 50 });
                 
-                entries = result.map(entry => ({
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+                
+                entries = result.data.map(entry => ({
                     ...entry,
                     // Convert Firestore timestamp to ISO string for compatibility
                     date: entry.createdAt?.toDate?.()?.toISOString() || 
@@ -5237,25 +4766,14 @@
                     mood: null  // User didn't specify mood in quick entry
                 };
                 
-                // Save to Firebase
-                const token = await state.currentUser.getIdToken();
-                const response = await fetch('/.netlify/functions/firebase-backend', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        action: 'createEntry',
-                        data: entryData
-                    })
-                });
+                // Save to Supabase
+                const result = await databaseService.createEntry(entryData);
                 
-                if (!response.ok) {
-                    throw new Error(`Failed to save entry: ${response.status}`);
+                if (!result.success) {
+                    throw new Error(result.error);
                 }
                 
-                const savedEntry = await response.json();
+                const savedEntry = result.data;
                 
                 // Add to local entries array
                 entries.unshift(savedEntry);
@@ -5335,7 +4853,10 @@
             const password = e.target.elements.password.value;
             
             try {
-                await signInWithEmailAndPassword(auth, email, password);
+                const result = await authService.signIn(email, password);
+                if (result.error) {
+                    throw new Error(result.error);
+                }
                 showToast("Welcome back to your sanctuary!", "success");
             } catch (error) {
                 console.error('Login error:', error);
@@ -5364,8 +4885,16 @@
             }
             
             try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                showToast("Welcome to Kairos! Your journey begins now.", "success");
+                const result = await authService.signUp(email, password);
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+                
+                if (result.needsEmailConfirmation) {
+                    showToast("Welcome to Kairos! Please check your email to confirm your account.", "success");
+                } else {
+                    showToast("Welcome to Kairos! Your journey begins now.", "success");
+                }
             } catch (error) {
                 console.error('Registration error:', error);
                 state.authError = getAuthErrorMessage(error.code);
@@ -5377,7 +4906,10 @@
 
         async function handleLogout() {
             try {
-                await signOut(auth);
+                const result = await authService.signOut();
+                if (result.error) {
+                    throw new Error(result.error);
+                }
                 showToast('Signed out successfully', 'success');
             } catch (error) {
                 console.error('Logout error:', error);
@@ -5508,7 +5040,7 @@
                     error.message.includes('Session expired') ||
                     error.message.includes('Invalid or expired token')) {
                     showToast('Your session has expired. Please log in again.', 'error');
-                    // The callFirebaseBackend function already handles redirecting to login
+                    // The auth service already handles redirecting to login
                 } else {
                     showToast('Failed to save entry. Please try again.', 'error');
                 }
@@ -5529,8 +5061,8 @@
                 confirmText: 'Delete', 
                 onConfirm: async () => { 
                     try {
-                        // Delete via secure backend
-                        await callFirebaseBackend('deleteEntry', { entryId });
+                        // Delete via Supabase service
+                        await databaseService.deleteEntry(entryId);
                         
                         // Remove from local entries array
                         entries = entries.filter(entry => entry.id !== entryId); 

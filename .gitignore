@@ -1,3 +1,5 @@
+# Ignore MCP config file
+.mcp.json
 node_modules
 .env
 .env.local
@@ -6,9 +8,14 @@ node_modules
 .DS_Store
 dist/
 build/
+
+# Firebase (legacy - will remove after migration)
 .firebase/
 firebase-debug.log
 firestore-debug.log
+
+# Supabase
+.supabase/
 
 # IDE files
 .vscode/
